@@ -1,31 +1,50 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "PKH/Player/PlayerCharacter.h"
+#include "PlayerInputComponent.h"
+#include "Camera/CameraComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Setting
+	
+
+	// Component
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SkeletalRef(TEXT("/Script/Engine.SkeletalMesh'/Game/PKH/Mesh/Player/SKM_Player_Man.SKM_Player_Man'"));
+	if( SkeletalRef.Object)
+	{
+		GetMesh()->SetSkeletalMesh(SkeletalRef.Object);
+	}
+
+	GunComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunComp"));
+	GunComp->SetupAttachment(GetMesh());
+
+	InputComp = CreateDefaultSubobject<UPlayerInputComponent>(TEXT("InputComp"));
+
+	// Camera
+	CameraComp=CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	CameraComp->SetupAttachment(RootComponent);
+	CameraComp->AddRelativeLocation(FVector(30, 0, 70));
+	CameraComp->bUsePawnControlRotation=true;
 }
 
-// Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+
 }
 
-// Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-// Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
