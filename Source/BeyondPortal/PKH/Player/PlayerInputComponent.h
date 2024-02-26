@@ -47,6 +47,12 @@ protected:
 	TObjectPtr<class UInputAction> IA_Look;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UInputAction> IA_Jump;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UInputAction> IA_Crouch;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UInputAction> IA_FireLeft;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -63,6 +69,12 @@ protected:
 	void OnIALook(const FInputActionValue& Value);
 
 	UFUNCTION()
+	void OnIAJump(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnIACrouch(const FInputActionValue& Value);
+
+	UFUNCTION()
 	void OnIAFireLeft(const FInputActionValue& Value);
 
 	UFUNCTION()
@@ -71,4 +83,11 @@ protected:
 	UFUNCTION()
 	void OnIAGrab(const FInputActionValue& Value);
 
+	// Values
+	UPROPERTY(EditAnywhere)
+	float MouseSensitivity=1.0f;
+
+// LineTrace
+protected:
+	bool TrySpawnPortal(FHitResult& InHitResult) const;
 };

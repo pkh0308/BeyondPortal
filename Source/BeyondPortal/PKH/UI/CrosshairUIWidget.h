@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -13,5 +13,21 @@ UCLASS()
 class BEYONDPORTAL_API UCrosshairUIWidget : public UUserWidget
 {
 	GENERATED_BODY()
-	
+
+public:
+	UCrosshairUIWidget(const FObjectInitializer& ObjectInitializer);
+
+protected:
+	virtual void NativeConstruct() override;
+
+// Images
+protected:
+	UPROPERTY(EditDefaultsOnly, meta = (BindWidget))
+	TObjectPtr<class UImage> Crosshair_Center;
+
+	UPROPERTY(EditDefaultsOnly, meta=(BindWidget))
+	TObjectPtr<class UImage> CrossHair_Left;
+
+	UPROPERTY(EditDefaultsOnly, meta=(BindWidget))
+	TObjectPtr<class UImage> CrossHair_Right;
 };

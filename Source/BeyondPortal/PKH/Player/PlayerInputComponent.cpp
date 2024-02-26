@@ -6,6 +6,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "PlayerCharacter.h"
 #include "InputMappingContext.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 UPlayerInputComponent::UPlayerInputComponent()
 {
@@ -28,6 +30,17 @@ UPlayerInputComponent::UPlayerInputComponent()
 	{
 		IA_Look=IA_LookRef.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_JumpRef(TEXT("/Script/EnhancedInput.InputAction'/Game/PKH/Input/IA_Portal_Jump.IA_Portal_Jump'"));
+	if ( IA_JumpRef.Object )
+	{
+		IA_Jump=IA_JumpRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_CrouchRef(TEXT("/Script/EnhancedInput.InputAction'/Game/PKH/Input/IA_Portal_Crouch.IA_Portal_Crouch'"));
+	if ( IA_CrouchRef.Object )
+	{
+		IA_Crouch=IA_CrouchRef.Object;
+	}
+
 	static ConstructorHelpers::FObjectFinder<UInputAction> IA_FireLeftRef(TEXT("/Script/EnhancedInput.InputAction'/Game/PKH/Input/IA_Portal_FireLeft.IA_Portal_FireLeft'"));
 	if ( IA_FireLeftRef.Object )
 	{
@@ -48,6 +61,9 @@ UPlayerInputComponent::UPlayerInputComponent()
 void UPlayerInputComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Owner=CastChecked<APlayerCharacter>(GetOwner());
+	MoveComp=Owner->GetCharacterMovement();
 
 	// Input Mapping
 	APlayerController* MyController=CastChecked<APlayerController>(Owner->GetController());
@@ -70,8 +86,7 @@ void UPlayerInputComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 
-	Owner=CastChecked<APlayerCharacter>(GetOwner());
-	MoveComp=Owner->GetCharacterMovement();
+	
 }
 
 void UPlayerInputComponent::SetupInput(UEnhancedInputComponent* PlayerInputComponent)
@@ -82,6 +97,11 @@ void UPlayerInputComponent::SetupInput(UEnhancedInputComponent* PlayerInputCompo
 	InputComp->BindAction(IA_Move, ETriggerEvent::Triggered, this, &UPlayerInputComponent::OnIAMove);
 	// Look
 	InputComp->BindAction(IA_Look, ETriggerEvent::Triggered, this, &UPlayerInputComponent::OnIALook);
+	// Jump
+	InputComp->BindAction(IA_Jump, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAJump);
+	// Crouch
+	InputComp->BindAction(IA_Crouch, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIACrouch);
+	InputComp->BindAction(IA_Crouch, ETriggerEvent::Completed, this, &UPlayerInputComponent::OnIACrouch);
 
 	// Fire
 	InputComp->BindAction(IA_FireLeft, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAFireLeft);
@@ -100,29 +120,66 @@ void UPlayerInputComponent::OnIAMove(const FInputActionValue& Value)
 	const FVector ForwardVec=FRotationMatrix(YawRotator).GetUnitAxis(EAxis::X);
 	const FVector RightVec=FRotationMatrix(YawRotator).GetUnitAxis(EAxis::Y);
 
-	Owner->AddMovementInput(ForwardVec, InputVec.Y);
-	Owner->AddMovementInput(RightVec, InputVec.X);
+	Owner->AddMovementInput(ForwardVec, InputVec.X);
+	Owner->AddMovementInput(RightVec, InputVec.Y);
 }
 
 void UPlayerInputComponent::OnIALook(const FInputActionValue& Value)
 {
 	const FVector2D InputVec=Value.Get<FVector2D>();
 
-	Owner->AddControllerPitchInput(InputVec.X);
-	Owner->AddControllerYawInput(InputVec.Y);
+	Owner->AddControllerPitchInput(InputVec.X * MouseSensitivity);
+	Owner->AddControllerYawInput(InputVec.Y * MouseSensitivity);
+}
+
+void UPlayerInputComponent::OnIAJump(const FInputActionValue& Value)
+{
+	Owner->Jump();
+}
+
+void UPlayerInputComponent::OnIACrouch(const FInputActionValue& Value)
+{
+	Owner->PlayerCrouch();
 }
 
 void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("FireLeft"));
+	FHitResult HitResult;
+	if( TrySpawnPortal(HitResult) )
+	{
+		Owner->SpawnPortal(true, HitResult.ImpactPoint, HitResult.ImpactNormal);
+	}
 }
 
 void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("FireRight"));
+	FHitResult HitResult;
+	if ( TrySpawnPortal(HitResult) )
+	{
+		Owner->SpawnPortal(false, HitResult.ImpactPoint, HitResult.ImpactNormal);
+	}
 }
 
 void UPlayerInputComponent::OnIAGrab(const FInputActionValue& Value)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Grab"));
+}
+
+bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult) const
+{
+	APlayerCameraManager* CameraManager=UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+	const FVector StartVec=CameraManager->GetCameraLocation();
+	const FVector EndVec=StartVec + CameraManager->GetActorForwardVector() * 10000;
+
+	FCollisionQueryParams Param;
+	Param.AddIgnoredActor(Owner);
+	bool IsHit=GetWorld()->LineTraceSingleByChannel(InHitResult, StartVec, EndVec, ECC_GameTraceChannel18, Param);
+	if ( false == IsHit )
+	{
+		DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red);
+		return false;
+	}
+
+	DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Green);
+	return true;
 }
