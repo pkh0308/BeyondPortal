@@ -34,6 +34,7 @@ APlayerCharacter::APlayerCharacter()
 	MoveComp=GetCharacterMovement();
 	MoveComp->AirControl=0.15f;
 	MoveComp->JumpZVelocity=300.0f;
+	MoveComp->MaxWalkSpeedCrouched=150.0f;
 
 	GunComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunComp"));
 	GunComp->SetupAttachment(GetMesh(), "GunSocket");
@@ -117,9 +118,6 @@ void APlayerCharacter::SpawnPortal(const bool IsLeft, const FVector& Location, c
 	
 	TargetPortal->SetActorLocation(SpawnLocation);
 	TargetPortal->SetActorRotation(SpawnRotation);
-	// 캡쳐 회전 초기화
-	PortalLeft->ResetCaptureCamera();
-	PortalRight->ResetCaptureCamera();
 
 	TargetPortal->Activate(true);
 
