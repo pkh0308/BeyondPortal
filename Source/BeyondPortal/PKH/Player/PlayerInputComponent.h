@@ -59,7 +59,7 @@ protected:
 	TObjectPtr<class UInputAction> IA_FireRight;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UInputAction> IA_Grab;
+	TObjectPtr<class UInputAction> IA_Interaction;
 
 	// Bind Functions
 	UFUNCTION()
@@ -81,11 +81,14 @@ protected:
 	void OnIAFireRight(const FInputActionValue& Value);
 
 	UFUNCTION()
-	void OnIAGrab(const FInputActionValue& Value);
+	void OnIAInteraction(const FInputActionValue& Value);
 
 	// Values
 	UPROPERTY(EditAnywhere)
 	float MouseSensitivity=1.0f;
+
+	UPROPERTY(EditAnywhere)
+	float InteractionDistance=200.0f;
 
 // LineTrace
 protected:

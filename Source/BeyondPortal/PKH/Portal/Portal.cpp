@@ -20,7 +20,7 @@ APortal::APortal()
 	// Component
 	BoxComp =CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	SetRootComponent(BoxComp);
-	BoxComp->SetBoxExtent(FVector(5, 52, 90));
+	BoxComp->SetBoxExtent(FVector(5, 60, 100));
 	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &APortal::OnBeginOverlap);
 
 	MeshComp=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
@@ -30,7 +30,7 @@ APortal::APortal()
 	{
 		MeshComp->SetStaticMesh(PlaneRef.Object);
 		MeshComp->AddRelativeRotation(FRotator(0, -90, 90));
-		MeshComp->SetRelativeScale3D(FVector(1.5f, 1.75f, 1.0f));
+		MeshComp->SetRelativeScale3D(FVector(1.75f, 2.0f, 1.0f));
 	}
 
 	CaptureComp=CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("CaptureComp"));
@@ -88,9 +88,10 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		Character->GetController()->SetControlRotation(TargetRotation);
 
 		// Velocity
-		const float NewVelocity=Character->GetRootComponent()->ComponentVelocity.Size();
-		const FVector ForwardVec=ArrowComp->GetForwardVector();
-		Character->GetRootComponent()->ComponentVelocity = ForwardVec * NewVelocity;
+		const float NewVelocity=Character->GetCharacterMovement()->Velocity.Size() * AccelMultiplier;
+		const FVector ForwardVec=LinkedPortal->GetTargetDirection();
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, FString::Printf(TEXT("%f, %f, %f"), ForwardVec.X, ForwardVec.Y, ForwardVec.Z));
+		Character->GetCharacterMovement()->Velocity = ForwardVec * NewVelocity;
 	}
 	else
 	{
@@ -155,7 +156,29 @@ void APortal::UpdateCaptureCamera()
 		return;
 	}
 
+	// FOV
 	const float Distance=FVector::Dist(Player->GetActorLocation(), LinkedPortal->GetActorLocation());
-	const float FOVValue = FMath::Clamp(Distance / FOVDivider, 30, 150);
-	CaptureComp->FOVAngle=FOVValue;
+	float FOVValue=FMath::Atan(Distance / FOVDivider);
+	if(FOVValue < 0.85f)
+	{
+		FOVValue=FMath::Lerp<float>(FOVValue, 0.85f, 0.9f);
+	}
+	CaptureComp->FOVAngle=FOVValue * FOVOffset;
+
+	// Rotation
+	FVector TargetLocation=Player->GetActorLocation();
+	TargetLocation.Z=0;
+	FVector MyLocation=GetActorLocation();
+	MyLocation.Z=0;
+	const float YawOffset=LinkedPortal->GetActorRotation().Yaw - GetActorRotation().Yaw;
+
+	const FVector Direction=TargetLocation - MyLocation;
+	FRotator Rotation=Direction.ToOrientationRotator();
+	Rotation.Yaw+=YawOffset;
+	LinkedPortal->SetCaptureRotation(Rotation);
+}
+
+void APortal::SetCaptureRotation(FRotator NewRotation)
+{
+	CaptureComp->SetWorldRotation(NewRotation);
 }

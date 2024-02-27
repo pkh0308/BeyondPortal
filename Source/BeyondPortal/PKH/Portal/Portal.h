@@ -60,6 +60,9 @@ protected:
 
 	bool IsLinked=false;
 
+	UPROPERTY(EditDefaultsOnly)
+	float AccelMultiplier=1.5f;
+
 public:
 	FORCEINLINE void SetIsLinked(bool NewIsLinked) { IsLinked = NewIsLinked; }
 	FORCEINLINE bool GetIsLinked() const { return IsLinked; }
@@ -78,15 +81,15 @@ protected:
 	TObjectPtr<class ACharacter> Player;
 
 	UPROPERTY(EditAnywhere)
-	float FOVDivider=4.0f;
+	float FOVOffset = 80.0f;
 
 	UPROPERTY(EditAnywhere)
-	float MinFOV=30.0f;
-
-	UPROPERTY(EditAnywhere)
-	float MaxFOV=150.0f;
+	float FOVDivider=300.0f;
 
 	void UpdateCaptureCamera();
+
+public:
+	void SetCaptureRotation(FRotator NewRotation);
 
 // Material
 protected:

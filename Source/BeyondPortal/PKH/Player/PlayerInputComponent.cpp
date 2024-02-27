@@ -8,6 +8,7 @@
 #include "InputMappingContext.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "PKH/Interface/Interactible.h"
 
 UPlayerInputComponent::UPlayerInputComponent()
 {
@@ -51,10 +52,10 @@ UPlayerInputComponent::UPlayerInputComponent()
 	{
 		IA_FireRight=IA_FireRightRef.Object;
 	}
-	static ConstructorHelpers::FObjectFinder<UInputAction> IA_GrabRef(TEXT("/Script/EnhancedInput.InputAction'/Game/PKH/Input/IA_Portal_Grab.IA_Portal_Grab'"));
-	if ( IA_GrabRef.Object )
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_InteractionRef(TEXT("/Script/EnhancedInput.InputAction'/Game/PKH/Input/IA_Portal_Grab.IA_Portal_Grab'"));
+	if ( IA_InteractionRef.Object )
 	{
-		IA_Grab=IA_GrabRef.Object;
+		IA_Interaction=IA_InteractionRef.Object;
 	}
 }
 
@@ -62,16 +63,23 @@ void UPlayerInputComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Owner=CastChecked<APlayerCharacter>(GetOwner());
+	Owner=Cast<APlayerCharacter>(GetOwner());
+	if( nullptr == Owner )
+	{
+		return;
+	}
 	MoveComp=Owner->GetCharacterMovement();
 
 	// Input Mapping
-	APlayerController* MyController=CastChecked<APlayerController>(Owner->GetController());
-	UEnhancedInputLocalPlayerSubsystem* Subsystem=ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(MyController->GetLocalPlayer());
-	if ( Subsystem )
+	APlayerController* MyController=Cast<APlayerController>(Owner->GetController());
+	if( MyController )
 	{
-		Subsystem->ClearAllMappings();
-		Subsystem->AddMappingContext(IMC, 0);
+		UEnhancedInputLocalPlayerSubsystem* Subsystem=ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(MyController->GetLocalPlayer());
+		if ( Subsystem )
+		{
+			Subsystem->ClearAllMappings();
+			Subsystem->AddMappingContext(IMC, 0);
+		}
 	}
 }
 
@@ -107,7 +115,7 @@ void UPlayerInputComponent::SetupInput(UEnhancedInputComponent* PlayerInputCompo
 	InputComp->BindAction(IA_FireLeft, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAFireLeft);
 	InputComp->BindAction(IA_FireRight, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAFireRight);
 	// Grab
-	InputComp->BindAction(IA_Grab, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAGrab);
+	InputComp->BindAction(IA_Interaction, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAInteraction);
 }
 
 void UPlayerInputComponent::OnIAMove(const FInputActionValue& Value)
@@ -160,9 +168,27 @@ void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 	}
 }
 
-void UPlayerInputComponent::OnIAGrab(const FInputActionValue& Value)
+void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Grab"));
+	FHitResult HitResult;
+	APlayerCameraManager* CameraManager=UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+	const FVector StartVec=CameraManager->GetCameraLocation();
+	const FVector EndVec=StartVec + CameraManager->GetActorForwardVector() * InteractionDistance;
+
+	bool IsHit=GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Camera);
+	if(false == IsHit)
+	{
+		return;
+	}
+
+	// Interaction
+	IInteractible* InteractibleActor = Cast<IInteractible>(HitResult.GetActor());
+	if(nullptr == InteractibleActor )
+	{
+		return;
+	}
+
+	InteractibleActor->DoInteraction();
 }
 
 bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult) const
@@ -176,10 +202,9 @@ bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult) const
 	bool IsHit=GetWorld()->LineTraceSingleByChannel(InHitResult, StartVec, EndVec, ECC_GameTraceChannel18, Param);
 	if ( false == IsHit )
 	{
-		DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red);
+		
 		return false;
 	}
 
-	DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Green);
 	return true;
 }

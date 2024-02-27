@@ -17,7 +17,7 @@ APlayerCharacter::APlayerCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Setting
-	GetCharacterMovement()->bOrientRotationToMovement=false;
+	
 	bUseControllerRotationRoll=false;
 	bUseControllerRotationPitch=false;
 	bUseControllerRotationYaw=true;
@@ -35,6 +35,8 @@ APlayerCharacter::APlayerCharacter()
 	MoveComp->AirControl=0.15f;
 	MoveComp->JumpZVelocity=300.0f;
 	MoveComp->MaxWalkSpeedCrouched=150.0f;
+	MoveComp->bUseControllerDesiredRotation=true;
+	MoveComp->bOrientRotationToMovement=false;
 
 	GunComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunComp"));
 	GunComp->SetupAttachment(GetMesh(), "GunSocket");
