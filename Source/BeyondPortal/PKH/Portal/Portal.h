@@ -40,6 +40,14 @@ protected:
 // Activate
 protected:
 	bool IsActivated=false;
+	bool IsCreating=false;
+
+	UPROPERTY(EditDefaultsOnly, Category = Portal)
+	float PortalCreateSpeed=1.5f;
+
+	float SizeAlpha=0.0f;
+
+	FVector PortalSize;
 
 public:
 	void Activate(const bool ActiveSelf);
@@ -47,10 +55,13 @@ public:
 
 // Link
 protected:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category=Portal)
 	TObjectPtr<APortal> LinkedPortal;
 
 	bool IsLinked=false;
+
+	UPROPERTY(EditDefaultsOnly)
+	float AccelMultiplier=1.5f;
 
 public:
 	FORCEINLINE void SetIsLinked(bool NewIsLinked) { IsLinked = NewIsLinked; }
@@ -58,6 +69,7 @@ public:
 	FORCEINLINE APortal* GetLinkedPortal() const { return LinkedPortal; }
 
 	void LinkPortal(APortal* NewLinkedPortal);
+	void UnlinkPortal();
 
 	FVector GetTargetLocation() const;
 	FRotator GetTargetRotation() const;
@@ -65,20 +77,25 @@ public:
 
 // Capture
 protected:
-	FVector CaptureLocation;
-	FRotator CaptureRotation;
+	UPROPERTY()
+	TObjectPtr<class ACharacter> Player;
 
-	FORCEINLINE FVector GetCaptureLocation() const { return CaptureLocation; }
-	FORCEINLINE FRotator GetCaptureRotation() const { return CaptureRotation; }
+	UPROPERTY(EditAnywhere)
+	float FOVOffset = 80.0f;
+
+	UPROPERTY(EditAnywhere)
+	float FOVDivider=300.0f;
+
+	void UpdateCaptureCamera();
 
 public:
-	void ResetCaptureCamera();
+	void SetCaptureRotation(FRotator NewRotation);
 
 // Material
 protected:
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category=Portal)
 	TObjectPtr<class UMaterialInterface> DefaultMaterial;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category=Portal)
 	TObjectPtr<class UMaterialInterface> LinkedMaterial;
 };
