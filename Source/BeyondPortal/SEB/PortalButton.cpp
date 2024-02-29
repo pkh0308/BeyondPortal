@@ -5,7 +5,9 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "Kismet/GameplayStatics.h"
 #include "PKH/Player/PlayerCharacter.h"
+#include "PKH/Props/GrabCube.h"
 
 // Sets default values
 APortalButton::APortalButton()
@@ -53,24 +55,50 @@ void APortalButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponen
 	// Player가 앞에 와서
 	if (OtherActor->IsA<APlayerCharacter>()) {
 		
-
-		//E 버튼을 누르면
-
 		//버튼 종류 식별 (SpawnCube / OpenDoor)
 
-		// 버튼 애니메이션 play
-		portalButton->PlayAnimation(pressButtonAnim, false);
-		//isPressed를 true로 바꾸고
-		isPressed=true;
+		//임시 => 나중에 player가 E버튼을 누르면 isPressed가 true로 바뀌게 변경
 		//isPressed가 true라면
-		if(isPressed )
+		if ( isPressed )
 		{
-			UE_LOG(LogTemp, Warning, TEXT("portalbutton"));
-
-			GetWorld()->SpawnActor<AActor>(spawnCube, FVector::ZeroVector, FRotator::ZeroRotator);
+			// 버튼 애니메이션 play
+			portalButton->PlayAnimation(pressButtonAnim, false);
+			activeSpawnCube();
+			isPressed=false;
 		}
 		
 	}
+}
+
+void APortalButton::activeSpawnCube()
+{
+;
+	// cube 스폰 -> 조금 흔들리다가 떨어뜨리기
+
+
+	if(!isSpawned )
+	{
+		//tag가 CubeDropper인 액터 탐색
+		TArray<AActor*> FoundActors;
+		UGameplayStatics::GetAllActorsWithTag(GetWorld(), TEXT("CubeDropper"), FoundActors);
+
+		//그 중에 가장 가까운 것 탐색 후 위치를 얻어서 => Find Nearest actor
+		float NearestActorDistance=1000.0f;
+		AActor* NearestActor=UGameplayStatics::FindNearestActor(GetActorLocation(), FoundActors, NearestActorDistance);
+
+		//스폰된 Cube가 없다면 cube 스폰
+		GetWorld()->SpawnActor<AActor>(spawnCube, FVector(NearestActor->GetActorLocation().X, NearestActor->GetActorLocation().Y, NearestActor->GetActorLocation().Z - 200), FRotator::ZeroRotator);
+		isSpawned=true;
+	}
+	UE_LOG(LogTemp, Warning, TEXT("isSpawned"));
+	
+}
+
+//E 버튼 눌렸을 때
+void APortalButton::DoInteraction()
+{
+	UE_LOG(LogTemp, Warning, TEXT("isSpawned"));
+	portalButton->PlayAnimation(pressButtonAnim, false);
 }
 
 

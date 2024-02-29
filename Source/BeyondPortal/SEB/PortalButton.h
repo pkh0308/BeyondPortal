@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "PKH/Interface/Interactible.h"
 #include "PortalButton.generated.h"
 
 UCLASS()
-class BEYONDPORTAL_API APortalButton : public AActor
+class BEYONDPORTAL_API APortalButton : public AActor, public IInteractible
 {
 	GENERATED_BODY()
 	
@@ -39,4 +40,12 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	TSubclassOf<AActor> spawnCube;
+
+	void activeSpawnCube();
+
+	UPROPERTY(EditDefaultsOnly)
+	bool isSpawned=false;
+
+public:
+	virtual void DoInteraction() override;
 };
