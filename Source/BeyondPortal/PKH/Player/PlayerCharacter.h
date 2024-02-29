@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "PKH/Portal/Portal.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
@@ -39,6 +40,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UCameraComponent> CameraComp;
 
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UPointLightComponent> LightComp;
+
+public:
+	FORCEINLINE UCameraComponent* GetCameraComp()const  { return CameraComp; }
 
 // Portal
 protected:
@@ -57,8 +63,39 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float PortalSpawnOffset=1.0f;
 
+	FVector PortalExtent;
+
 public:
 	void SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
+
+	FORCEINLINE FVector GetPortalExtent() const { return PortalExtent; }
+
+	FORCEINLINE bool IsLeftPortal(AActor* Target) const { return Target->GetUniqueID() == PortalLeft->GetUniqueID(); }
+	FORCEINLINE bool IsRightPortal(AActor* Target) const { return Target->GetUniqueID() == PortalLeft->GetUniqueID(); }
+
+// Portal gun light
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	float MaxIntensity=50;
+
+	float CurIntensity=0;
+
+public:
+	void PortalGunLightOn(FLinearColor NewColor);
+	void PortalGunLightOff();
+
+// Grab
+protected:
+	class ICanGrab* GrabObject;
+
+	float GrabDistance=200.0f;
+
+public:
+	FORCEINLINE void GrabObj(class ICanGrab* NewObject) { GrabObject=NewObject; };
+	FORCEINLINE void DropObj() { GrabObject=nullptr; };
+	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; };
+
+	FVector GetGrabPoint() const;
 
 // Animation
 protected:

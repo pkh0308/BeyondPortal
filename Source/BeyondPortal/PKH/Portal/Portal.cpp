@@ -90,7 +90,6 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		// Velocity
 		const float NewVelocity=Character->GetCharacterMovement()->Velocity.Size() * AccelMultiplier;
 		const FVector ForwardVec=LinkedPortal->GetTargetDirection();
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, FString::Printf(TEXT("%f, %f, %f"), ForwardVec.X, ForwardVec.Y, ForwardVec.Z));
 		Character->GetCharacterMovement()->Velocity = ForwardVec * NewVelocity;
 	}
 	else
