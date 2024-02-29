@@ -43,6 +43,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UPointLightComponent> LightComp;
 
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UParticleSystemComponent> GunParticleComp;
+
 public:
 	FORCEINLINE UCameraComponent* GetCameraComp()const  { return CameraComp; }
 
@@ -86,14 +89,17 @@ public:
 
 // Grab
 protected:
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UParticleSystem> VFX_GrabEffect;
+
 	class ICanGrab* GrabObject;
 
 	float GrabDistance=200.0f;
 
 public:
-	FORCEINLINE void GrabObj(class ICanGrab* NewObject) { GrabObject=NewObject; };
-	FORCEINLINE void DropObj() { GrabObject=nullptr; };
-	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; };
+	void GrabObj(class ICanGrab* NewObject);
+	void DropObj();
+	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; }
 
 	FVector GetGrabPoint() const;
 

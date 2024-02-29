@@ -155,33 +155,33 @@ void UPlayerInputComponent::OnIACrouch(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 {
-	Owner->PortalGunLightOn(FLinearColor::Blue);
-
 	FHitResult HitResult;
 	FVector ImpactPoint = HitResult.ImpactPoint;
 	if( TrySpawnPortal(HitResult, ImpactPoint) )
 	{
 		Owner->SpawnPortal(true, ImpactPoint, HitResult.ImpactNormal);
+		Owner->PortalGunLightOn(FLinearColor::Blue);
 	}
 	else
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalLFail, HitResult.ImpactPoint);
+		UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z);
 	}
 }
 
 void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 {
-	Owner->PortalGunLightOn(FLinearColor::FromSRGBColor(FColor::Orange));
-
 	FHitResult HitResult;
 	FVector ImpactPoint=HitResult.ImpactPoint;
 	if ( TrySpawnPortal(HitResult, ImpactPoint) )
 	{
 		Owner->SpawnPortal(false, ImpactPoint, HitResult.ImpactNormal);
+		Owner->PortalGunLightOn(FLinearColor::FromSRGBColor(FColor::Orange));
 	}
 	else
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalRFail, HitResult.ImpactPoint);
+		UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z);
 	}
 }
 
@@ -243,30 +243,38 @@ bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult, FVector& Imp
 	}
 	ImpactPoint=InHitResult.ImpactPoint;
 
-	// Disable surface
-	const UPhysicalMaterial* PM = InHitResult.PhysMaterial.Get();
-	if(nullptr == PM)
+	// Check surface
+	const auto MI =InHitResult.GetComponent()->GetMaterial(0);
+	if( nullptr == MI )
 	{
+		return false;
+	}
+	const auto PM = MI->GetPhysicalMaterial();
+	if( nullptr == PM )
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Physical Material"));
 		return false;
 	}
 	if( PM->SurfaceType != PORTAL_SURFACE )
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Surface is not PORTAL_SURFACE"));
 		return false;
 	}
 
-	//// Adjust Location
-	//if( FMath::Abs(InHitResult.ImpactNormal.X) > 0.1f )
-	//{
-	//	CalcPortalLocationYZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox());
-	//}
-	//else if( FMath::Abs(InHitResult.ImpactNormal.Y) > 0.1f )
-	//{
-	//	CalcPortalLocationXZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
-	//}
-	//else
-	//{
-	//	CalcPortalLocationXY(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
-	//}
+	// Adjust Location
+	// Only for vertical wall
+	if( FMath::Abs(InHitResult.ImpactNormal.X) > 0.99f )
+	{
+		CalcPortalLocationYZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox());
+	}
+	else if( FMath::Abs(InHitResult.ImpactNormal.Y) > 0.99f )
+	{
+		CalcPortalLocationXZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
+	}
+	else if ( FMath::Abs(InHitResult.ImpactNormal.Z) > 0.99f )
+	{
+		CalcPortalLocationXY(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
+	}
 	
 	return true;
 }

@@ -49,24 +49,27 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 	{
 		OwnPlayer=Player;
 	}
-	BoxComp->SetSimulatePhysics(false);
+	BoxComp->SetEnableGravity(false);
 }
 
 void AGrabCube::Drop()
 {
+	OwnPlayer->DropObj();
 	OwnPlayer=nullptr;
-	BoxComp->SetSimulatePhysics(true);
+	BoxComp->SetEnableGravity(true);
 }
 
 void AGrabCube::TickGrab()
 {
-	FVector NewLocation=OwnPlayer->GetGrabPoint();
-	if(FVector::Dist(NewLocation, GetActorLocation()) > 250.0f )
+	const FVector NewLocation=OwnPlayer->GetGrabPoint();
+	SetActorLocation(NewLocation);
+
+	// Check Velocity
+	// if velocity is too big, drop cube
+	const FVector CurVelocity=BoxComp->GetComponentVelocity();
+	if( CurVelocity.Size() > DropVelocity)
 	{
-		OwnPlayer=nullptr;
-	}
-	else
-	{
-		SetActorLocation(NewLocation);
+		BoxComp->SetPhysicsLinearVelocity(CurVelocity * VelocityCut);
+		Drop();
 	}
 }

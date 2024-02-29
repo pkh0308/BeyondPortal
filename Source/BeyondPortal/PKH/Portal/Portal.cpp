@@ -155,25 +155,32 @@ void APortal::UpdateCaptureCamera()
 		return;
 	}
 
-	// FOV
+	SetCaptureFOV();
+	SetCaptureRotation();
+}
+
+void APortal::SetCaptureFOV()
+{
 	const float Distance=FVector::Dist(Player->GetActorLocation(), LinkedPortal->GetActorLocation());
 	float FOVValue=FMath::Atan(Distance / FOVDivider);
-	if(FOVValue < 0.85f)
+	if ( FOVValue < 0.85f )
 	{
 		FOVValue=FMath::Lerp<float>(FOVValue, 0.85f, 0.9f);
 	}
 	CaptureComp->FOVAngle=FOVValue * FOVOffset;
+}
 
-	// Rotation
-	FVector TargetLocation=Player->GetActorLocation();
-	TargetLocation.Z=0;
-	FVector MyLocation=GetActorLocation();
-	MyLocation.Z=0;
+void APortal::SetCaptureRotation()
+{
+	const FVector TargetLocation=Player->GetActorLocation();
+	const FVector MyLocation=GetActorLocation();
+	const float PitchOffset=LinkedPortal->GetActorRotation().Pitch - GetActorRotation().Pitch;
 	const float YawOffset=LinkedPortal->GetActorRotation().Yaw - GetActorRotation().Yaw;
 
 	const FVector Direction=TargetLocation - MyLocation;
 	FRotator Rotation=Direction.ToOrientationRotator();
-	Rotation.Yaw+=YawOffset;
+	Rotation.Pitch += PitchOffset;
+	Rotation.Yaw += YawOffset;
 	LinkedPortal->SetCaptureRotation(Rotation);
 }
 

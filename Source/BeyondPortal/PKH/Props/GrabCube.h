@@ -36,8 +36,14 @@ public:
 
 // Grab
 protected:
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<class APlayerCharacter> OwnPlayer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float DropVelocity = 250.0f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float VelocityCut = 0.5f;
 
 	void TickGrab();
 
