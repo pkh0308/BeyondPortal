@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "PKH/Interface/Interactible.h"
+#include "PKH/Interface/CanGrab.h"
 #include "GrabCube.generated.h"
 
 UCLASS()
-class BEYONDPORTAL_API AGrabCube : public AActor, public IInteractible
+class BEYONDPORTAL_API AGrabCube : public AActor, public ICanGrab
 {
 	GENERATED_BODY()
 	
@@ -17,6 +17,8 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	virtual void Tick(float DeltaSeconds) override;
 
 // Component
 protected:
@@ -28,5 +30,15 @@ protected:
 
 // Interface
 public:
-	virtual void DoInteraction() override;
+	virtual void Grab(ACharacter* NewOwner) override;
+
+	virtual void Drop() override;
+
+// Grab
+protected:
+	UPROPERTY()
+	TObjectPtr<class APlayerCharacter> OwnPlayer;
+
+	void TickGrab();
+
 };

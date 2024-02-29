@@ -2,13 +2,13 @@
 
 
 #include "PKH/Props/GrabCube.h"
-
 #include "Components/BoxComponent.h"
+#include "PKH/Player/PlayerCharacter.h"
 
 // Sets default values
 AGrabCube::AGrabCube()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	BoxComp=CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCom"));
 	SetRootComponent(BoxComp);
@@ -32,7 +32,41 @@ void AGrabCube::BeginPlay()
 	
 }
 
-void AGrabCube::DoInteraction()
+void AGrabCube::Tick(float DeltaSeconds)
 {
+	Super::Tick(DeltaSeconds);
 
+	if( OwnPlayer )
+	{
+		TickGrab();
+	}
+}
+
+void AGrabCube::Grab(ACharacter* NewOwner)
+{
+	APlayerCharacter* Player = Cast<APlayerCharacter>(NewOwner);
+	if( Player )
+	{
+		OwnPlayer=Player;
+	}
+	BoxComp->SetSimulatePhysics(false);
+}
+
+void AGrabCube::Drop()
+{
+	OwnPlayer=nullptr;
+	BoxComp->SetSimulatePhysics(true);
+}
+
+void AGrabCube::TickGrab()
+{
+	FVector NewLocation=OwnPlayer->GetGrabPoint();
+	if(FVector::Dist(NewLocation, GetActorLocation()) > 250.0f )
+	{
+		OwnPlayer=nullptr;
+	}
+	else
+	{
+		SetActorLocation(NewLocation);
+	}
 }

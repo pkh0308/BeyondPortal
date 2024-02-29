@@ -6,7 +6,10 @@
 #include "EnhancedInputComponent.h"
 #include "PlayerInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/PointLightComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "PKH/UI/CrosshairUIWidget.h"
 #include "PKH/Anim/PlayerAnimInstance.h"
 #include "PKH/Portal/Portal.h"
@@ -39,13 +42,19 @@ APlayerCharacter::APlayerCharacter()
 	MoveComp->bOrientRotationToMovement=false;
 
 	GunComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GunComp"));
-	GunComp->SetupAttachment(GetMesh(), "GunSocket");
+	GunComp->SetupAttachment(GetMesh(), "PortalGunSocket");
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> GunRef(TEXT("/Script/Engine.StaticMesh'/Game/PKH/Mesh/PortalGun/SM_PortalGun.SM_PortalGun'"));
 	if ( GunRef.Object )
 	{
 		GunComp->SetStaticMesh(GunRef.Object);
 		GunComp->SetRelativeScale3D(FVector(5.0f));
 	}
+
+	LightComp=CreateDefaultSubobject<UPointLightComponent>(TEXT("LighComp"));
+	LightComp->SetupAttachment(GunComp, TEXT("LightSocket"));
+	LightComp->SetAttenuationRadius(8.0f);
+	LightComp->SetSourceRadius(5.0f);
+	LightComp->SetIntensity(0);
 
 	InputComp = CreateDefaultSubobject<UPlayerInputComponent>(TEXT("InputComp"));
 
@@ -96,11 +105,13 @@ void APlayerCharacter::BeginPlay()
 	// Portal
 	PortalLeft = GetWorld()->SpawnActor<APortal>(PortalLClass, FVector(-100), FRotator(0));
 	PortalRight = GetWorld()->SpawnActor<APortal>(PortalRClass, FVector(-100), FRotator(0));
+	PortalExtent = PortalLeft->GetComponentByClass<UBoxComponent>()->GetUnscaledBoxExtent();
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 
 }
 
@@ -120,7 +131,6 @@ void APlayerCharacter::SpawnPortal(const bool IsLeft, const FVector& Location, c
 	
 	TargetPortal->SetActorLocation(SpawnLocation);
 	TargetPortal->SetActorRotation(SpawnRotation);
-
 	TargetPortal->Activate(true);
 
 	// Link
@@ -136,6 +146,23 @@ void APlayerCharacter::SpawnPortal(const bool IsLeft, const FVector& Location, c
 
 	TargetPortal->LinkPortal(OtherPortal);
 	OtherPortal->LinkPortal(TargetPortal);
+}
+
+void APlayerCharacter::PortalGunLightOn(FLinearColor NewColor)
+{
+	LightComp->SetLightColor(NewColor);
+	LightComp->SetIntensity(MaxIntensity);
+}
+
+void APlayerCharacter::PortalGunLightOff()
+{
+	LightComp->SetIntensity(0);
+}
+
+FVector APlayerCharacter::GetGrabPoint() const
+{
+	const FVector GrabPoint = CameraComp->GetComponentLocation() + FVector(0, 0, 25) + CameraComp->GetForwardVector() * GrabDistance;
+	return GrabPoint;
 }
 
 void APlayerCharacter::PlayerCrouch()
