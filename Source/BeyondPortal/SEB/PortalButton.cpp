@@ -66,6 +66,8 @@ void APortalButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponen
 		if(isPressed )
 		{
 			UE_LOG(LogTemp, Warning, TEXT("portalbutton"));
+
+			GetWorld()->SpawnActor<AActor>(spawnCube, FVector::ZeroVector, FRotator::ZeroRotator);
 		}
 		
 	}
