@@ -8,6 +8,7 @@
 #include "InputMappingContext.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "PKH/Anim/PlayerAnimInstance.h"
 #include "PKH/Interface/CanGrab.h"
 #include "PKH/Interface/Interactible.h"
 
@@ -164,7 +165,8 @@ void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 	}
 	else
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalLFail, HitResult.ImpactPoint);
+		const FRotator EmitterRotation=FRotationMatrix::MakeFromY(HitResult.ImpactNormal).Rotator();
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalLFail, HitResult.ImpactPoint, EmitterRotation);
 		UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z);
 	}
 }
@@ -180,7 +182,8 @@ void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 	}
 	else
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalRFail, HitResult.ImpactPoint);
+		const FRotator EmitterRotation =FRotationMatrix::MakeFromY(HitResult.ImpactNormal).Rotator();
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalRFail, HitResult.ImpactPoint, EmitterRotation);
 		UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z);
 	}
 }
@@ -228,15 +231,35 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 	}
 }
 
+void UPlayerInputComponent::PlayFireMontage() const
+{
+	UAnimInstance* AnimInstance=Owner->GetMesh()->GetAnimInstance();
+	if ( nullptr == AnimInstance )
+	{
+		return;
+	}
+
+	UPlayerAnimInstance* PlayerAnim=Cast<UPlayerAnimInstance>(AnimInstance);
+	if ( nullptr == PlayerAnim )
+	{
+		return;
+	}
+
+	PlayerAnim->PlayMontage_Fire();
+}
+
 bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult, FVector& ImpactPoint) const
 {
+	// Animation
+	PlayFireMontage();
+
 	APlayerCameraManager* CameraManager=UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0); // Should Edit for Network
 	const FVector StartVec=CameraManager->GetCameraLocation();
 	const FVector EndVec=StartVec + CameraManager->GetActorForwardVector() * 10000;
 
 	FCollisionQueryParams Param;
 	Param.AddIgnoredActor(Owner);
-	bool IsHit=GetWorld()->LineTraceSingleByChannel(InHitResult, StartVec, EndVec, ECC_GameTraceChannel18, Param);
+	bool IsHit=GetWorld()->LineTraceSingleByChannel(InHitResult, StartVec, EndVec, ECC_Visibility, Param);
 	if ( false == IsHit )
 	{
 		return false;

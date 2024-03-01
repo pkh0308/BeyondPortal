@@ -20,8 +20,7 @@ APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Setting
-	
+	// Rotation Setting
 	bUseControllerRotationRoll=false;
 	bUseControllerRotationPitch=false;
 	bUseControllerRotationYaw=true;
@@ -61,7 +60,8 @@ APlayerCharacter::APlayerCharacter()
 
 	GunParticleComp=CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GunParticleComp"));
 	GunParticleComp->SetupAttachment(GunComp, TEXT("EffectSocket"));
-	GunParticleComp->bAutoActivate=false;
+	GunParticleComp->SetRelativeScale3D(FVector(0.1f));
+	GunParticleComp->bAutoActivate = false;
 	GunParticleComp->bAutoDestroy = false;
 
 	// Camera
@@ -114,8 +114,8 @@ void APlayerCharacter::BeginPlay()
 	PortalExtent = PortalLeft->GetComponentByClass<UBoxComponent>()->GetUnscaledBoxExtent();
 
 	// Particle
-	GunParticleComp->SetTemplate(VFX_GrabEffect);
-	GunParticleComp->ActivateSystem(false);
+	//GunParticleComp->SetTemplate(VFX_GrabEffect);
+	//GunParticleComp->EndPlay(EEndPlayReason::Quit);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
