@@ -179,6 +179,7 @@ void APortal::SetCaptureRotation()
 
 	const FVector Direction=TargetLocation - MyLocation;
 	FRotator Rotation=Direction.ToOrientationRotator();
+	Rotation.Roll = 0;
 	Rotation.Pitch += PitchOffset;
 	Rotation.Yaw += YawOffset;
 	LinkedPortal->SetCaptureRotation(Rotation);

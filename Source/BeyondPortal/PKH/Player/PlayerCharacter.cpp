@@ -60,7 +60,7 @@ APlayerCharacter::APlayerCharacter()
 
 	GunParticleComp=CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GunParticleComp"));
 	GunParticleComp->SetupAttachment(GunComp, TEXT("EffectSocket"));
-	GunParticleComp->SetRelativeScale3D(FVector(0.1f));
+	GunParticleComp->SetRelativeScale3D(FVector(0.05f));
 	GunParticleComp->bAutoActivate = false;
 	GunParticleComp->bAutoDestroy = false;
 
@@ -114,8 +114,8 @@ void APlayerCharacter::BeginPlay()
 	PortalExtent = PortalLeft->GetComponentByClass<UBoxComponent>()->GetUnscaledBoxExtent();
 
 	// Particle
-	//GunParticleComp->SetTemplate(VFX_GrabEffect);
-	//GunParticleComp->EndPlay(EEndPlayReason::Quit);
+	GunParticleComp->SetTemplate(VFX_GrabEffect);
+	GunParticleComp->SetActive(false);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -174,7 +174,7 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject)
 	GrabObject=NewObject;
 	if ( GunParticleComp->Template )
 	{
-		GunParticleComp->ActivateSystem(true);
+		GunParticleComp->SetActive(true);
 	}
 }
 
@@ -183,7 +183,7 @@ void APlayerCharacter::DropObj()
 	GrabObject=nullptr;
 	if ( GunParticleComp->Template )
 	{
-		GunParticleComp->ActivateSystem(false);
+		GunParticleComp->SetActive(false);
 	}
 }
 

@@ -306,13 +306,17 @@ void UPlayerInputComponent::CalcPortalLocationYZ(FVector& ImpactPoint, FBox Wall
 {
 	const FVector WallExtent=WallBox.GetExtent();
 	const FVector WallCenter=WallBox.GetCenter();
-	const FVector PortalExtent=Owner->GetPortalExtent();
+	FVector PortalExtent=Owner->GetPortalExtent();
+	PortalExtent.X = -1;
 
+	const float MaxX=WallCenter.X + WallExtent.X - PortalExtent.X;
+	const float MinX=WallCenter.X - WallExtent.X + PortalExtent.X;
 	const float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.Y;
 	const float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.Y;
 	const float MaxZ=WallCenter.Z + WallExtent.Z - PortalExtent.Z;
 	const float MinZ=WallCenter.Z - WallExtent.Z + PortalExtent.Z;
-	
+
+	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX);
 	ImpactPoint.Y=FMath::Clamp(ImpactPoint.Y, MinY, MaxY);
 	ImpactPoint.Z=FMath::Clamp(ImpactPoint.Z, MinZ, MaxZ);
 	UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), ImpactPoint.X, ImpactPoint.Y, ImpactPoint.Z);
@@ -322,13 +326,18 @@ void UPlayerInputComponent::CalcPortalLocationXZ(FVector& ImpactPoint, FBox Wall
 {
 	const FVector WallExtent=WallBox.GetExtent();
 	const FVector WallCenter=WallBox.GetCenter();
-	const FVector PortalExtent=Owner->GetPortalExtent();
+	FVector PortalExtent=Owner->GetPortalExtent();
+	PortalExtent.X=-1;
 
 	const float MaxX=WallCenter.X + WallExtent.X - PortalExtent.Y;
 	const float MinX=WallCenter.X - WallExtent.X + PortalExtent.Y;
+	const float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.X;
+	const float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.X;
 	const float MaxZ=WallCenter.Z + WallExtent.Z - PortalExtent.Z;
 	const float MinZ=WallCenter.Z - WallExtent.Z + PortalExtent.Z;
-	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX); 
+
+	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX);
+	ImpactPoint.Y=FMath::Clamp(ImpactPoint.Y, MinY, MaxY);
 	ImpactPoint.Z=FMath::Clamp(ImpactPoint.Z, MinZ, MaxZ);
 	UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), ImpactPoint.X, ImpactPoint.Y, ImpactPoint.Z);
 }
@@ -337,14 +346,18 @@ void UPlayerInputComponent::CalcPortalLocationXY(FVector& ImpactPoint, FBox Wall
 {
 	const FVector WallExtent=WallBox.GetExtent();
 	const FVector WallCenter=WallBox.GetCenter();
-	const FVector PortalExtent=Owner->GetPortalExtent();
+	FVector PortalExtent=Owner->GetPortalExtent();
+	PortalExtent.X=-1;
 
-	const float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.Y;
-	const float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.Y;
 	const float MaxX=WallCenter.X + WallExtent.X - PortalExtent.Z;
 	const float MinX=WallCenter.X - WallExtent.X + PortalExtent.Z;
+	const float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.Y;
+	const float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.Y;
+	const float MaxZ=WallCenter.Z + WallExtent.Z - PortalExtent.X;
+	const float MinZ=WallCenter.Z - WallExtent.Z + PortalExtent.X;
 	
 	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX);
 	ImpactPoint.Y=FMath::Clamp(ImpactPoint.Y, MinY, MaxY);
+	ImpactPoint.Z=FMath::Clamp(ImpactPoint.Z, MinZ, MaxZ);
 	UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), ImpactPoint.X, ImpactPoint.Y, ImpactPoint.Z);
 }
