@@ -37,6 +37,7 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	bIsCrouching=Owner->GetIsCrouching();
 
 	ControllerPitch=Owner->GetControlRotation().GetNormalized().Pitch * -1;
+	ControllerPitch=FMath::Clamp(ControllerPitch, -60, 60);
 }
 
 void UPlayerAnimInstance::PlayMontage_Fire()

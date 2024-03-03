@@ -298,6 +298,7 @@ bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult, FVector& Imp
 	{
 		CalcPortalLocationXY(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
 	}
+	//CalcPortalLocation(ImpactPoint, InHitResult.ImpactNormal, InHitResult.GetActor()->GetComponentsBoundingBox());
 	
 	return true;
 }
@@ -356,6 +357,45 @@ void UPlayerInputComponent::CalcPortalLocationXY(FVector& ImpactPoint, FBox Wall
 	const float MaxZ=WallCenter.Z + WallExtent.Z - PortalExtent.X;
 	const float MinZ=WallCenter.Z - WallExtent.Z + PortalExtent.X;
 	
+	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX);
+	ImpactPoint.Y=FMath::Clamp(ImpactPoint.Y, MinY, MaxY);
+	ImpactPoint.Z=FMath::Clamp(ImpactPoint.Z, MinZ, MaxZ);
+	UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), ImpactPoint.X, ImpactPoint.Y, ImpactPoint.Z);
+}
+
+void UPlayerInputComponent::CalcPortalLocation(FVector& ImpactPoint, const FVector& ImpactNormal, const FBox& WallBox) const
+{
+	const FVector WallExtent=WallBox.GetExtent();
+	const FVector WallCenter=WallBox.GetCenter();
+	FVector PortalExtent=Owner->GetPortalExtent();
+	PortalExtent.X=-1;
+
+	float MaxX=WallCenter.X + WallExtent.X - PortalExtent.X;
+	float MinX=WallCenter.X - WallExtent.X + PortalExtent.X;
+	float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.Y;
+	float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.Y;
+	float MaxZ=WallCenter.Z + WallExtent.Z - PortalExtent.Z;
+	float MinZ=WallCenter.Z - WallExtent.Z + PortalExtent.Z;
+
+	FVector UpperLeft=FVector(MaxX, MinY, MaxZ);
+	FVector UpperRight=FVector(MaxX, MaxY, MaxZ);
+	FVector LowerLeft=FVector(MaxX, MinY, MinZ);
+	FVector LowerRight=FVector(MaxX, MaxY, MinZ);
+
+	const FVector RotationVec=ImpactNormal * -1;
+	const FMatrix RotationMatrix=FRotationMatrix::MakeFromX(RotationVec);
+	UpperLeft = RotationMatrix.TransformVector(UpperLeft);
+	UpperRight = RotationMatrix.TransformVector(UpperRight);
+	LowerLeft = RotationMatrix.TransformVector(LowerLeft);
+	LowerRight = RotationMatrix.TransformVector(LowerRight);
+
+	MaxX = FMath::Max(UpperLeft.X, UpperRight.X);
+	MinX = FMath::Min(UpperLeft.X, UpperRight.X);
+	MaxY = FMath::Max(UpperLeft.Y, UpperRight.Y);
+	MinY = FMath::Min(UpperLeft.Y, UpperRight.Y);
+	MaxZ = FMath::Max(UpperLeft.Z, LowerLeft.Z);
+	MinZ = FMath::Min(UpperLeft.Z, LowerLeft.Z);
+
 	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX);
 	ImpactPoint.Y=FMath::Clamp(ImpactPoint.Y, MinY, MaxY);
 	ImpactPoint.Z=FMath::Clamp(ImpactPoint.Z, MinZ, MaxZ);

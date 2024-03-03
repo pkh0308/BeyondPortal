@@ -106,4 +106,6 @@ protected:
 	void CalcPortalLocationXZ(FVector& ImpactPoint, FBox WallBox) const;
 	void CalcPortalLocationXY(FVector& ImpactPoint, FBox WallBox) const;
 
+	void CalcPortalLocation(FVector& ImpactPoint, const FVector& ImpactNormal, const FBox& WallBox) const;
+
 };

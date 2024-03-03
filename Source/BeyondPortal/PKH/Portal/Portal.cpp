@@ -10,12 +10,15 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "PKH/Props/GrabCube.h"
 
 
 // Sets default values
 APortal::APortal()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates=true;
+	NetUpdateFrequency=60.0f;
 
 	// Component
 	BoxComp =CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
@@ -35,7 +38,7 @@ APortal::APortal()
 
 	CaptureComp=CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("CaptureComp"));
 	CaptureComp->SetupAttachment(RootComponent);
-	CaptureComp->AddRelativeLocation(FVector(10, 0, 0));
+	CaptureComp->AddRelativeLocation(FVector(20, 0, 0));
 
 	ArrowComp=CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
 	ArrowComp->SetupAttachment(RootComponent);
@@ -91,11 +94,18 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		const float NewVelocity=Character->GetCharacterMovement()->Velocity.Size() * AccelMultiplier;
 		const FVector ForwardVec=LinkedPortal->GetTargetDirection();
 		Character->GetCharacterMovement()->Velocity = ForwardVec * NewVelocity;
+		return;
 	}
-	else
+
+	AGrabCube* GrabCube = Cast<AGrabCube>(OtherActor);
+	if( GrabCube )
 	{
-		OtherActor->SetActorRotation(TargetRotation);
+		// Velocity
+		const float NewVelocity = GrabCube->GetVelocity().Size() * AccelMultiplier;
+		const FVector ForwardVec = LinkedPortal->GetTargetDirection();
+		OverlappedComponent->ComponentVelocity = (ForwardVec * NewVelocity);
 	}
+	//OtherActor->SetActorRotation(TargetRotation);
 }
 
 void APortal::Activate(const bool ActiveSelf)
@@ -172,8 +182,10 @@ void APortal::SetCaptureFOV()
 
 void APortal::SetCaptureRotation()
 {
-	const FVector TargetLocation=Player->GetActorLocation();
-	const FVector MyLocation=GetActorLocation();
+	FVector TargetLocation=Player->GetActorLocation();
+	TargetLocation.Z=0;
+	FVector MyLocation=GetActorLocation();
+	MyLocation.Z=0;
 	const float PitchOffset=LinkedPortal->GetActorRotation().Pitch - GetActorRotation().Pitch;
 	const float YawOffset=LinkedPortal->GetActorRotation().Yaw - GetActorRotation().Yaw;
 
