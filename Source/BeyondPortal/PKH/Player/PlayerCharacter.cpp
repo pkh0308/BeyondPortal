@@ -13,14 +13,14 @@
 #include "PKH/UI/CrosshairUIWidget.h"
 #include "PKH/Anim/PlayerAnimInstance.h"
 #include "PKH/Portal/Portal.h"
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Setting
-	
+	// Rotation Setting
 	bUseControllerRotationRoll=false;
 	bUseControllerRotationPitch=false;
 	bUseControllerRotationYaw=true;
@@ -57,6 +57,12 @@ APlayerCharacter::APlayerCharacter()
 	LightComp->SetIntensity(0);
 
 	InputComp = CreateDefaultSubobject<UPlayerInputComponent>(TEXT("InputComp"));
+
+	GunParticleComp=CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GunParticleComp"));
+	GunParticleComp->SetupAttachment(GunComp, TEXT("EffectSocket"));
+	GunParticleComp->SetRelativeScale3D(FVector(0.05f));
+	GunParticleComp->bAutoActivate = false;
+	GunParticleComp->bAutoDestroy = false;
 
 	// Camera
 	CameraComp=CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
@@ -106,6 +112,10 @@ void APlayerCharacter::BeginPlay()
 	PortalLeft = GetWorld()->SpawnActor<APortal>(PortalLClass, FVector(-100), FRotator(0));
 	PortalRight = GetWorld()->SpawnActor<APortal>(PortalRClass, FVector(-100), FRotator(0));
 	PortalExtent = PortalLeft->GetComponentByClass<UBoxComponent>()->GetUnscaledBoxExtent();
+
+	// Particle
+	GunParticleComp->SetTemplate(VFX_GrabEffect);
+	GunParticleComp->SetActive(false);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -157,6 +167,24 @@ void APlayerCharacter::PortalGunLightOn(FLinearColor NewColor)
 void APlayerCharacter::PortalGunLightOff()
 {
 	LightComp->SetIntensity(0);
+}
+
+void APlayerCharacter::GrabObj(ICanGrab* NewObject)
+{
+	GrabObject=NewObject;
+	if ( GunParticleComp->Template )
+	{
+		GunParticleComp->SetActive(true);
+	}
+}
+
+void APlayerCharacter::DropObj()
+{
+	GrabObject=nullptr;
+	if ( GunParticleComp->Template )
+	{
+		GunParticleComp->SetActive(false);
+	}
 }
 
 FVector APlayerCharacter::GetGrabPoint() const

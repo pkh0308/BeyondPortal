@@ -8,6 +8,7 @@
 #include "InputMappingContext.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "PKH/Anim/PlayerAnimInstance.h"
 #include "PKH/Interface/CanGrab.h"
 #include "PKH/Interface/Interactible.h"
 
@@ -155,33 +156,35 @@ void UPlayerInputComponent::OnIACrouch(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 {
-	Owner->PortalGunLightOn(FLinearColor::Blue);
-
 	FHitResult HitResult;
 	FVector ImpactPoint = HitResult.ImpactPoint;
 	if( TrySpawnPortal(HitResult, ImpactPoint) )
 	{
 		Owner->SpawnPortal(true, ImpactPoint, HitResult.ImpactNormal);
+		Owner->PortalGunLightOn(FLinearColor::Blue);
 	}
 	else
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalLFail, HitResult.ImpactPoint);
+		const FRotator EmitterRotation=FRotationMatrix::MakeFromY(HitResult.ImpactNormal).Rotator();
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalLFail, HitResult.ImpactPoint, EmitterRotation);
+		UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z);
 	}
 }
 
 void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 {
-	Owner->PortalGunLightOn(FLinearColor::FromSRGBColor(FColor::Orange));
-
 	FHitResult HitResult;
 	FVector ImpactPoint=HitResult.ImpactPoint;
 	if ( TrySpawnPortal(HitResult, ImpactPoint) )
 	{
 		Owner->SpawnPortal(false, ImpactPoint, HitResult.ImpactNormal);
+		Owner->PortalGunLightOn(FLinearColor::FromSRGBColor(FColor::Orange));
 	}
 	else
 	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalRFail, HitResult.ImpactPoint);
+		const FRotator EmitterRotation =FRotationMatrix::MakeFromY(HitResult.ImpactNormal).Rotator();
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalRFail, HitResult.ImpactPoint, EmitterRotation);
+		UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z);
 	}
 }
 
@@ -228,45 +231,74 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 	}
 }
 
+void UPlayerInputComponent::PlayFireMontage() const
+{
+	UAnimInstance* AnimInstance=Owner->GetMesh()->GetAnimInstance();
+	if ( nullptr == AnimInstance )
+	{
+		return;
+	}
+
+	UPlayerAnimInstance* PlayerAnim=Cast<UPlayerAnimInstance>(AnimInstance);
+	if ( nullptr == PlayerAnim )
+	{
+		return;
+	}
+
+	PlayerAnim->PlayMontage_Fire();
+}
+
 bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult, FVector& ImpactPoint) const
 {
+	// Animation
+	PlayFireMontage();
+
 	APlayerCameraManager* CameraManager=UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0); // Should Edit for Network
 	const FVector StartVec=CameraManager->GetCameraLocation();
 	const FVector EndVec=StartVec + CameraManager->GetActorForwardVector() * 10000;
 
 	FCollisionQueryParams Param;
 	Param.AddIgnoredActor(Owner);
-	bool IsHit=GetWorld()->LineTraceSingleByChannel(InHitResult, StartVec, EndVec, ECC_GameTraceChannel18, Param);
+	bool IsHit=GetWorld()->LineTraceSingleByChannel(InHitResult, StartVec, EndVec, ECC_Visibility, Param);
 	if ( false == IsHit )
 	{
 		return false;
 	}
 	ImpactPoint=InHitResult.ImpactPoint;
 
-	// Disable surface
-	const UPhysicalMaterial* PM = InHitResult.PhysMaterial.Get();
-	if(nullptr == PM)
+	// Check surface
+	const auto MI =InHitResult.GetComponent()->GetMaterial(0);
+	if( nullptr == MI )
 	{
+		return false;
+	}
+	const auto PM = MI->GetPhysicalMaterial();
+	if( nullptr == PM )
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No Physical Material"));
 		return false;
 	}
 	if( PM->SurfaceType != PORTAL_SURFACE )
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Surface is not PORTAL_SURFACE"));
 		return false;
 	}
 
-	//// Adjust Location
-	//if( FMath::Abs(InHitResult.ImpactNormal.X) > 0.1f )
-	//{
-	//	CalcPortalLocationYZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox());
-	//}
-	//else if( FMath::Abs(InHitResult.ImpactNormal.Y) > 0.1f )
-	//{
-	//	CalcPortalLocationXZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
-	//}
-	//else
-	//{
-	//	CalcPortalLocationXY(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
-	//}
+	// Adjust Location
+	// Only for vertical wall
+	if( FMath::Abs(InHitResult.ImpactNormal.X) > 0.99f )
+	{
+		CalcPortalLocationYZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox());
+	}
+	else if( FMath::Abs(InHitResult.ImpactNormal.Y) > 0.99f )
+	{
+		CalcPortalLocationXZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
+	}
+	else if ( FMath::Abs(InHitResult.ImpactNormal.Z) > 0.99f )
+	{
+		CalcPortalLocationXY(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
+	}
+	//CalcPortalLocation(ImpactPoint, InHitResult.ImpactNormal, InHitResult.GetActor()->GetComponentsBoundingBox());
 	
 	return true;
 }
@@ -275,13 +307,17 @@ void UPlayerInputComponent::CalcPortalLocationYZ(FVector& ImpactPoint, FBox Wall
 {
 	const FVector WallExtent=WallBox.GetExtent();
 	const FVector WallCenter=WallBox.GetCenter();
-	const FVector PortalExtent=Owner->GetPortalExtent();
+	FVector PortalExtent=Owner->GetPortalExtent();
+	PortalExtent.X = -1;
 
+	const float MaxX=WallCenter.X + WallExtent.X - PortalExtent.X;
+	const float MinX=WallCenter.X - WallExtent.X + PortalExtent.X;
 	const float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.Y;
 	const float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.Y;
 	const float MaxZ=WallCenter.Z + WallExtent.Z - PortalExtent.Z;
 	const float MinZ=WallCenter.Z - WallExtent.Z + PortalExtent.Z;
-	
+
+	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX);
 	ImpactPoint.Y=FMath::Clamp(ImpactPoint.Y, MinY, MaxY);
 	ImpactPoint.Z=FMath::Clamp(ImpactPoint.Z, MinZ, MaxZ);
 	UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), ImpactPoint.X, ImpactPoint.Y, ImpactPoint.Z);
@@ -291,13 +327,18 @@ void UPlayerInputComponent::CalcPortalLocationXZ(FVector& ImpactPoint, FBox Wall
 {
 	const FVector WallExtent=WallBox.GetExtent();
 	const FVector WallCenter=WallBox.GetCenter();
-	const FVector PortalExtent=Owner->GetPortalExtent();
+	FVector PortalExtent=Owner->GetPortalExtent();
+	PortalExtent.X=-1;
 
 	const float MaxX=WallCenter.X + WallExtent.X - PortalExtent.Y;
 	const float MinX=WallCenter.X - WallExtent.X + PortalExtent.Y;
+	const float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.X;
+	const float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.X;
 	const float MaxZ=WallCenter.Z + WallExtent.Z - PortalExtent.Z;
 	const float MinZ=WallCenter.Z - WallExtent.Z + PortalExtent.Z;
-	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX); 
+
+	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX);
+	ImpactPoint.Y=FMath::Clamp(ImpactPoint.Y, MinY, MaxY);
 	ImpactPoint.Z=FMath::Clamp(ImpactPoint.Z, MinZ, MaxZ);
 	UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), ImpactPoint.X, ImpactPoint.Y, ImpactPoint.Z);
 }
@@ -306,14 +347,57 @@ void UPlayerInputComponent::CalcPortalLocationXY(FVector& ImpactPoint, FBox Wall
 {
 	const FVector WallExtent=WallBox.GetExtent();
 	const FVector WallCenter=WallBox.GetCenter();
-	const FVector PortalExtent=Owner->GetPortalExtent();
+	FVector PortalExtent=Owner->GetPortalExtent();
+	PortalExtent.X=-1;
 
-	const float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.Y;
-	const float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.Y;
 	const float MaxX=WallCenter.X + WallExtent.X - PortalExtent.Z;
 	const float MinX=WallCenter.X - WallExtent.X + PortalExtent.Z;
+	const float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.Y;
+	const float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.Y;
+	const float MaxZ=WallCenter.Z + WallExtent.Z - PortalExtent.X;
+	const float MinZ=WallCenter.Z - WallExtent.Z + PortalExtent.X;
 	
 	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX);
 	ImpactPoint.Y=FMath::Clamp(ImpactPoint.Y, MinY, MaxY);
+	ImpactPoint.Z=FMath::Clamp(ImpactPoint.Z, MinZ, MaxZ);
+	UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), ImpactPoint.X, ImpactPoint.Y, ImpactPoint.Z);
+}
+
+void UPlayerInputComponent::CalcPortalLocation(FVector& ImpactPoint, const FVector& ImpactNormal, const FBox& WallBox) const
+{
+	const FVector WallExtent=WallBox.GetExtent();
+	const FVector WallCenter=WallBox.GetCenter();
+	FVector PortalExtent=Owner->GetPortalExtent();
+	PortalExtent.X=-1;
+
+	float MaxX=WallCenter.X + WallExtent.X - PortalExtent.X;
+	float MinX=WallCenter.X - WallExtent.X + PortalExtent.X;
+	float MaxY=WallCenter.Y + WallExtent.Y - PortalExtent.Y;
+	float MinY=WallCenter.Y - WallExtent.Y + PortalExtent.Y;
+	float MaxZ=WallCenter.Z + WallExtent.Z - PortalExtent.Z;
+	float MinZ=WallCenter.Z - WallExtent.Z + PortalExtent.Z;
+
+	FVector UpperLeft=FVector(MaxX, MinY, MaxZ);
+	FVector UpperRight=FVector(MaxX, MaxY, MaxZ);
+	FVector LowerLeft=FVector(MaxX, MinY, MinZ);
+	FVector LowerRight=FVector(MaxX, MaxY, MinZ);
+
+	const FVector RotationVec=ImpactNormal * -1;
+	const FMatrix RotationMatrix=FRotationMatrix::MakeFromX(RotationVec);
+	UpperLeft = RotationMatrix.TransformVector(UpperLeft);
+	UpperRight = RotationMatrix.TransformVector(UpperRight);
+	LowerLeft = RotationMatrix.TransformVector(LowerLeft);
+	LowerRight = RotationMatrix.TransformVector(LowerRight);
+
+	MaxX = FMath::Max(UpperLeft.X, UpperRight.X);
+	MinX = FMath::Min(UpperLeft.X, UpperRight.X);
+	MaxY = FMath::Max(UpperLeft.Y, UpperRight.Y);
+	MinY = FMath::Min(UpperLeft.Y, UpperRight.Y);
+	MaxZ = FMath::Max(UpperLeft.Z, LowerLeft.Z);
+	MinZ = FMath::Min(UpperLeft.Z, LowerLeft.Z);
+
+	ImpactPoint.X=FMath::Clamp(ImpactPoint.X, MinX, MaxX);
+	ImpactPoint.Y=FMath::Clamp(ImpactPoint.Y, MinY, MaxY);
+	ImpactPoint.Z=FMath::Clamp(ImpactPoint.Z, MinZ, MaxZ);
 	UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), ImpactPoint.X, ImpactPoint.Y, ImpactPoint.Z);
 }

@@ -88,6 +88,9 @@ protected:
 
 	void UpdateCaptureCamera();
 
+	void SetCaptureFOV();
+	void SetCaptureRotation();
+
 public:
 	void SetCaptureRotation(FRotator NewRotation);
 

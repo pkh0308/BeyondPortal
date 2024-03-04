@@ -47,4 +47,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, category=PlayerState)
 	float ControllerPitch;
+
+// Montage
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UAnimMontage> Montage_Fire;
+
+public:
+	void PlayMontage_Fire();
 };

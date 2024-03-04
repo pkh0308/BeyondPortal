@@ -92,16 +92,20 @@ protected:
 
 // LineTrace
 protected:
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UParticleSystem> VFX_PortalLFail;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UParticleSystem> VFX_PortalRFail;
+
+	void PlayFireMontage() const;
+
 	bool TrySpawnPortal(FHitResult& InHitResult, FVector& ImpactPoint) const;
 
 	void CalcPortalLocationYZ(FVector& ImpactPoint, FBox WallBox) const;
 	void CalcPortalLocationXZ(FVector& ImpactPoint, FBox WallBox) const;
 	void CalcPortalLocationXY(FVector& ImpactPoint, FBox WallBox) const;
 
-	UPROPERTY(EditDefaultsOnly)
-	TObjectPtr<class UParticleSystem> VFX_PortalLFail;
-
-	UPROPERTY(EditDefaultsOnly)
-	TObjectPtr<class UParticleSystem> VFX_PortalRFail;
+	void CalcPortalLocation(FVector& ImpactPoint, const FVector& ImpactNormal, const FBox& WallBox) const;
 
 };

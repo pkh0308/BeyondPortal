@@ -4,11 +4,14 @@
 #include "PKH/Props/GrabCube.h"
 #include "Components/BoxComponent.h"
 #include "PKH/Player/PlayerCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AGrabCube::AGrabCube()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
+	NetUpdateFrequency = 60.0f;
 
 	BoxComp=CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCom"));
 	SetRootComponent(BoxComp);
@@ -22,7 +25,6 @@ AGrabCube::AGrabCube()
 	{
 		MeshComp->SetStaticMesh(MeshRef.Object);
 	}
-
 }
 
 // Called when the game starts or when spawned
@@ -44,29 +46,91 @@ void AGrabCube::Tick(float DeltaSeconds)
 
 void AGrabCube::Grab(ACharacter* NewOwner)
 {
-	APlayerCharacter* Player = Cast<APlayerCharacter>(NewOwner);
-	if( Player )
+	if( HasAuthority() )
 	{
+		APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
+		if ( nullptr == Player )
+		{
+			return;
+		}
 		OwnPlayer=Player;
+		BoxComp->SetEnableGravity(false);
+		// Network
+		Net_OwnPlayer=Player;
 	}
-	BoxComp->SetSimulatePhysics(false);
+	else
+	{
+		
+	}
 }
 
 void AGrabCube::Drop()
 {
-	OwnPlayer=nullptr;
-	BoxComp->SetSimulatePhysics(true);
+	if ( HasAuthority() )
+	{
+		OwnPlayer->DropObj();
+		OwnPlayer=nullptr;
+		BoxComp->SetEnableGravity(true);
+		// Network
+		Net_OwnPlayer=nullptr;
+	}
+	else
+	{
+		
+	}
 }
 
 void AGrabCube::TickGrab()
 {
-	FVector NewLocation=OwnPlayer->GetGrabPoint();
-	if(FVector::Dist(NewLocation, GetActorLocation()) > 250.0f )
+	// Server
+	if( HasAuthority() )
 	{
-		OwnPlayer=nullptr;
+		const FVector NewLocation=OwnPlayer->GetGrabPoint();
+		SetActorLocation(NewLocation);
+
+		// Check Velocity
+		// if velocity is too big, drop cube
+		const FVector CurVelocity=BoxComp->GetComponentVelocity();
+		if ( CurVelocity.Size() > DropVelocity )
+		{
+			BoxComp->SetPhysicsLinearVelocity(CurVelocity * VelocityCut);
+			Drop();
+		}
+
+		Net_CubeLocation=GetActorLocation();
+		Net_CubeRotation=GetActorRotation();
+	}
+}
+
+void AGrabCube::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGrabCube, Net_CubeLocation);
+	DOREPLIFETIME(AGrabCube, Net_CubeRotation);
+	DOREPLIFETIME(AGrabCube, Net_OwnPlayer);
+}
+
+void AGrabCube::OnRep_CubeLocationChanged()
+{
+	SetActorLocation(Net_CubeLocation);
+}
+
+void AGrabCube::OnRep_CubeRotationChanged()
+{
+	SetActorRotation(Net_CubeRotation);
+}
+
+void AGrabCube::OnRep_OwnPlayerChanged()
+{
+	OwnPlayer=Net_OwnPlayer;
+
+	if( OwnPlayer )
+	{
+		BoxComp->SetEnableGravity(false);
 	}
 	else
 	{
-		SetActorLocation(NewLocation);
+		BoxComp->SetEnableGravity(true);
 	}
 }
