@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "PKH/Interface/Interactible.h"
 #include "CubeButton.generated.h"
 
 UCLASS()
@@ -23,9 +24,28 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	//충돌처리
+	UFUNCTION()
+	void OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UBoxComponent> boxComp;
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UStaticMeshComponent> cubeButton;
+
+
+	UPROPERTY()
+	class AArmDoor* armDoor;
+
+	UPROPERTY(EditDefaultsOnly)
+	bool isActive = false;
+
+
+	
+
 };

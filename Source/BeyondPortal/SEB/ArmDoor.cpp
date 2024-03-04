@@ -1,0 +1,53 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "SEB/ArmDoor.h"
+
+// Sets default values
+AArmDoor::AArmDoor()
+{
+ 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	// mesh 생성
+	armDoor=CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("armDoor"));
+	this->SetRootComponent(armDoor);
+
+
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/SEB/Resources/Mesh/Arm/arm_interior_192_model.arm_interior_192_model'"));
+	if ( tempMesh.Succeeded() )
+	{
+		armDoor->SetSkeletalMesh(tempMesh.Object);
+		armDoor->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+		
+	}
+}
+
+// Called when the game starts or when spawned
+void AArmDoor::BeginPlay()
+{
+	Super::BeginPlay();
+	armDoor->PlayAnimation(armDoorIdleAnim, true);
+	
+}
+
+// Called every frame
+void AArmDoor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	if(isOpened )
+	{
+		isClosed=false;
+		armDoor->PlayAnimation(armDoorOpenAnim, false);
+		isOpened=false;
+		UE_LOG(LogTemp, Warning, TEXT("aaaaaaaa"));
+	}
+	if(isClosed )
+	{
+		
+		armDoor->PlayAnimation(armDoorCloseAnim, false);
+		isClosed=false;
+		isOpened=false;
+	}
+}
+

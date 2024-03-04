@@ -3,18 +3,21 @@
 
 #include "SEB/CubeButton.h"
 
+#include "ArmDoor.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "PKH/Props/GrabCube.h"
 
 // Sets default values
 ACubeButton::ACubeButton()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick=true;
 	// capsuleComp를 생성
 	boxComp=CreateDefaultSubobject<UBoxComponent>(TEXT("boxComp"));
 	// 루트 컴포넌트로 변경
 	this->SetRootComponent(boxComp);
-	
+
 
 	// mesh 생성
 	cubeButton=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("cubeButton"));
@@ -26,6 +29,7 @@ ACubeButton::ACubeButton()
 	{
 		cubeButton->SetStaticMesh(tempMesh.Object);
 		cubeButton->SetRelativeScale3D(FVector(0.03f));
+		cubeButton->SetRelativeLocation(FVector(0, -25, 20));
 	}
 }
 
@@ -33,7 +37,8 @@ ACubeButton::ACubeButton()
 void ACubeButton::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	boxComp->OnComponentBeginOverlap.AddDynamic(this, &ACubeButton::OnMyCompBeginOverlap);
+	boxComp->OnComponentEndOverlap.AddDynamic(this, &ACubeButton::OnMyCompEndOverlap);
 }
 
 // Called every frame
@@ -42,4 +47,64 @@ void ACubeButton::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+
+void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+	if ( OtherActor->IsA<AGrabCube>() ) {
+
+
+		//눌린 버튼의 tag를 가져와서
+		//그 tag와 같은 actor들을 전부 탐색
+		TArray<AActor*> FoundActors;
+
+		//충돌한 CubeButton Tag 가져오기
+		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
+		FName findTagName=FName(*findTag);
+		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
+		
+		//그 중에 ArmDoor는 isOpened = true로 바꾸고,
+		//floorChain은 mesh 컬러를 변경. 
+		for ( auto armDoorActor : FoundActors )
+		{
+			// 찾은 태그 중에 ArmDoor를 찾아서
+			if ( armDoorActor->IsA<AArmDoor>() )
+			{
+				// 딜레이 후에 문 열기
+				Cast<AArmDoor>(armDoorActor)->isOpened=true;
+				UE_LOG(LogTemp, Warning, TEXT("open"));
+				
+			}
+
+		}
+
+	}
+
+
+}
+
+void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if ( OtherActor->IsA<AGrabCube>() ) {
+		TArray<AActor*> FoundActors;
+		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
+		FName findTagName=FName(*findTag);
+		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
+		for ( auto armDoorActor : FoundActors )
+		{
+
+			// 찾은 태그 중에 ArmDoor를 찾아서
+			if ( armDoorActor->IsA<AArmDoor>() )
+			{
+				//문 닫기
+				Cast<AArmDoor>(armDoorActor)->isClosed=true;
+			}
+
+		}
+	}
+}
+
+
+
 

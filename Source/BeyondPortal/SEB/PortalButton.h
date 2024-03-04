@@ -44,7 +44,7 @@ public:
 	void activeSpawnCube();
 
 	UPROPERTY(EditDefaultsOnly)
-	bool isSpawned=false;
+	bool isSpawned;
 
 public:
 	virtual void DoInteraction() override;
