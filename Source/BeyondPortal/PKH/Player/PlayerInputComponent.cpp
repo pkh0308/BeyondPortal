@@ -156,6 +156,11 @@ void UPlayerInputComponent::OnIACrouch(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 {
+	if(Owner->GetGrabObject())
+	{
+		return;
+	}
+
 	FHitResult HitResult;
 	FVector ImpactPoint = HitResult.ImpactPoint;
 	if( TrySpawnPortal(HitResult, ImpactPoint) )
@@ -173,6 +178,11 @@ void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 {
+	if (Owner->GetGrabObject())
+	{
+		return;
+	}
+
 	FHitResult HitResult;
 	FVector ImpactPoint=HitResult.ImpactPoint;
 	if ( TrySpawnPortal(HitResult, ImpactPoint) )

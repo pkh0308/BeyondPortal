@@ -9,9 +9,8 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "PKH/Props/GrabCube.h"
-
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APortal::APortal()
@@ -39,6 +38,7 @@ APortal::APortal()
 	CaptureComp=CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("CaptureComp"));
 	CaptureComp->SetupAttachment(RootComponent);
 	CaptureComp->AddRelativeLocation(FVector(20, 0, 0));
+	CaptureComp->ShowFlags.SetDynamicShadows(false);
 
 	ArrowComp=CreateDefaultSubobject<UArrowComponent>(TEXT("ArrowComp"));
 	ArrowComp->SetupAttachment(RootComponent);
@@ -101,7 +101,7 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	if( GrabCube )
 	{
 		// Velocity
-		const float NewVelocity = GrabCube->GetVelocity().Size() * AccelMultiplier;
+		const float NewVelocity = GrabCube->GetVelocity().Size() * AccelMultiplier; 
 		const FVector ForwardVec = LinkedPortal->GetTargetDirection();
 		OverlappedComponent->ComponentVelocity = (ForwardVec * NewVelocity);
 	}
@@ -110,11 +110,32 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 
 void APortal::Activate(const bool ActiveSelf)
 {
-	IsActivated=ActiveSelf;
-	IsCreating=true;
+	if(HasAuthority() ) // Server
+	{
+		IsActivated=ActiveSelf;
+		IsCreating=ActiveSelf;
 
-	// Material
-	MeshComp->SetMaterial(0, DefaultMaterial);
+		// Material
+		MeshComp->SetMaterial(0, DefaultMaterial);
+
+		if(ActiveSelf)
+		{
+			BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			MeshComp->SetVisibility(true);
+		}
+		else
+		{
+			BoxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			MeshComp->SetVisibility(false);
+		}
+
+		// Network
+		Net_PortalTransform=GetActorTransform();
+	}
+	else // Client
+	{
+		RPC_PortalTransformChanged();
+	}
 }
 
 void APortal::LinkPortal(APortal* NewLinkedPortal)
@@ -182,6 +203,11 @@ void APortal::SetCaptureFOV()
 
 void APortal::SetCaptureRotation()
 {
+	if ( FMath::Abs(ArrowComp->GetForwardVector().Z) > 0.9f )
+	{
+		return;
+	}
+
 	FVector TargetLocation=Player->GetActorLocation();
 	TargetLocation.Z=0;
 	FVector MyLocation=GetActorLocation();
@@ -200,4 +226,22 @@ void APortal::SetCaptureRotation()
 void APortal::SetCaptureRotation(FRotator NewRotation)
 {
 	CaptureComp->SetWorldRotation(NewRotation);
+}
+
+void APortal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APortal, Net_PortalTransform);
+}
+
+void APortal::OnRep_PortalTransformChanged()
+{
+	SetActorTransform(Net_PortalTransform);
+}
+
+void APortal::RPC_PortalTransformChanged_Implementation()
+{
+	Net_PortalTransform=GetActorTransform();
+	OnRep_PortalTransformChanged();
 }

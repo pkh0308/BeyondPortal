@@ -57,7 +57,7 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_CubeRotationChanged)
 	FRotator Net_CubeRotation;
 
-	UPROPERTY(ReplicatedUsing=OnRep_OwnPlayerChanged)
+	UPROPERTY(ReplicatedUsing = OnRep_OwnPlayerChanged)
 	TObjectPtr<class APlayerCharacter> Net_OwnPlayer;
 
 	UFUNCTION()
@@ -68,4 +68,8 @@ public:
 
 	UFUNCTION()
 	void OnRep_OwnPlayerChanged();
+
+	// RPC
+	UFUNCTION(Server, Unreliable)
+	void RPC_SetCubeOwner(class APlayerCharacter* NewOwner);
 };

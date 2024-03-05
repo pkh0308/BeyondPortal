@@ -71,6 +71,8 @@ protected:
 public:
 	void SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
 
+	void ResetAllPortals();
+
 	FORCEINLINE FVector GetPortalExtent() const { return PortalExtent; }
 
 	FORCEINLINE bool IsLeftPortal(AActor* Target) const { return Target->GetUniqueID() == PortalLeft->GetUniqueID(); }
@@ -119,4 +121,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UCrosshairUIWidget> CrosshairUI;
+
+// Network
+protected:
+	UFUNCTION(Server, Unreliable)
+	void RPC_SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal, class APortal* LP, class APortal* RP) const;
 };
