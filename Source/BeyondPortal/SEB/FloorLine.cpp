@@ -5,6 +5,7 @@
 
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
@@ -12,47 +13,30 @@ AFloorLine::AFloorLine()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick=true;
-	spline=CreateDefaultSubobject<USplineComponent>(TEXT("Spline"));
-	instancedStaticMeshComp=CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("InstancedStaticMesh"));
+	lineMeshComp=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("lineMeshComp"));
+
+	ConstructorHelpers::FObjectFinder<UStaticMesh> tempMesh(TEXT("/Script/Engine.StaticMesh'/Game/SEB/Resources/Mesh/FloorLine_Blue.FloorLine_Blue'"));
+	if ( tempMesh.Succeeded() )
+	{
+		lineMeshComp->SetStaticMesh(tempMesh.Object);
+
+	}
 }
 
 void AFloorLine::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
-	if ( chain && spline && instancedStaticMeshComp )
-	{
-		UE_LOG(LogTemp, Error, TEXT("있네유"));
-		instancedStaticMeshComp->SetStaticMesh(chain);
-		FVector breakBoxChain=chain->GetBoundingBox().Max - chain->GetBoundingBox().Min;
-		float spacing=breakBoxChain.X + offset;
-
-		int32 a=floor(spline->GetSplineLength() / spacing);
-
-		for ( int i=0; i < a; i++ )
-		{
-
-			FVector locationSpline=spline->GetLocationAtDistanceAlongSpline(i * spacing, ESplineCoordinateSpace::Local);
-			FTransform transformSpline=UKismetMathLibrary::MakeTransform(locationSpline, FRotator(0, 0, 0), FVector3d(1, 1, 1));
-			instancedStaticMeshComp->AddInstance(transformSpline);
-
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("읎네요"));
-	}
-
-
-
-
+	
 }
+
 
 // Called when the game starts or when spawned
 void AFloorLine::BeginPlay()
 {
 	Super::BeginPlay();
 
+	
 }
 
 // Called every frame
@@ -60,5 +44,23 @@ void AFloorLine::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	
+}
+
+void AFloorLine::ChangeOrange(AActor* changeLine)
+{
+	//여기서 lineMeshComp staticmesh를 바꾸고싶어
+    
+    /*if ( TempMesh )
+    {
+       
+          
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("tempmesh있다 "));
+		
+    	lineMeshComp->SetStaticMesh(TempMesh);
+    	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("그래서 바궜다 "));
+       
+    }*/
+   
 }
 

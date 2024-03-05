@@ -45,7 +45,8 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	bool isActive = false;
 
-
+	UPROPERTY()
+	class AFloorLine* floorLine;
 	
 
 };

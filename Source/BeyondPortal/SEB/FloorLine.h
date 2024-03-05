@@ -3,9 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
 #include "GameFramework/Actor.h"
 #include "FloorLine.generated.h"
 
+UENUM()
+enum class ESplineMeshType: uint8
+{
+	DEFAULT UMETA(DisplayName = "Default Mesh"),
+	START UMETA(DisplayName = "Starting Mesh"),
+	END UMETA(DisplayName = "Ending Mesh"),
+};
 UCLASS()
 class BEYONDPORTAL_API AFloorLine : public AActor
 {
@@ -25,17 +34,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class USplineComponent* spline;
+	class UStaticMeshComponent* lineMeshComp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UInstancedStaticMeshComponent* instancedStaticMeshComp;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	class UStaticMesh* chain;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float offset=0;
+	
+	UFUNCTION()
+	void ChangeOrange(AActor* changeLine);
 
 };

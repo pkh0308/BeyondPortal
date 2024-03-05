@@ -43,7 +43,7 @@ public:
 
 	void activeSpawnCube();
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditAnywhere)
 	bool isSpawned;
 
 public:

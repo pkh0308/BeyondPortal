@@ -4,6 +4,7 @@
 #include "SEB/CubeButton.h"
 
 #include "ArmDoor.h"
+#include "FloorLine.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PKH/Props/GrabCube.h"
@@ -60,20 +61,33 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 		TArray<AActor*> FoundActors;
 
 		//충돌한 CubeButton Tag 가져오기
-		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
+		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag"); 
 		FName findTagName=FName(*findTag);
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
 		
 		//그 중에 ArmDoor는 isOpened = true로 바꾸고,
 		//floorChain은 mesh 컬러를 변경. 
-		for ( auto armDoorActor : FoundActors )
+		for ( auto CurrentActor : FoundActors )
 		{
 			// 찾은 태그 중에 ArmDoor를 찾아서
-			if ( armDoorActor->IsA<AArmDoor>() )
+			if ( CurrentActor->IsA<AArmDoor>() )
 			{
 				// 딜레이 후에 문 열기
-				Cast<AArmDoor>(armDoorActor)->isOpened=true;
-				UE_LOG(LogTemp, Warning, TEXT("open"));
+				Cast<AArmDoor>(CurrentActor)->isOpened=true;
+				
+			}
+			else if( CurrentActor->IsA<AFloorLine>() )
+			{
+				FString findColor=CurrentActor->Tags.Num() > 1 ? CurrentActor->Tags[1].ToString() : TEXT("NoTag");
+				if( findColor == "blue" )
+				{
+					CurrentActor->SetActorHiddenInGame(true);
+				}
+				else if ( findColor == "orange" )
+				{
+					CurrentActor->SetActorHiddenInGame(false);
+				}
+
 				
 			}
 
@@ -91,14 +105,27 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
 		FName findTagName=FName(*findTag);
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
-		for ( auto armDoorActor : FoundActors )
+		for ( auto CurrentActor : FoundActors )
 		{
 
 			// 찾은 태그 중에 ArmDoor를 찾아서
-			if ( armDoorActor->IsA<AArmDoor>() )
+			if ( CurrentActor->IsA<AArmDoor>() )
 			{
 				//문 닫기
-				Cast<AArmDoor>(armDoorActor)->isClosed=true;
+				Cast<AArmDoor>(CurrentActor)->isClosed=true;
+			}
+			else if ( CurrentActor->IsA<AFloorLine>() )
+			{
+
+				FString findColor=CurrentActor->Tags.Num() > 1 ? CurrentActor->Tags[1].ToString() : TEXT("NoTag");
+				if ( findColor == "blue" )
+				{
+					CurrentActor->SetActorHiddenInGame(false);
+				}
+				else if ( findColor == "orange" )
+				{
+					CurrentActor->SetActorHiddenInGame(true);
+				}
 			}
 
 		}

@@ -24,7 +24,7 @@ void ABarrier::BeginPlay()
 {
 	Super::BeginPlay();
 	boxComp->OnComponentBeginOverlap.AddDynamic(this, &ABarrier::OnMyCompBeginOverlap);
-
+	
 	
 }
 

@@ -35,5 +35,6 @@ public:
 	UPROPERTY()
 	class APortalButton* portalButton;
 
-
+	UPROPERTY()
+	bool isValid=false;
 };

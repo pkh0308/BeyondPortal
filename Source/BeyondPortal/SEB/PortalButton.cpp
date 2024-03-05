@@ -60,10 +60,11 @@ void APortalButton::activeSpawnCube()
 {
 ;
 	// cube 스폰 -> 조금 흔들리다가 떨어뜨리기
-ABarrier* foundActor=Cast<ABarrier>(UGameplayStatics::GetActorOfClass(GetWorld(), APortalButton::StaticClass()));
+	ABarrier* foundActor=Cast<ABarrier>(UGameplayStatics::GetActorOfClass(GetWorld(), APortalButton::StaticClass()));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("우오오오오오오옹 "));
 	if(!isSpawned  )
 	{
-		UE_LOG(LogTemp, Warning, TEXT("스폰할 수 있다: %d"), isSpawned);
+		
 		//tag가 CubeDropper인 액터 탐색
 		TArray<AActor*> FoundActors;
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), TEXT("CubeDropper"), FoundActors);
