@@ -101,4 +101,18 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category=Portal)
 	TObjectPtr<class UMaterialInterface> LinkedMaterial;
+
+// Network
+public:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY(ReplicatedUsing=OnRep_PortalTransformChanged)
+	FTransform Net_PortalTransform;
+
+	UFUNCTION()
+	void OnRep_PortalTransformChanged();
+
+	// RPC
+	UFUNCTION(Server, Unreliable)
+	void RPC_PortalTransformChanged();
 };

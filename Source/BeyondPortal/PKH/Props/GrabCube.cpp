@@ -31,7 +31,28 @@ AGrabCube::AGrabCube()
 void AGrabCube::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// For Server
+	if ( false == HasAuthority() )
+	{
+		return;
+	}
+	// Set Network Owner
+	FTimerHandle Handle;
+	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([&]()
+	{
+		for ( FConstPlayerControllerIterator it=GetWorld()->GetPlayerControllerIterator(); it; ++it )
+		{
+			APlayerController* PlayerController=it->Get();
+			// WeakPtr이므로 널체크
+			// LocalPlayerController가 아니라면(서버의 컨트롤러가 아니라면) 클라이언트
+			if ( nullptr != PlayerController && false == PlayerController->IsLocalPlayerController() )
+			{
+				SetOwner(PlayerController); UE_LOG(LogTemp, Warning, TEXT("SetOwner"));
+				break;
+			}
+		}
+	}), 5.0f, false);
 }
 
 void AGrabCube::Tick(float DeltaSeconds)
@@ -46,21 +67,27 @@ void AGrabCube::Tick(float DeltaSeconds)
 
 void AGrabCube::Grab(ACharacter* NewOwner)
 {
+	APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
+	if ( nullptr == Player )
+	{
+		return;
+	}
+
 	if( HasAuthority() )
 	{
-		APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
-		if ( nullptr == Player )
+		if ( nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject() )
 		{
-			return;
+			OwnPlayer->DropObj();
 		}
 		OwnPlayer=Player;
+		OwnPlayer->GrabObj(this);
 		BoxComp->SetEnableGravity(false);
 		// Network
 		Net_OwnPlayer=Player;
 	}
 	else
 	{
-		
+		RPC_SetCubeOwner(Player);
 	}
 }
 
@@ -76,7 +103,7 @@ void AGrabCube::Drop()
 	}
 	else
 	{
-		
+		RPC_SetCubeOwner(nullptr);
 	}
 }
 
@@ -99,6 +126,10 @@ void AGrabCube::TickGrab()
 
 		Net_CubeLocation=GetActorLocation();
 		Net_CubeRotation=GetActorRotation();
+	}
+	else
+	{
+		
 	}
 }
 
@@ -123,14 +154,30 @@ void AGrabCube::OnRep_CubeRotationChanged()
 
 void AGrabCube::OnRep_OwnPlayerChanged()
 {
-	OwnPlayer=Net_OwnPlayer;
-
-	if( OwnPlayer )
+	if( Net_OwnPlayer )
 	{
+		if(nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject())
+		{
+			OwnPlayer->DropObj();
+		}
+		OwnPlayer=Net_OwnPlayer;
+
+		OwnPlayer->GrabObj(this);
 		BoxComp->SetEnableGravity(false);
 	}
 	else
 	{
+		if ( OwnPlayer )
+		{
+			OwnPlayer->DropObj();
+		}
+		OwnPlayer=Net_OwnPlayer;
 		BoxComp->SetEnableGravity(true);
 	}
+}
+
+void AGrabCube::RPC_SetCubeOwner_Implementation(APlayerCharacter* NewOwner)
+{
+	Net_OwnPlayer=NewOwner;
+	OnRep_OwnPlayerChanged();
 }

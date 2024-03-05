@@ -109,8 +109,20 @@ void APlayerCharacter::BeginPlay()
 	}
 
 	// Portal
-	PortalLeft = GetWorld()->SpawnActor<APortal>(PortalLClass, FVector(-100), FRotator(0));
+	PortalLeft=GetWorld()->SpawnActor<APortal>(PortalLClass, FVector(-100), FRotator(0));
 	PortalRight = GetWorld()->SpawnActor<APortal>(PortalRClass, FVector(-100), FRotator(0));
+	if ( HasAuthority() )
+	{
+		PortalLeft->SetOwner(GetController());
+		PortalRight->SetOwner(GetController());
+	}
+	else
+	{
+		PortalLeft->SetOwner(GetWorld()->GetFirstPlayerController());
+		PortalRight->SetOwner(GetWorld()->GetFirstPlayerController());
+	}
+
+
 	PortalExtent = PortalLeft->GetComponentByClass<UBoxComponent>()->GetUnscaledBoxExtent();
 
 	// Particle
@@ -135,27 +147,71 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const
 {
+	if( HasAuthority() ) // Server
+	{
+		APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
+		const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
+		const FRotator SpawnRotation=Normal.ToOrientationRotator();
+
+		TargetPortal->SetActorLocation(SpawnLocation);
+		TargetPortal->SetActorRotation(SpawnRotation);
+		TargetPortal->Activate(true);
+		CrosshairUI->PortalUI_Empty(IsLeft);
+
+		// Link
+		APortal* OtherPortal=IsLeft ? PortalRight : PortalLeft;
+		if ( nullptr == OtherPortal )
+		{
+			return;
+		}
+		if ( false == OtherPortal->GetIsActivated() )
+		{
+			return;
+		}
+
+		TargetPortal->LinkPortal(OtherPortal);
+		OtherPortal->LinkPortal(TargetPortal);
+	}
+	else // Client
+	{
+		RPC_SpawnPortal(IsLeft, Location, Normal, PortalLeft, PortalRight);
+	}
+}
+
+void APlayerCharacter::RPC_SpawnPortal_Implementation(const bool IsLeft, const FVector& Location, const FVector& Normal, class APortal* LP, class APortal* RP) const
+{
 	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
 	const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
-	FRotator SpawnRotation=Normal.ToOrientationRotator() + FRotator(0, 0, 0);
-	
+	const FRotator SpawnRotation=Normal.ToOrientationRotator();
+
 	TargetPortal->SetActorLocation(SpawnLocation);
 	TargetPortal->SetActorRotation(SpawnRotation);
 	TargetPortal->Activate(true);
+	CrosshairUI->PortalUI_Empty(IsLeft);
 
 	// Link
 	APortal* OtherPortal=IsLeft ? PortalRight : PortalLeft;
-	if( nullptr == OtherPortal )
+	if ( nullptr == OtherPortal )
 	{
 		return;
 	}
-	if( false == OtherPortal->GetIsActivated() )
+	if ( false == OtherPortal->GetIsActivated() )
 	{
 		return;
 	}
 
 	TargetPortal->LinkPortal(OtherPortal);
 	OtherPortal->LinkPortal(TargetPortal);
+}
+
+void APlayerCharacter::ResetAllPortals()
+{
+	PortalLeft->Activate(false);
+	PortalRight->Activate(false);
+
+	// UI
+	CrosshairUI->PortalUI_Fill(true);
+	CrosshairUI->PortalUI_Fill(false);
 }
 
 void APlayerCharacter::PortalGunLightOn(FLinearColor NewColor)
@@ -176,6 +232,8 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject)
 	{
 		GunParticleComp->SetActive(true);
 	}
+
+	CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void APlayerCharacter::DropObj()
@@ -185,6 +243,8 @@ void APlayerCharacter::DropObj()
 	{
 		GunParticleComp->SetActive(false);
 	}
+
+	CrosshairUI->SetVisibility(ESlateVisibility::Visible);
 }
 
 FVector APlayerCharacter::GetGrabPoint() const

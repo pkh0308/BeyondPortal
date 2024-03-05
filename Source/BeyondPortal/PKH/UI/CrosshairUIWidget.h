@@ -30,4 +30,20 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, meta=(BindWidget))
 	TObjectPtr<class UImage> CrossHair_Right;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UTexture2D> PortalL_Fill;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UTexture2D> PortalR_Fill;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UTexture2D> PortalL_Empty;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UTexture2D> PortalR_Empty;
+
+public:
+	void PortalUI_Empty(bool IsLeft);
+	void PortalUI_Fill(bool IsLeft);
 };
