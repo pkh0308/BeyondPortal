@@ -47,6 +47,37 @@ protected:
 
 	void TickGrab();
 
+// Success
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UTexture2D> DefaultTexture;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UTexture2D> SuccessTexture;
+
+public:
+	void ChangeMaterial(bool Success);
+
+// Dissolve
+protected:
+	UPROPERTY(VisibleAnywhere)
+	TArray<TObjectPtr<class UMaterialInstanceDynamic>> DMArray;
+
+	void InitDynamicMaterials();
+
+public:
+	void OnDisappear();
+
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	float DissolveSeconds=4.0f;
+
+	float DissolveCount=0.15f;
+
+	bool IsDissolving=false;
+
+	void TickDisappear(float DeltaSeconds);
+
 // Network
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

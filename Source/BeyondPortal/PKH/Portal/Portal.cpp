@@ -9,8 +9,8 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "PKH/Props/GrabCube.h"
 #include "Net/UnrealNetwork.h"
+#include "PKH/Player/PlayerCharacter.h"
 
 // Sets default values
 APortal::APortal()
@@ -85,27 +85,46 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	OtherActor->SetActorLocation(LinkedPortal->GetTargetLocation());
 
 	const FRotator TargetRotation=LinkedPortal->GetTargetRotation();
-	ACharacter* Character=Cast<ACharacter>(OtherActor);
+	APlayerCharacter* Character=Cast<APlayerCharacter>(OtherActor);
 	if( Character )
 	{
-		Character->GetController()->SetControlRotation(TargetRotation);
+		if( HasAuthority() )
+		{
+			// Rotation
+			Character->GetController()->SetControlRotation(TargetRotation);
 
-		// Velocity
-		const float NewVelocity=Character->GetCharacterMovement()->Velocity.Size() * AccelMultiplier;
-		const FVector ForwardVec=LinkedPortal->GetTargetDirection();
-		Character->GetCharacterMovement()->Velocity = ForwardVec * NewVelocity;
+			// Velocity
+			const float NewVelocity=Character->GetCharacterMovement()->Velocity.Size() * AccelMultiplier;
+			const FVector ForwardVec=LinkedPortal->GetTargetDirection();
+			Character->GetCharacterMovement()->Velocity=ForwardVec * NewVelocity;
+
+			Character->Net_SetControlRotation(TargetRotation);
+		}
+		else
+		{
+			//RPC_PortalOut(Character, TargetRotation);
+		}
 		return;
 	}
 
-	AGrabCube* GrabCube = Cast<AGrabCube>(OtherActor);
-	if( GrabCube )
+	// Velocity
+	UBoxComponent* Box=Cast<UBoxComponent>(OtherActor->GetRootComponent());
+	if ( nullptr ==  Box )
 	{
-		// Velocity
-		const float NewVelocity = GrabCube->GetVelocity().Size() * AccelMultiplier; 
-		const FVector ForwardVec = LinkedPortal->GetTargetDirection();
-		OverlappedComponent->ComponentVelocity = (ForwardVec * NewVelocity);
+		return;
+	}
+	if ( Box->IsSimulatingPhysics() )
+	{
+		const float NewVelocity=OtherActor->GetVelocity().Size() * AccelMultiplier;
+		const FVector ForwardVec=LinkedPortal->GetTargetDirection();
+		Box->AddForce(ForwardVec * NewVelocity * 5000);
 	}
 	//OtherActor->SetActorRotation(TargetRotation);
+}
+
+void APortal::RPC_PortalOut_Implementation(APlayerCharacter* Character, const FRotator& TargetRotation)
+{
+	Character->Net_SetControlRotation(TargetRotation);
 }
 
 void APortal::Activate(const bool ActiveSelf)
@@ -217,9 +236,9 @@ void APortal::SetCaptureRotation()
 
 	const FVector Direction=TargetLocation - MyLocation;
 	FRotator Rotation=Direction.ToOrientationRotator();
-	Rotation.Roll = 0;
-	Rotation.Pitch += PitchOffset;
-	Rotation.Yaw += YawOffset;
+	Rotation.Roll=0;
+	Rotation.Pitch+=PitchOffset;
+	Rotation.Yaw+=YawOffset;
 	LinkedPortal->SetCaptureRotation(Rotation);
 }
 

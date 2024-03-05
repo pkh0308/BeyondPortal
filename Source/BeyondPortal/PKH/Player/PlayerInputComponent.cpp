@@ -172,7 +172,6 @@ void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 	{
 		const FRotator EmitterRotation=FRotationMatrix::MakeFromY(HitResult.ImpactNormal).Rotator();
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalLFail, HitResult.ImpactPoint, EmitterRotation);
-		UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z);
 	}
 }
 
@@ -194,7 +193,6 @@ void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 	{
 		const FRotator EmitterRotation =FRotationMatrix::MakeFromY(HitResult.ImpactNormal).Rotator();
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalRFail, HitResult.ImpactPoint, EmitterRotation);
-		UE_LOG(LogTemp, Warning, TEXT("%f %f %f"), HitResult.ImpactPoint.X, HitResult.ImpactPoint.Y, HitResult.ImpactPoint.Z);
 	}
 }
 
@@ -213,7 +211,7 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 	UCameraComponent* Camera=Owner->GetCameraComp();
 	const FVector StartVec=Camera->GetComponentLocation();
 	const FVector EndVec=StartVec + Camera->GetForwardVector() * InteractionDistance;
-	DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red, false, 3.0f);
+	//DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red, false, 3.0f);
 
 	FCollisionQueryParams Param;
 	Param.AddIgnoredActor(Owner);
