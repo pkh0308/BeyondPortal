@@ -25,12 +25,26 @@ AGrabCube::AGrabCube()
 	{
 		MeshComp->SetStaticMesh(MeshRef.Object);
 	}
+
+	// Texture
+	static ConstructorHelpers::FObjectFinder<UTexture2D> SuccessTextureRef(TEXT("/Script/Engine.Texture2D'/Game/PKH/Mesh/Cube/box_03_-_Success_Emissive.box_03_-_Success_Emissive'"));
+	if( SuccessTextureRef.Object )
+	{
+		SuccessTexture=SuccessTextureRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UTexture2D> DefaultTextureRef(TEXT("/Script/Engine.Texture2D'/Game/PKH/Mesh/Cube/box_03_-_Default_Emissive.box_03_-_Default_Emissive'"));
+	if ( DefaultTextureRef.Object )
+	{
+		DefaultTexture=DefaultTextureRef.Object;
+	}
 }
 
 // Called when the game starts or when spawned
 void AGrabCube::BeginPlay()
 {
 	Super::BeginPlay();
+
+	InitDynamicMaterials();
 
 	// For Server
 	if ( false == HasAuthority() )
@@ -62,6 +76,10 @@ void AGrabCube::Tick(float DeltaSeconds)
 	if( OwnPlayer )
 	{
 		TickGrab();
+	}
+	if(IsDissolving)
+	{
+		TickDisappear(DeltaSeconds);
 	}
 }
 
@@ -130,6 +148,49 @@ void AGrabCube::TickGrab()
 	else
 	{
 		
+	}
+}
+
+void AGrabCube::ChangeMaterial(bool Success)
+{
+	if(Success)
+	{
+		DMArray[2]->SetTextureParameterValue(FName(TEXT("Emissive")), SuccessTexture);
+	}
+	else
+	{
+		DMArray[2]->SetTextureParameterValue(FName(TEXT("Emissive")), DefaultTexture);
+	}
+}
+
+void AGrabCube::InitDynamicMaterials()
+{
+	const int32 Nums=MeshComp->GetNumMaterials();
+	for ( int i = 0; i < Nums; i++ )
+	{
+		DMArray.Add(UMaterialInstanceDynamic::Create(MeshComp->GetMaterial(i), this));
+		MeshComp->SetMaterial(i, DMArray[i]);
+	}
+}
+
+void AGrabCube::OnDisappear()
+{
+	IsDissolving=true; 
+}
+
+void AGrabCube::TickDisappear(float DeltaSeconds)
+{
+	DissolveCount=(DissolveCount + DeltaSeconds / DissolveSeconds);
+	for ( int i=0; i < DMArray.Num(); i++ )
+	{
+		DMArray[i]->SetScalarParameterValue(FName(TEXT("Fade")), DissolveCount); 
+	}
+
+	if( DissolveCount > 1.0f )
+	{
+		IsDissolving=false;
+		Drop();
+		Destroy();
 	}
 }
 

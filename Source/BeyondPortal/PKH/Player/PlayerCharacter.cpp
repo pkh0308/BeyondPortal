@@ -10,6 +10,7 @@
 #include "Components/PointLightComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "PKH/UI/CrosshairUIWidget.h"
 #include "PKH/Anim/PlayerAnimInstance.h"
 #include "PKH/Portal/Portal.h"
@@ -101,6 +102,12 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 위치 조정(클라)
+	if( false == HasAuthority() )
+	{
+		//RPC_SetPlayerLocation(this);
+	}
+
 	// UI
 	CrosshairUI=CreateWidget<UCrosshairUIWidget>(GetWorld(), CrosshairUIClass);
 	if( CrosshairUI )
@@ -122,12 +129,24 @@ void APlayerCharacter::BeginPlay()
 		PortalRight->SetOwner(GetWorld()->GetFirstPlayerController());
 	}
 
-
 	PortalExtent = PortalLeft->GetComponentByClass<UBoxComponent>()->GetUnscaledBoxExtent();
 
 	// Particle
 	GunParticleComp->SetTemplate(VFX_GrabEffect);
 	GunParticleComp->SetActive(false);
+}
+
+void APlayerCharacter::RPC_SetOwnPlayer_Implementation(class APortal* L, class APortal* R) const
+{
+	for( auto it = GetWorld()->GetPlayerControllerIterator(); it; ++it )
+	{
+		APlayerController* TargetController=it->Get();
+		if( nullptr != TargetController && false == TargetController->IsLocalController() )
+		{
+			L->SetOwnPlayer(TargetController->GetCharacter());
+			R->SetOwnPlayer(TargetController->GetCharacter());
+		}
+	}
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -265,4 +284,21 @@ void APlayerCharacter::PlayerCrouch()
 		Crouch();
 		IsCrouching=true;
 	}
+}
+
+void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APlayerCharacter, Net_ControlRotation);
+}
+
+void APlayerCharacter::OnRep_ControlRotationChanged()
+{
+	GetController()->SetControlRotation(Net_ControlRotation);
+}
+
+void APlayerCharacter::RPC_SetPlayerLocation_Implementation(ACharacter* ClientPlayer)
+{
+	ClientPlayer->SetActorLocation(FVector(60, -460, 73));
 }

@@ -92,6 +92,8 @@ protected:
 	void SetCaptureRotation();
 
 public:
+	FORCEINLINE void SetOwnPlayer(class ACharacter* NewPlayer) { Player=NewPlayer; };
+
 	void SetCaptureRotation(FRotator NewRotation);
 
 // Material
@@ -106,6 +108,7 @@ protected:
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	// Portal Transform
 	UPROPERTY(ReplicatedUsing=OnRep_PortalTransformChanged)
 	FTransform Net_PortalTransform;
 
@@ -115,4 +118,7 @@ public:
 	// RPC
 	UFUNCTION(Server, Unreliable)
 	void RPC_PortalTransformChanged();
+
+	UFUNCTION(Server, Unreliable)
+	void RPC_PortalOut(class APlayerCharacter* Character, const FRotator& TargetRotation);
 };

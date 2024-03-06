@@ -124,6 +124,25 @@ protected:
 
 // Network
 protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UPROPERTY(ReplicatedUsing=OnRep_ControlRotationChanged)
+	FRotator Net_ControlRotation;
+
+	UFUNCTION()
+	void OnRep_ControlRotationChanged();
+
+public:
+	FORCEINLINE void Net_SetControlRotation(const FRotator& TargetRotation) { Net_ControlRotation=TargetRotation; }
+
+// RPC
+protected:
 	UFUNCTION(Server, Unreliable)
 	void RPC_SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal, class APortal* LP, class APortal* RP) const;
+
+	UFUNCTION(Server, Unreliable)
+	void RPC_SetOwnPlayer(class APortal* L, class APortal* R) const;
+
+	UFUNCTION(Server, Unreliable)
+	void RPC_SetPlayerLocation(class ACharacter* ClientPlayer);
 };
