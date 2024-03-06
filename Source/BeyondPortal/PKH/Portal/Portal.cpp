@@ -117,7 +117,7 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	{
 		const float NewVelocity=OtherActor->GetVelocity().Size() * AccelMultiplier;
 		const FVector ForwardVec=LinkedPortal->GetTargetDirection();
-		Box->AddForce(ForwardVec * NewVelocity * 5000);
+		Box->AddForce(ForwardVec * NewVelocity * 10000);
 	}
 	//OtherActor->SetActorRotation(TargetRotation);
 }

@@ -91,8 +91,6 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 		return;
 	}
 
-	ChangeMaterial(true);
-
 	if( HasAuthority() )
 	{
 		if ( nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject() )
@@ -113,8 +111,6 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 
 void AGrabCube::Drop()
 {
-	ChangeMaterial(false);
-
 	if ( HasAuthority() )
 	{
 		OwnPlayer->DropObj();
