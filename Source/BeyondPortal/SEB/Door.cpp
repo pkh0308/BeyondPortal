@@ -73,3 +73,8 @@ void ADoor::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	}*/
 }
 
+void ADoor::OpenDoor()
+{
+	door->PlayAnimation(openDoorAnim, false);
+}
+

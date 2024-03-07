@@ -4,6 +4,7 @@
 #include "SEB/CubeButton.h"
 
 #include "ArmDoor.h"
+#include "CheckOpen.h"
 #include "FloorLine.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -77,8 +78,8 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 				// 딜레이 후에 문 열기
 				Cast<AArmDoor>(CurrentActor)->isOpened=true;
 			}
-			// 찾은 태그 중에 FloorLine를 찾아서
-			else if( CurrentActor->IsA<AFloorLine>() )
+			
+			else if( CurrentActor->IsA<AFloorLine>() ) //FloorLine 색상 변경
 			{
 				//색 변경
 				FString findColor=CurrentActor->Tags.Num() > 1 ? CurrentActor->Tags[1].ToString() : TEXT("NoTag");
@@ -92,6 +93,11 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 				}
 
 				
+			}
+			else if(CurrentActor->IsA< ACheckOpen>() ) //checkopen 보드 색상 변경
+			{
+				ACheckOpen* co=Cast<ACheckOpen>(CurrentActor);
+				co->checkOpen->SetMaterial(0, co->mat);
 			}
 
 		}
@@ -122,7 +128,7 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 				//문 닫기
 				Cast<AArmDoor>(CurrentActor)->isClosed=true;
 			}
-			else if ( CurrentActor->IsA<AFloorLine>() )
+			else if ( CurrentActor->IsA<AFloorLine>() ) //FloorLine 색상 변경
 			{
 
 				FString findColor=CurrentActor->Tags.Num() > 1 ? CurrentActor->Tags[1].ToString() : TEXT("NoTag");
@@ -135,7 +141,11 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 					CurrentActor->SetActorHiddenInGame(true);
 				}
 			}
-
+			else if ( CurrentActor->IsA< ACheckOpen>() ) //checkopen 보드 색상 변경
+			{
+				ACheckOpen* co=Cast<ACheckOpen>(CurrentActor);
+				co->checkOpen->SetMaterial(0, co->mat);
+			}
 		}
 	}
 }

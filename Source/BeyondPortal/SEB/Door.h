@@ -38,4 +38,7 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	UAnimationAsset* openDoorAnim;
+
+	UFUNCTION(BlueprintCallable)
+	void OpenDoor();
 };

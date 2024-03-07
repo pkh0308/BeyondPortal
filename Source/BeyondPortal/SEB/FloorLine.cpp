@@ -36,7 +36,12 @@ void AFloorLine::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
+	//시작할 때는 주황색 라인은 안보이도록 함. 
+	FString findColor=this->Tags.Num() > 1 ? this->Tags[1].ToString() : TEXT("NoTag");
+	if( findColor == "orange" )
+	{
+		this->SetActorHiddenInGame(true);
+	}
 }
 
 // Called every frame
@@ -47,20 +52,5 @@ void AFloorLine::Tick(float DeltaTime)
 	
 }
 
-void AFloorLine::ChangeOrange(AActor* changeLine)
-{
-	//여기서 lineMeshComp staticmesh를 바꾸고싶어
-    
-    /*if ( TempMesh )
-    {
-       
-          
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("tempmesh있다 "));
-		
-    	lineMeshComp->SetStaticMesh(TempMesh);
-    	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("그래서 바궜다 "));
-       
-    }*/
-   
-}
+
 

@@ -37,8 +37,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	class UStaticMeshComponent* lineMeshComp;
 
-	
-	UFUNCTION()
-	void ChangeOrange(AActor* changeLine);
+
 
 };
