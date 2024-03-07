@@ -68,15 +68,25 @@ protected:
 
 	FVector PortalExtent;
 
+protected:
+	void Spawn(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
+
 public:
 	void SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
 
 	void ResetAllPortals();
 
+	void ChangeVelocity(const FVector& NewDirection, const float Multiplier);
+
 	FORCEINLINE FVector GetPortalExtent() const { return PortalExtent; }
 
 	FORCEINLINE bool IsLeftPortal(AActor* Target) const { return Target->GetUniqueID() == PortalLeft->GetUniqueID(); }
 	FORCEINLINE bool IsRightPortal(AActor* Target) const { return Target->GetUniqueID() == PortalLeft->GetUniqueID(); }
+
+// Portal - Network
+protected:
+	UFUNCTION(Server, Unreliable)
+	void RPC_Server_InitPortal();
 
 // Portal gun light
 protected:
@@ -138,10 +148,7 @@ public:
 // RPC
 protected:
 	UFUNCTION(Server, Unreliable)
-	void RPC_SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal, class APortal* LP, class APortal* RP) const;
-
-	UFUNCTION(Server, Unreliable)
-	void RPC_SetOwnPlayer(class APortal* L, class APortal* R) const;
+	void RPC_Server_SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
 
 	UFUNCTION(Server, Unreliable)
 	void RPC_SetPlayerLocation(class ACharacter* ClientPlayer);

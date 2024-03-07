@@ -3,6 +3,7 @@
 
 #include "PKH/Props/GrabCube.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "PKH/Player/PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 
@@ -51,22 +52,10 @@ void AGrabCube::BeginPlay()
 	{
 		return;
 	}
+
 	// Set Network Owner
-	FTimerHandle Handle;
-	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([&]()
-	{
-		for ( FConstPlayerControllerIterator it=GetWorld()->GetPlayerControllerIterator(); it; ++it )
-		{
-			APlayerController* PlayerController=it->Get();
-			// WeakPtr이므로 널체크
-			// LocalPlayerController가 아니라면(서버의 컨트롤러가 아니라면) 클라이언트
-			if ( nullptr != PlayerController && false == PlayerController->IsLocalPlayerController() )
-			{
-				SetOwner(PlayerController); UE_LOG(LogTemp, Warning, TEXT("SetOwner"));
-				break;
-			}
-		}
-	}), 5.0f, false);
+	SetOwner(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+	UE_LOG(LogTemp, Warning, TEXT("SetOwner: %s"), *GetOwner()->GetName());
 }
 
 void AGrabCube::Tick(float DeltaSeconds)
@@ -113,7 +102,10 @@ void AGrabCube::Drop()
 {
 	if ( HasAuthority() )
 	{
-		OwnPlayer->DropObj();
+		if( OwnPlayer )
+		{
+			OwnPlayer->DropObj();
+		}
 		OwnPlayer=nullptr;
 		BoxComp->SetEnableGravity(true);
 		// Network
@@ -140,6 +132,10 @@ void AGrabCube::TickGrab()
 		{
 			BoxComp->SetPhysicsLinearVelocity(CurVelocity * VelocityCut);
 			Drop();
+		}
+		else
+		{
+			BoxComp->SetWorldRotation(FRotator::ZeroRotator);
 		}
 
 		Net_CubeLocation=GetActorLocation();
