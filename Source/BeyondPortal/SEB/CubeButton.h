@@ -48,5 +48,9 @@ public:
 	UPROPERTY()
 	class AFloorLine* floorLine;
 	
+	UPROPERTY(EditAnywhere)
+	TArray<AActor*> armDoorArray;
+
+	void OpenNextDoor(int32 i);
 
 };

@@ -69,14 +69,20 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 		FName findTagName=FName(*findTag);
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
 		
-
+		float Delay=0.2f;
 		for ( auto CurrentActor : FoundActors )
 		{
 			// 찾은 태그 중에 ArmDoor를 찾아서
 			if ( CurrentActor->IsA<AArmDoor>() )
 			{
 				// 딜레이 후에 문 열기
-				Cast<AArmDoor>(CurrentActor)->isOpened=true;
+				AArmDoor* Door=Cast<AArmDoor>(CurrentActor);
+				FTimerHandle Handle;
+				GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Door]()
+					{
+						Door->isOpened=true;
+					}), Delay, false);
+				Delay+=0.2f;
 			}
 			
 			else if( CurrentActor->IsA<AFloorLine>() ) //FloorLine 색상 변경
@@ -119,6 +125,8 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
 		FName findTagName=FName(*findTag);
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
+
+		float Delay=0.2f;
 		for ( auto CurrentActor : FoundActors )
 		{
 
@@ -126,7 +134,16 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 			if ( CurrentActor->IsA<AArmDoor>() )
 			{
 				//문 닫기
-				Cast<AArmDoor>(CurrentActor)->isClosed=true;
+
+				// 딜레이 후에 문 열기
+				AArmDoor* Door=Cast<AArmDoor>(CurrentActor);
+				FTimerHandle Handle;
+				GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Door]()
+					{
+						Door->isClosed=true;
+					}), Delay, false);
+				Delay+=0.2f;
+
 			}
 			else if ( CurrentActor->IsA<AFloorLine>() ) //FloorLine 색상 변경
 			{
@@ -150,6 +167,16 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 	}
 }
 
-
+void ACubeButton::OpenNextDoor(int32 i)
+{
+	if(armDoorArray.Num() > 0 )
+	{
+		UE_LOG(LogTemp, Error, TEXT("왜 안열리냐.. 이거 인덱스는 %d"), i);
+		// 지정된 인덱스의 문 열기
+		Cast<AArmDoor>(armDoorArray[i])->isOpened=true;
+	}
+		
+	
+}
 
 
