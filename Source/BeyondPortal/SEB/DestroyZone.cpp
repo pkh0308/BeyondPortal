@@ -62,7 +62,7 @@ void ADestroyZone::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent
 
 		//cube 사라지는 이펙트 후 큐브 제거
 		AGrabCube* cube=Cast<AGrabCube>(OtherActor);
-		
+		cube->OnDisappear();
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("큐브가 사라졌으니까"));
 
 

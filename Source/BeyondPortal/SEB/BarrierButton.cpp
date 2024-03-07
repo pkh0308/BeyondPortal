@@ -3,6 +3,7 @@
 
 #include "BarrierButton.h"
 
+#include "FloorLine.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "PKH/Player/PlayerCharacter.h"
@@ -57,6 +58,20 @@ void ABarrierButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedCompone
 			{
 				CurrentActor->SetActorHiddenInGame(true);
 			}
+
+			else if ( CurrentActor->IsA<AFloorLine>() )
+			{
+
+				FString findColor=CurrentActor->Tags.Num() > 1 ? CurrentActor->Tags[1].ToString() : TEXT("NoTag");
+				if ( findColor == "blue" )
+				{
+					CurrentActor->SetActorHiddenInGame(true);
+				}
+				else if ( findColor == "orange" )
+				{
+					CurrentActor->SetActorHiddenInGame(false);
+				}
+			}
 		}
 
 	}
@@ -80,7 +95,22 @@ void ABarrierButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AAc
 			{
 				CurrentActor->SetActorHiddenInGame(false);
 			}
+
+			else if ( CurrentActor->IsA<AFloorLine>() )
+			{
+
+				FString findColor=CurrentActor->Tags.Num() > 1 ? CurrentActor->Tags[1].ToString() : TEXT("NoTag");
+				if ( findColor == "blue" )
+				{
+					CurrentActor->SetActorHiddenInGame(false);
+				}
+				else if ( findColor == "orange" )
+				{
+					CurrentActor->SetActorHiddenInGame(true);
+				}
+			}
 		}
+
 
 	}
 }

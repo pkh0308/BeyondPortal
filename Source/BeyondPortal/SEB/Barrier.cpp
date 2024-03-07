@@ -74,8 +74,8 @@ void ABarrier::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	else if(OtherActor->IsA< APlayerCharacter>()){
 		
 		APlayerCharacter* player=Cast<APlayerCharacter>(OtherActor);
-		player->ResetAllPortals();
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("플레이어랑 닿음"));
+		/*player->ResetAllPortals();*/
+		
 	}
 }
 
