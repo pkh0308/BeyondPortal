@@ -15,13 +15,16 @@
 #include "PKH/Anim/PlayerAnimInstance.h"
 #include "PKH/Portal/Portal.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "EngineUtils.h"
+#include "PKH/Props/GunActor.h"
+#include "SEB/Barrier.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
-
+	
 	// Replicate
 	bReplicates=true;
 	NetUpdateFrequency=100.0f;
@@ -39,6 +42,8 @@ APlayerCharacter::APlayerCharacter()
 	}
 	GetMesh()->SetRelativeLocation(FVector(0, 0, -90));
 	GetMesh()->SetRelativeRotation(FRotator(0, -90, 0));
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::OnPlayerBeginOverlap);
 
 	MoveComp=GetCharacterMovement();
 	MoveComp->AirControl=0.15f;
@@ -73,8 +78,15 @@ APlayerCharacter::APlayerCharacter()
 	// Camera
 	CameraComp=CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(RootComponent);
-	CameraComp->AddRelativeLocation(FVector(30, 0, 70));
+	CameraComp->AddRelativeLocation(FVector(17, 7, 28));
 	CameraComp->bUsePawnControlRotation=true;
+
+	// Gun Actor
+	static ConstructorHelpers::FClassFinder<AGunActor> GunActorClassRef(TEXT("/Game/PKH/Blueprint/Props/BP_GunActor.BP_GunActor_C"));
+	if ( GunActorClassRef.Class )
+	{
+		GunActorClass=GunActorClassRef.Class;
+	}
 
 	// Portal
 	static ConstructorHelpers::FClassFinder<APortal> PortalLClassRef(TEXT("/Game/PKH/Blueprint/BP_PortalL.BP_PortalL_C"));
@@ -112,6 +124,13 @@ void APlayerCharacter::BeginPlay()
 	{
 		//RPC_SetPlayerLocation(this);
 	}
+
+	// Gun Actor
+	GunActor = GetWorld()->SpawnActor<AGunActor>(GunActorClass);
+	GunActor->SetActive(false);
+
+	// Respawn
+	RespawnLocation=GetActorLocation();
 
 	// UI
 	CrosshairUI=CreateWidget<UCrosshairUIWidget>(GetWorld(), CrosshairUIClass);
@@ -193,14 +212,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 void APlayerCharacter::SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const
 {
-	if( HasAuthority() ) // Server
-	{
-		Spawn(IsLeft, Location, Normal);
-	}
-	else
-	{
-		RPC_Server_SpawnPortal(IsLeft, Location, Normal);
-	}
+	Spawn(IsLeft, Location, Normal);
 }
 
 void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const FVector& Normal) const
@@ -209,8 +221,15 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 	const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
 	const FRotator SpawnRotation=Normal.ToOrientationRotator();
 
-	TargetPortal->SetActorLocation(SpawnLocation);
-	TargetPortal->SetActorRotation(SpawnRotation);
+	if( HasAuthority() )
+	{
+		TargetPortal->SetActorLocation(SpawnLocation);
+		TargetPortal->SetActorRotation(SpawnRotation);
+	}
+	else
+	{
+		RPC_Server_SpawnPortal(TargetPortal, SpawnLocation, SpawnRotation);
+	}
 	TargetPortal->Activate(true);
 	CrosshairUI->PortalUI_Empty(IsLeft);
 
@@ -229,36 +248,43 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 	OtherPortal->LinkPortal(TargetPortal);
 }
 
-void APlayerCharacter::RPC_Server_SpawnPortal_Implementation(const bool IsLeft, const FVector& Location, const FVector& Normal) const
+void APlayerCharacter::RPC_Server_SpawnPortal_Implementation(APortal* TargetPortal, const FVector& NewLocation, const FRotator& NewRotation) const
 {
-	APlayerCharacter* OtherPlayer=Cast< APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 1));
-	if( nullptr == OtherPlayer )
+	TargetPortal->SetActorLocation(NewLocation);
+	TargetPortal->SetActorRotation(NewRotation);
+}
+
+bool APlayerCharacter::IsOverlapPortal(bool IsLeft, FVector TargetCenter)
+{
+	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
+	if( false == TargetPortal->GetIsActivated())
 	{
-		return;
+		return false;
 	}
 
-	APortal* TargetPortal=IsLeft ? OtherPlayer->PortalLeft : OtherPlayer->PortalRight;
-	const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
-	const FRotator SpawnRotation=Normal.ToOrientationRotator();
+	const FVector TargetBox=TargetPortal->GetComponentsBoundingBox().GetExtent();
+	const float TargetMaxX=TargetCenter.X + TargetBox.X;
+	const float TargetMinX=TargetCenter.X - TargetBox.X;
+	const float TargetMaxY=TargetCenter.Y + TargetBox.Y;
+	const float TargetMinY=TargetCenter.Y - TargetBox.Y;
+	const float TargetMaxZ=TargetCenter.Z + TargetBox.Z;
+	const float TargetMinZ=TargetCenter.Z - TargetBox.Z;
 
-	TargetPortal->SetActorLocation(SpawnLocation);
-	TargetPortal->SetActorRotation(SpawnRotation);
-	TargetPortal->Activate(true);
-	CrosshairUI->PortalUI_Empty(IsLeft);
+	const APortal* OtherPortal=IsLeft ? PortalRight : PortalLeft;
+	const FVector LinkedCenter=OtherPortal->GetActorLocation();
+	const FVector LinkedBox=OtherPortal->GetComponentsBoundingBox().GetExtent();
+	const float LinkedMaxX=LinkedCenter.X + LinkedBox.X;
+	const float LinkedMinX=LinkedCenter.X - LinkedBox.X;
+	const float LinkedMaxY=LinkedCenter.Y + LinkedBox.Y;
+	const float LinkedMinY=LinkedCenter.Y - LinkedBox.Y;
+	const float LinkedMaxZ=LinkedCenter.Z + LinkedBox.Z;
+	const float LinkedMinZ=LinkedCenter.Z - LinkedBox.Z;
 
-	// Link
-	APortal* OtherPortal=IsLeft ? OtherPlayer->PortalRight : OtherPlayer->PortalLeft;
-	if ( nullptr == OtherPortal )
-	{
-		return;
-	}
-	if ( false == OtherPortal->GetIsActivated() )
-	{
-		return;
-	}
+	const bool XOverlap = (TargetCenter.X < LinkedCenter.X && TargetMaxX >= LinkedMinX) || (TargetCenter.X > LinkedCenter.X && TargetMinX <= LinkedMaxX);
+	const bool YOverlap = (TargetCenter.Y < LinkedCenter.Y && TargetMaxY >= LinkedMinY) || (TargetCenter.Y > LinkedCenter.Y && TargetMinY <= LinkedMaxY);
+	const bool ZOverlap = (TargetCenter.Z < LinkedCenter.Z && TargetMaxZ >= LinkedMinZ) || (TargetCenter.Z > LinkedCenter.Z && TargetMinZ <= LinkedMaxZ);
 
-	TargetPortal->LinkPortal(OtherPortal);
-	OtherPortal->LinkPortal(TargetPortal);
+	return XOverlap && YOverlap && ZOverlap;
 }
 
 void APlayerCharacter::ResetAllPortals()
@@ -280,6 +306,19 @@ void APlayerCharacter::ChangeVelocity(const FVector& NewDirection, const float M
 	GetCharacterMovement()->Velocity=NewDirection * NewVelocity;
 }
 
+void APlayerCharacter::OnPlayerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	ABarrier* Barrier=Cast<ABarrier>(OtherActor);
+	if( Barrier )
+	{
+		const FVector NewLocation=Barrier->GetActorLocation();
+		if( RespawnLocation != NewLocation )
+		{
+			RespawnLocation=NewLocation;
+		}
+	}
+}
+
 void APlayerCharacter::PortalGunLightOn(FLinearColor NewColor)
 {
 	LightComp->SetLightColor(NewColor);
@@ -289,6 +328,11 @@ void APlayerCharacter::PortalGunLightOn(FLinearColor NewColor)
 void APlayerCharacter::PortalGunLightOff()
 {
 	LightComp->SetIntensity(0);
+}
+
+FVector APlayerCharacter::GetCameraLocation() const
+{
+	return CameraComp->GetComponentLocation();
 }
 
 void APlayerCharacter::GrabObj(ICanGrab* NewObject)
@@ -317,6 +361,50 @@ FVector APlayerCharacter::GetGrabPoint() const
 {
 	const FVector GrabPoint = CameraComp->GetComponentLocation() + FVector(0, 0, 25) + CameraComp->GetForwardVector() * GrabDistance;
 	return GrabPoint;
+}
+
+void APlayerCharacter::Respawn()
+{
+	SetActorLocation(RespawnLocation);
+
+	// Animation
+	UPlayerAnimInstance* Anim=Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	if ( Anim )
+	{
+		Anim->StopAllMontages(0);
+	}
+
+	// Gun
+	GunComp->SetVisibility(true);
+	GunActor->SetActive(false);
+
+	// Camera
+	CameraComp->SetRelativeLocation(CameraDefaultLocation);
+	GetMesh()->SetOwnerNoSee(true);
+}
+
+void APlayerCharacter::OnDie()
+{
+	// Animation
+	UPlayerAnimInstance* Anim=Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	if( Anim )
+	{
+		Anim->PlayMontage_Dead();
+	}
+
+	// Gun 
+	GunComp->SetVisibility(false);
+	GunActor->SetActive(true);
+	GunActor->SetActorLocation(GunComp->GetComponentLocation());
+	GunActor->SetActorRotation(GunComp->GetComponentRotation());
+
+	// Camera
+	CameraComp->SetRelativeLocation(CameraOnDieLocation);
+	GetMesh()->SetOwnerNoSee(false);
+
+	// Respawn
+	FTimerHandle RespawnHandle;
+	GetWorldTimerManager().SetTimer(RespawnHandle, this, &APlayerCharacter::Respawn, 3.0f, false);
 }
 
 void APlayerCharacter::PlayerCrouch()

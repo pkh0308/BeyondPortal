@@ -266,7 +266,8 @@ bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult, FVector& Imp
 	// Animation
 	PlayFireMontage();
 
-	APlayerCameraManager* CameraManager=UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0); // Should Edit for Network
+	// Line Trace
+	APlayerCameraManager* CameraManager=UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
 	const FVector StartVec=CameraManager->GetCameraLocation();
 	const FVector EndVec=StartVec + CameraManager->GetActorForwardVector() * 10000;
 
@@ -279,6 +280,12 @@ bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult, FVector& Imp
 	}
 	ImpactPoint=InHitResult.ImpactPoint;
 
+	// Prevent portal overlap
+	if(Owner->IsOverlapPortal(IsLeft, ImpactPoint))
+	{
+		return false;
+	}
+
 	// Check surface
 	const auto MI =InHitResult.GetComponent()->GetMaterial(0);
 	if( nullptr == MI )
@@ -288,12 +295,12 @@ bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult, FVector& Imp
 	const auto PM = MI->GetPhysicalMaterial();
 	if( nullptr == PM )
 	{
-		UE_LOG(LogTemp, Warning, TEXT("No Physical Material"));
+		//UE_LOG(LogTemp, Log, TEXT("No Physical Material"));
 		return false;
 	}
 	if( PM->SurfaceType != PORTAL_SURFACE )
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Surface is not PORTAL_SURFACE"));
+		//UE_LOG(LogTemp, Log, TEXT("Surface is not PORTAL_SURFACE"));
 		return false;
 	}
 

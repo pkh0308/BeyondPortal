@@ -238,35 +238,51 @@ void APortal::SetCaptureFOV()
 
 void APortal::SetCaptureRotation()
 {
-	FVector TargetLocation=Player->GetActorLocation();
-	TargetLocation.Z=0;
-	FVector MyLocation=GetActorLocation();
-	MyLocation.Z=0;
-	FVector rightDelta = LinkedPortal->GetActorRightVector() - GetActorRightVector();
-	FVector upDelta = LinkedPortal->GetActorUpVector() - GetActorUpVector();
+	const auto PlayerCameraManager=GWorld->GetFirstPlayerController()->PlayerCameraManager;
 
-	const FVector Direction=TargetLocation - MyLocation;
-	FRotator Rotation=Direction.ToOrientationRotator();
-	LinkedPortal->SetCaptureRotation(Rotation.GetNormalized());
+	FMatrix ViewMatrix;
+	FMatrix ProjectionMatrix;
+	FMatrix ViewProjectionMatrix;
+	UGameplayStatics::GetViewProjectionMatrix(PlayerCameraManager->GetCameraCacheView(), ViewMatrix, ProjectionMatrix, ViewProjectionMatrix);
 
-	//FVector TargetLocation=Player->GetActorLocation();
-	//TargetLocation.Z=0;
-	//FVector MyLocation=GetActorLocation();
-	//MyLocation.Z=0;
-	//const float PitchOffset=LinkedPortal->GetActorRotation().Pitch - GetActorRotation().Pitch;
-	//const float YawOffset=LinkedPortal->GetActorRotation().Yaw - GetActorRotation().Yaw;
+	CaptureComp->CustomProjectionMatrix=ProjectionMatrix;
 
-	//const FVector Direction=TargetLocation - MyLocation;
-	//FRotator Rotation=Direction.ToOrientationRotator();
-	//Rotation.Pitch=0;
-	//Rotation.Yaw+=YawOffset;
-	//Rotation.Roll=0;
-	//LinkedPortal->SetCaptureRotation(Rotation.GetNormalized());
+	//const FVector TargetLocation=Player->GetActorLocation();
+	////TargetLocation.Z=0;
+	//const FVector MyLocation=GetActorLocation();
+	////MyLocation.Z=0;
+	//const FRotator RotationOffset = LinkedPortal->GetActorRotation() - GetActorRotation();
+
+	//if(FMath::Abs(GetActorForwardVector().Z) > 0.9f )
+	//{
+	//	// Horizontal Wall
+	//	const auto PlayerCameraManager=GWorld->GetFirstPlayerController()->PlayerCameraManager;
+
+	//	FMatrix ViewMatrix;
+	//	FMatrix ProjectionMatrix;
+	//	FMatrix ViewProjectionMatrix;
+	//	UGameplayStatics::GetViewProjectionMatrix(PlayerCameraManager->GetCameraCacheView(), ViewMatrix, ProjectionMatrix, ViewProjectionMatrix);
+
+	//	LinkedPortal->SetCaptureRotation(ProjectionMatrix); 
+	//}
+	//else 
+	//{
+	//	// Vertical Wall
+	//	const FVector Direction=(TargetLocation - LinkedPortal->GetActorLocation()).GetSafeNormal();
+	//	FRotator Rotation=Direction.ToOrientationRotator();
+	//	Rotation.Yaw+=RotationOffset.Yaw;
+	//	SetCaptureRotation(Rotation);
+	//}
 }
 
 void APortal::SetCaptureRotation(FRotator NewRotation)
 {
 	CaptureComp->SetWorldRotation(NewRotation);
+}
+
+void APortal::SetCaptureRotation(FMatrix NewMatrix)
+{
+	CaptureComp->CustomProjectionMatrix=NewMatrix;
 }
 
 void APortal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

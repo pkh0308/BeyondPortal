@@ -64,7 +64,7 @@ protected:
 	TObjectPtr<class APortal> PortalRight;
 
 	UPROPERTY(EditDefaultsOnly)
-	float PortalSpawnOffset=1.0f;
+	float PortalSpawnOffset=0.5f;
 
 	FVector PortalExtent;
 
@@ -72,6 +72,8 @@ protected:
 	void Spawn(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
 
 public:
+	bool IsOverlapPortal(bool IsLeft, FVector TargetCenter);
+
 	void SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
 
 	void ResetAllPortals();
@@ -88,6 +90,11 @@ protected:
 	UFUNCTION(Server, Unreliable)
 	void RPC_Server_InitPortal();
 
+// Overlap
+protected:
+	UFUNCTION()
+	void OnPlayerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 // Portal gun light
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -98,6 +105,10 @@ protected:
 public:
 	void PortalGunLightOn(FLinearColor NewColor);
 	void PortalGunLightOff();
+
+// Camera
+public:
+	FVector GetCameraLocation() const;
 
 // Grab
 protected:
@@ -114,6 +125,24 @@ public:
 	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; }
 
 	FVector GetGrabPoint() const;
+
+// Die & Respawn
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AGunActor> GunActorClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class AGunActor> GunActor;
+
+	FVector CameraDefaultLocation=FVector(17, 7, 28);
+	FVector CameraOnDieLocation=FVector(-400, 0, 110);
+
+	FVector RespawnLocation;
+
+	void Respawn();
+
+public:
+	void OnDie();
 
 // Animation
 protected:
@@ -148,7 +177,7 @@ public:
 // RPC
 protected:
 	UFUNCTION(Server, Unreliable)
-	void RPC_Server_SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
+	void RPC_Server_SpawnPortal(class APortal* TargetPortal, const FVector& NewLocation, const FRotator& NewRotation) const;
 
 	UFUNCTION(Server, Unreliable)
 	void RPC_SetPlayerLocation(class ACharacter* ClientPlayer);

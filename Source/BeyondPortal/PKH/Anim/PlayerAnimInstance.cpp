@@ -46,11 +46,17 @@ void UPlayerAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 void UPlayerAnimInstance::PlayMontage_Fire()
 {
-	
-
 	if( Montage_Fire )
 	{
 		Montage_Play(Montage_Fire);
+	}
+}
+
+void UPlayerAnimInstance::PlayMontage_Dead()
+{
+	if ( Montage_Dead )
+	{
+		Montage_Play(Montage_Dead);
 	}
 }
 

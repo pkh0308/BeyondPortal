@@ -53,6 +53,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UAnimMontage> Montage_Fire;
 
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UAnimMontage> Montage_Dead;
+
 public:
 	void PlayMontage_Fire();
+	void PlayMontage_Dead();
 };
