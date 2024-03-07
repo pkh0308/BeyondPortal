@@ -78,7 +78,7 @@ public:
 // Capture
 protected:
 	UPROPERTY()
-	TObjectPtr<class ACharacter> Player;
+	TObjectPtr<class APlayerCharacter> Player;
 
 	UPROPERTY(EditAnywhere)
 	float FOVOffset = 80.0f;
@@ -92,9 +92,10 @@ protected:
 	void SetCaptureRotation();
 
 public:
-	FORCEINLINE void SetCapturePlayer(class ACharacter* NewPlayer) { Player=NewPlayer; };
+	FORCEINLINE void SetCapturePlayer(class APlayerCharacter* NewPlayer) { Player=NewPlayer; };
 
 	void SetCaptureRotation(FRotator NewRotation);
+	void SetCaptureRotation(FMatrix NewMatrix);
 
 // Material
 protected:
