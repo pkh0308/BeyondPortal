@@ -15,11 +15,16 @@
 #include "PKH/Anim/PlayerAnimInstance.h"
 #include "PKH/Portal/Portal.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "EngineUtils.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// Replicate
+	bReplicates=true;
+	NetUpdateFrequency=100.0f;
 
 	// Rotation Setting
 	bUseControllerRotationRoll=false;
@@ -117,36 +122,58 @@ void APlayerCharacter::BeginPlay()
 
 	// Portal
 	PortalLeft=GetWorld()->SpawnActor<APortal>(PortalLClass, FVector(-100), FRotator(0));
-	PortalRight = GetWorld()->SpawnActor<APortal>(PortalRClass, FVector(-100), FRotator(0));
-	if ( HasAuthority() )
+	PortalRight=GetWorld()->SpawnActor<APortal>(PortalRClass, FVector(-100), FRotator(0));
+	PortalExtent=PortalLeft->GetComponentByClass<UBoxComponent>()->GetUnscaledBoxExtent();
+
+	if( HasAuthority() )
 	{
 		PortalLeft->SetOwner(GetController());
 		PortalRight->SetOwner(GetController());
+		PortalLeft->SetCapturePlayer(this);
+		PortalRight->SetCapturePlayer(this);
 	}
 	else
 	{
-		PortalLeft->SetOwner(GetWorld()->GetFirstPlayerController());
-		PortalRight->SetOwner(GetWorld()->GetFirstPlayerController());
-	}
+		RPC_Server_InitPortal();
 
-	PortalExtent = PortalLeft->GetComponentByClass<UBoxComponent>()->GetUnscaledBoxExtent();
+		PortalLeft->SetCapturePlayer(this);
+		PortalRight->SetCapturePlayer(this);
+
+		APlayerCharacter* OtherPlayer=Cast< APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		if ( nullptr == OtherPlayer )
+		{
+			UE_LOG(LogTemp, Log, TEXT("Set Capture Player Fail - idx 0 Player not exist"));
+			return;
+		}
+		OtherPlayer->PortalLeft->SetCapturePlayer(this);
+		OtherPlayer->PortalRight->SetCapturePlayer(this);
+	}
 
 	// Particle
 	GunParticleComp->SetTemplate(VFX_GrabEffect);
 	GunParticleComp->SetActive(false);
 }
 
-void APlayerCharacter::RPC_SetOwnPlayer_Implementation(class APortal* L, class APortal* R) const
+void APlayerCharacter::RPC_Server_InitPortal_Implementation()
 {
-	for( auto it = GetWorld()->GetPlayerControllerIterator(); it; ++it )
+	APlayerCharacter* OtherPlayer=Cast< APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 1));
+	if ( nullptr == OtherPlayer )
 	{
-		APlayerController* TargetController=it->Get();
-		if( nullptr != TargetController && false == TargetController->IsLocalController() )
-		{
-			L->SetOwnPlayer(TargetController->GetCharacter());
-			R->SetOwnPlayer(TargetController->GetCharacter());
-		}
+		UE_LOG(LogTemp, Warning, TEXT("[RPC_Server_InitPortal] There is no OtherPlayer"));
+		return;
 	}
+
+	APlayerController* OtherController=UGameplayStatics::GetPlayerController(GetWorld(), 1);
+	if( nullptr == OtherController )
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[RPC_Server_InitPortal] There is no OtherController"));
+		return;
+	}
+
+	OtherPlayer->PortalLeft->SetOwner(OtherController);
+	OtherPlayer->PortalRight->SetOwner(OtherController);
+	OtherPlayer->PortalLeft->SetCapturePlayer(this);
+	OtherPlayer->PortalRight->SetCapturePlayer(this);
 }
 
 void APlayerCharacter::Tick(float DeltaTime)
@@ -168,36 +195,15 @@ void APlayerCharacter::SpawnPortal(const bool IsLeft, const FVector& Location, c
 {
 	if( HasAuthority() ) // Server
 	{
-		APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
-		const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
-		const FRotator SpawnRotation=Normal.ToOrientationRotator();
-
-		TargetPortal->SetActorLocation(SpawnLocation);
-		TargetPortal->SetActorRotation(SpawnRotation);
-		TargetPortal->Activate(true);
-		CrosshairUI->PortalUI_Empty(IsLeft);
-
-		// Link
-		APortal* OtherPortal=IsLeft ? PortalRight : PortalLeft;
-		if ( nullptr == OtherPortal )
-		{
-			return;
-		}
-		if ( false == OtherPortal->GetIsActivated() )
-		{
-			return;
-		}
-
-		TargetPortal->LinkPortal(OtherPortal);
-		OtherPortal->LinkPortal(TargetPortal);
+		Spawn(IsLeft, Location, Normal);
 	}
-	else // Client
+	else
 	{
-		RPC_SpawnPortal(IsLeft, Location, Normal, PortalLeft, PortalRight);
+		RPC_Server_SpawnPortal(IsLeft, Location, Normal);
 	}
 }
 
-void APlayerCharacter::RPC_SpawnPortal_Implementation(const bool IsLeft, const FVector& Location, const FVector& Normal, class APortal* LP, class APortal* RP) const
+void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const FVector& Normal) const
 {
 	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
 	const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
@@ -223,6 +229,38 @@ void APlayerCharacter::RPC_SpawnPortal_Implementation(const bool IsLeft, const F
 	OtherPortal->LinkPortal(TargetPortal);
 }
 
+void APlayerCharacter::RPC_Server_SpawnPortal_Implementation(const bool IsLeft, const FVector& Location, const FVector& Normal) const
+{
+	APlayerCharacter* OtherPlayer=Cast< APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 1));
+	if( nullptr == OtherPlayer )
+	{
+		return;
+	}
+
+	APortal* TargetPortal=IsLeft ? OtherPlayer->PortalLeft : OtherPlayer->PortalRight;
+	const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
+	const FRotator SpawnRotation=Normal.ToOrientationRotator();
+
+	TargetPortal->SetActorLocation(SpawnLocation);
+	TargetPortal->SetActorRotation(SpawnRotation);
+	TargetPortal->Activate(true);
+	CrosshairUI->PortalUI_Empty(IsLeft);
+
+	// Link
+	APortal* OtherPortal=IsLeft ? OtherPlayer->PortalRight : OtherPlayer->PortalLeft;
+	if ( nullptr == OtherPortal )
+	{
+		return;
+	}
+	if ( false == OtherPortal->GetIsActivated() )
+	{
+		return;
+	}
+
+	TargetPortal->LinkPortal(OtherPortal);
+	OtherPortal->LinkPortal(TargetPortal);
+}
+
 void APlayerCharacter::ResetAllPortals()
 {
 	PortalLeft->Activate(false);
@@ -231,6 +269,15 @@ void APlayerCharacter::ResetAllPortals()
 	// UI
 	CrosshairUI->PortalUI_Fill(true);
 	CrosshairUI->PortalUI_Fill(false);
+}
+
+void APlayerCharacter::ChangeVelocity(const FVector& NewDirection, const float Multiplier)
+{
+	const float CurVelocitySize=GetCharacterMovement()->Velocity.Size();
+	const float Offset=FMath::Clamp(FMath::Atan(CurVelocitySize / 400), 0.9f, 1.15f);
+	// Velocity가 클수록 증폭
+	const float NewVelocity=CurVelocitySize * Multiplier * 1.15f;
+	GetCharacterMovement()->Velocity=NewDirection * NewVelocity;
 }
 
 void APlayerCharacter::PortalGunLightOn(FLinearColor NewColor)

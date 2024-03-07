@@ -100,11 +100,11 @@ protected:
 
 	void PlayFireMontage() const;
 
-	bool TrySpawnPortal(FHitResult& InHitResult, FVector& ImpactPoint) const;
+	bool TrySpawnPortal(FHitResult& InHitResult, FVector& ImpactPoint, bool IsLeft) const;
 
-	void CalcPortalLocationYZ(FVector& ImpactPoint, FBox WallBox) const;
-	void CalcPortalLocationXZ(FVector& ImpactPoint, FBox WallBox) const;
-	void CalcPortalLocationXY(FVector& ImpactPoint, FBox WallBox) const;
+	bool CalcPortalLocationYZ(FVector& ImpactPoint, const FBox& WallBox) const;
+	bool CalcPortalLocationXZ(FVector& ImpactPoint, const FBox& WallBox) const;
+	bool CalcPortalLocationXY(FVector& ImpactPoint, const FBox& WallBox) const;
 
 	void CalcPortalLocation(FVector& ImpactPoint, const FVector& ImpactNormal, const FBox& WallBox) const;
 

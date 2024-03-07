@@ -92,7 +92,7 @@ protected:
 	void SetCaptureRotation();
 
 public:
-	FORCEINLINE void SetOwnPlayer(class ACharacter* NewPlayer) { Player=NewPlayer; };
+	FORCEINLINE void SetCapturePlayer(class ACharacter* NewPlayer) { Player=NewPlayer; };
 
 	void SetCaptureRotation(FRotator NewRotation);
 
@@ -115,10 +115,18 @@ public:
 	UFUNCTION()
 	void OnRep_PortalTransformChanged();
 
-	// RPC
+	// Portal Scale
+	UPROPERTY(ReplicatedUsing=OnRep_PortalScaleChanged)
+	FVector Net_PortalScale;
+
+	UFUNCTION()
+	void OnRep_PortalScaleChanged();
+
+
+// RPC
 	UFUNCTION(Server, Unreliable)
 	void RPC_PortalTransformChanged();
 
-	UFUNCTION(Server, Unreliable)
-	void RPC_PortalOut(class APlayerCharacter* Character, const FRotator& TargetRotation);
+	UFUNCTION(Server, Reliable)
+	void RPC_PortalOut(const FVector& NewDirection);
 };

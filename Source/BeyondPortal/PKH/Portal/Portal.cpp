@@ -50,8 +50,6 @@ APortal::APortal()
 void APortal::BeginPlay()
 {
 	Super::BeginPlay();
-
-	Player=UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 }
 
 void APortal::Tick(float DeltaTime)
@@ -62,14 +60,18 @@ void APortal::Tick(float DeltaTime)
 
 	if( IsCreating )
 	{
-		DeltaTime*=PortalCreateSpeed;
-		SizeAlpha = SizeAlpha + DeltaTime > 1 ? 1 : SizeAlpha + DeltaTime;
-		MeshComp->SetRelativeScale3D(FMath::Lerp<FVector>(FVector::UpVector, PortalSize, SizeAlpha));
-
-		if(SizeAlpha >= 1)
+		if( HasAuthority() )
 		{
-			SizeAlpha=0;
-			IsCreating=false;
+			DeltaTime*=PortalCreateSpeed;
+			SizeAlpha=SizeAlpha + DeltaTime > 1 ? 1 : SizeAlpha + DeltaTime;
+			Net_PortalScale = FMath::Lerp<FVector>(FVector::UpVector, PortalSize, SizeAlpha);
+			MeshComp->SetRelativeScale3D(Net_PortalScale);
+
+			if ( SizeAlpha >= 1 )
+			{
+				SizeAlpha=0;
+				IsCreating=false;
+			}
 		}
 	}
 }
@@ -82,32 +84,38 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		return;
 	}
 
+	APortal* Portal=Cast<APortal>(OtherActor);
+	if( Portal )
+	{
+
+		return;
+	}
+
+	// Location
 	OtherActor->SetActorLocation(LinkedPortal->GetTargetLocation());
 
-	const FRotator TargetRotation=LinkedPortal->GetTargetRotation();
+	// Player
 	APlayerCharacter* Character=Cast<APlayerCharacter>(OtherActor);
 	if( Character )
 	{
+		// Rotation
+		const FRotator TargetRotation=LinkedPortal->GetTargetRotation();
+		Character->GetController()->SetControlRotation(TargetRotation);
+
+		// Velocity
 		if( HasAuthority() )
 		{
-			// Rotation
-			Character->GetController()->SetControlRotation(TargetRotation);
-
-			// Velocity
-			const float NewVelocity=Character->GetCharacterMovement()->Velocity.Size() * AccelMultiplier;
-			const FVector ForwardVec=LinkedPortal->GetTargetDirection();
-			Character->GetCharacterMovement()->Velocity=ForwardVec * NewVelocity;
-
-			Character->Net_SetControlRotation(TargetRotation);
+			APlayerCharacter* OwnPlayer=CastChecked<APlayerCharacter>(Player);
+			OwnPlayer->ChangeVelocity(LinkedPortal->GetActorForwardVector(), AccelMultiplier);
 		}
 		else
 		{
-			//RPC_PortalOut(Character, TargetRotation);
+			RPC_PortalOut(LinkedPortal->GetActorForwardVector()); UE_LOG(LogTemp, Warning, TEXT("[RPC_PortalOut] "));
 		}
 		return;
 	}
 
-	// Velocity
+	// Other Actors
 	UBoxComponent* Box=Cast<UBoxComponent>(OtherActor->GetRootComponent());
 	if ( nullptr ==  Box )
 	{
@@ -122,9 +130,17 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	//OtherActor->SetActorRotation(TargetRotation);
 }
 
-void APortal::RPC_PortalOut_Implementation(APlayerCharacter* Character, const FRotator& TargetRotation)
+void APortal::RPC_PortalOut_Implementation(const FVector& NewDirection)
 {
-	Character->Net_SetControlRotation(TargetRotation);
+	// Velocity
+	ACharacter* OtherCharacter=UGameplayStatics::GetPlayerCharacter(GetWorld(), 1);
+	if ( OtherCharacter )
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[RPC_PortalOut] There is no idx 1 player"));
+		return;
+	}
+	APlayerCharacter* OtherPlayer=CastChecked<APlayerCharacter>(OtherCharacter);
+	OtherPlayer->ChangeVelocity(NewDirection, AccelMultiplier);
 }
 
 void APortal::Activate(const bool ActiveSelf)
@@ -222,24 +238,30 @@ void APortal::SetCaptureFOV()
 
 void APortal::SetCaptureRotation()
 {
-	if ( FMath::Abs(ArrowComp->GetForwardVector().Z) > 0.9f )
-	{
-		return;
-	}
-
 	FVector TargetLocation=Player->GetActorLocation();
 	TargetLocation.Z=0;
 	FVector MyLocation=GetActorLocation();
 	MyLocation.Z=0;
-	const float PitchOffset=LinkedPortal->GetActorRotation().Pitch - GetActorRotation().Pitch;
-	const float YawOffset=LinkedPortal->GetActorRotation().Yaw - GetActorRotation().Yaw;
+	FVector rightDelta = LinkedPortal->GetActorRightVector() - GetActorRightVector();
+	FVector upDelta = LinkedPortal->GetActorUpVector() - GetActorUpVector();
 
 	const FVector Direction=TargetLocation - MyLocation;
 	FRotator Rotation=Direction.ToOrientationRotator();
-	Rotation.Roll=0;
-	Rotation.Pitch+=PitchOffset;
-	Rotation.Yaw+=YawOffset;
-	LinkedPortal->SetCaptureRotation(Rotation);
+	LinkedPortal->SetCaptureRotation(Rotation.GetNormalized());
+
+	//FVector TargetLocation=Player->GetActorLocation();
+	//TargetLocation.Z=0;
+	//FVector MyLocation=GetActorLocation();
+	//MyLocation.Z=0;
+	//const float PitchOffset=LinkedPortal->GetActorRotation().Pitch - GetActorRotation().Pitch;
+	//const float YawOffset=LinkedPortal->GetActorRotation().Yaw - GetActorRotation().Yaw;
+
+	//const FVector Direction=TargetLocation - MyLocation;
+	//FRotator Rotation=Direction.ToOrientationRotator();
+	//Rotation.Pitch=0;
+	//Rotation.Yaw+=YawOffset;
+	//Rotation.Roll=0;
+	//LinkedPortal->SetCaptureRotation(Rotation.GetNormalized());
 }
 
 void APortal::SetCaptureRotation(FRotator NewRotation)
@@ -257,6 +279,11 @@ void APortal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 void APortal::OnRep_PortalTransformChanged()
 {
 	SetActorTransform(Net_PortalTransform);
+}
+
+void APortal::OnRep_PortalScaleChanged()
+{
+	MeshComp->SetRelativeScale3D(Net_PortalScale);
 }
 
 void APortal::RPC_PortalTransformChanged_Implementation()
