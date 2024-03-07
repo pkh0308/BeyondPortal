@@ -46,6 +46,11 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool isSpawned;
 
+	UPROPERTY()
+	class AArmMesh* armMesh;
+
+
+
 public:
 	virtual void DoInteraction() override;
 };

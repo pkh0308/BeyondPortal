@@ -55,6 +55,9 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 
 	if ( OtherActor->IsA<AGrabCube>() ) {
 
+		//닿으면 cube 색 변경 blue -> orange
+		AGrabCube* cube=Cast<AGrabCube>(OtherActor);
+		cube->ChangeMaterial(true);
 
 		//눌린 버튼의 tag를 가져와서
 		//그 tag와 같은 actor들을 전부 탐색
@@ -65,8 +68,7 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 		FName findTagName=FName(*findTag);
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
 		
-		//그 중에 ArmDoor는 isOpened = true로 바꾸고,
-		//floorChain은 mesh 컬러를 변경. 
+
 		for ( auto CurrentActor : FoundActors )
 		{
 			// 찾은 태그 중에 ArmDoor를 찾아서
@@ -74,10 +76,11 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 			{
 				// 딜레이 후에 문 열기
 				Cast<AArmDoor>(CurrentActor)->isOpened=true;
-				
 			}
+			// 찾은 태그 중에 FloorLine를 찾아서
 			else if( CurrentActor->IsA<AFloorLine>() )
 			{
+				//색 변경
 				FString findColor=CurrentActor->Tags.Num() > 1 ? CurrentActor->Tags[1].ToString() : TEXT("NoTag");
 				if( findColor == "blue" )
 				{
@@ -101,6 +104,11 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	if ( OtherActor->IsA<AGrabCube>() ) {
+
+		//닿으면 cube 색 변경 orange -> blue
+		AGrabCube* cube=Cast<AGrabCube>(OtherActor);
+		cube->ChangeMaterial(false);
+
 		TArray<AActor*> FoundActors;
 		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
 		FName findTagName=FName(*findTag);

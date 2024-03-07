@@ -3,6 +3,8 @@
 
 #include "SEB/PortalButton.h"
 
+#include "ArmDoor.h"
+#include "ArmMesh.h"
 #include "Barrier.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -49,7 +51,7 @@ void APortalButton::BeginPlay()
 void APortalButton::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 }
 
 void APortalButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -61,26 +63,55 @@ void APortalButton::activeSpawnCube()
 ;
 	// cube 스폰 -> 조금 흔들리다가 떨어뜨리기
 	ABarrier* foundActor=Cast<ABarrier>(UGameplayStatics::GetActorOfClass(GetWorld(), APortalButton::StaticClass()));
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("우오오오오오오옹 "));
-	if(!isSpawned  )
+	
+	FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
+	FName findTagName=FName(*findTag);
+	if(findTag == TEXT("open") )
 	{
-		
-		//tag가 CubeDropper인 액터 탐색
-		TArray<AActor*> FoundActors;
-		UGameplayStatics::GetAllActorsWithTag(GetWorld(), TEXT("CubeDropper"), FoundActors);
-
-		//그 중에 가장 가까운 것 탐색 후 위치를 얻어서 => Find Nearest actor
-		float NearestActorDistance=1000.0f;
-		AActor* NearestActor=UGameplayStatics::FindNearestActor(GetActorLocation(), FoundActors, NearestActorDistance);
-
-		//스폰된 Cube가 없다면 cube 스폰
-		GetWorld()->SpawnActor<AActor>(spawnCube, FVector(NearestActor->GetActorLocation().X, NearestActor->GetActorLocation().Y, NearestActor->GetActorLocation().Z - 200), FRotator::ZeroRotator);
-		isSpawned=true;
-		UE_LOG(LogTemp, Warning, TEXT("이제 스폰할 수 없다: %d"), isSpawned);
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("열려라"));
+		TArray<AActor*> findArmMesh;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmMesh::StaticClass(), findArmMesh);
+		for(auto currentArm : findArmMesh )
+		{
+			armMesh =Cast<AArmMesh>(currentArm);
+			armMesh->openMesh();
+		}
+		/*AActor* findArmDoor=UGameplayStatics::GetActorOfClass(GetWorld(), AArmMesh::StaticClass());*/
+		/*armMesh=Cast<AArmMesh>(findArmDoor);
+		armMesh->openMesh();*/
 	}
-	UE_LOG(LogTemp, Warning, TEXT("isSpawned"));
+	else
+	{
+		if ( !isSpawned )
+		{
+
+			//tag가 CubeDropper인 액터 탐색
+			TArray<AActor*> FoundActors;
+			UGameplayStatics::GetAllActorsWithTag(GetWorld(), TEXT("CubeDropper"), FoundActors);
+
+			//그 중에 가장 가까운 것 탐색 후 위치를 얻어서 => Find Nearest actor
+			float NearestActorDistance=1000.0f;
+			AActor* NearestActor=UGameplayStatics::FindNearestActor(GetActorLocation(), FoundActors, NearestActorDistance);
+
+			//스폰된 Cube가 없다면 cube 스폰
+			AActor* cube=GetWorld()->SpawnActor<AActor>(spawnCube, FVector(NearestActor->GetActorLocation().X, NearestActor->GetActorLocation().Y, NearestActor->GetActorLocation().Z - 200), FRotator::ZeroRotator);
+
+			cube->Tags.Add(findTagName);
+			isSpawned=true;
+
+		}
+		else
+		{
+			;
+
+		}
+	}
+	
+	
 	
 }
+
+
 
 //E 버튼 눌렸을 때
 void APortalButton::DoInteraction()
