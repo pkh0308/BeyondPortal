@@ -124,6 +124,11 @@ void UPlayerInputComponent::SetupInput(UEnhancedInputComponent* PlayerInputCompo
 
 void UPlayerInputComponent::OnIAMove(const FInputActionValue& Value)
 {
+	if(Owner->IsPlayerDead())
+	{
+		return;
+	}
+
 	const FVector2D InputVec=Value.Get<FVector2D>();
 
 	const FRotator Rotator=Owner->Controller->GetControlRotation();
@@ -138,6 +143,11 @@ void UPlayerInputComponent::OnIAMove(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIALook(const FInputActionValue& Value)
 {
+	if ( Owner->IsPlayerDead() )
+	{
+		return;
+	}
+
 	const FVector2D InputVec=Value.Get<FVector2D>();
 
 	Owner->AddControllerPitchInput(InputVec.X * MouseSensitivity);
@@ -146,16 +156,30 @@ void UPlayerInputComponent::OnIALook(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAJump(const FInputActionValue& Value)
 {
+	if ( Owner->IsPlayerDead() )
+	{
+		return;
+	}
+
 	Owner->Jump();
 }
 
 void UPlayerInputComponent::OnIACrouch(const FInputActionValue& Value)
 {
+	if ( Owner->IsPlayerDead() )
+	{
+		return;
+	}
+
 	Owner->PlayerCrouch();
 }
 
 void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 {
+	if ( Owner->IsPlayerDead() )
+	{
+		return;
+	}
 	if(Owner->GetGrabObject())
 	{
 		return;
@@ -182,6 +206,10 @@ void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 {
+	if ( Owner->IsPlayerDead() )
+	{
+		return;
+	}
 	if (Owner->GetGrabObject())
 	{
 		return;
@@ -204,10 +232,14 @@ void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 {
 	// Drop Object
+	if ( Owner->IsPlayerDead() )
+	{
+		return;
+	}
 	if( Owner->GetGrabObject() )
 	{
 		Owner->GetGrabObject()->Drop();
-		Owner->DropObj();
+		//Owner->DropObj();
 		return;
 	}
 
@@ -231,7 +263,7 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 	if(GrabActor)
 	{
 		GrabActor->Grab(Owner);
-		Owner->GrabObj(GrabActor);
+		//Owner->GrabObj(GrabActor);
 		return;
 	}
 

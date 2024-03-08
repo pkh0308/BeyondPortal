@@ -135,14 +135,18 @@ protected:
 	TObjectPtr<class AGunActor> GunActor;
 
 	FVector CameraDefaultLocation=FVector(17, 7, 28);
-	FVector CameraOnDieLocation=FVector(-400, 0, 110);
+	FVector CameraOnDieLocation=FVector(-400, 0, 150);
 
 	FVector RespawnLocation;
+
+	bool IsDead=false;
 
 	void Respawn();
 
 public:
 	void OnDie();
+
+	FORCEINLINE bool IsPlayerDead() const { return IsDead; }
 
 // Animation
 protected:

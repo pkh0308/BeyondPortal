@@ -88,7 +88,7 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 		}
 		OwnPlayer=Player;
 		OwnPlayer->GrabObj(this);
-		BoxComp->SetEnableGravity(false);
+		BoxComp->SetEnableGravity(false); UE_LOG(LogTemp, Warning, TEXT("Cube Grab"));
 		// Network
 		Net_OwnPlayer=Player;
 	}
@@ -107,7 +107,7 @@ void AGrabCube::Drop()
 			OwnPlayer->DropObj();
 		}
 		OwnPlayer=nullptr;
-		BoxComp->SetEnableGravity(true);
+		BoxComp->SetEnableGravity(true); UE_LOG(LogTemp, Warning, TEXT("Cube Drop"));
 		// Network
 		Net_OwnPlayer=nullptr;
 	}

@@ -10,7 +10,7 @@ AGunActor::AGunActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	// Capsule
+	// Box
 	BoxComp=CreateDefaultSubobject<UBoxComponent>(TEXT("CapsuleComp"));
 	SetRootComponent(BoxComp);
 	BoxComp->SetBoxExtent(FVector(20.0f, 8.0f, 8.0f));
@@ -20,7 +20,7 @@ AGunActor::AGunActor()
 	// StaticMesh
 	MeshComp=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	MeshComp->SetupAttachment(RootComponent);
-	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	MeshComp->SetCollisionProfileName(TEXT("NoCollision"));
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MeshCompRef(TEXT("/Script/Engine.StaticMesh'/Game/PKH/Mesh/PortalGun/SM_PortalGun.SM_PortalGun'"));
 	if( MeshCompRef.Object )

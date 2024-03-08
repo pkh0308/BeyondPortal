@@ -343,7 +343,7 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject)
 		GunParticleComp->SetActive(true);
 	}
 
-	CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
+	CrosshairUI->SetVisibility(ESlateVisibility::Hidden); UE_LOG(LogTemp, Warning, TEXT("Player Grab"));
 }
 
 void APlayerCharacter::DropObj()
@@ -354,7 +354,7 @@ void APlayerCharacter::DropObj()
 		GunParticleComp->SetActive(false);
 	}
 
-	CrosshairUI->SetVisibility(ESlateVisibility::Visible);
+	CrosshairUI->SetVisibility(ESlateVisibility::Visible); UE_LOG(LogTemp, Warning, TEXT("Player Drop"));
 }
 
 FVector APlayerCharacter::GetGrabPoint() const
@@ -365,6 +365,8 @@ FVector APlayerCharacter::GetGrabPoint() const
 
 void APlayerCharacter::Respawn()
 {
+	IsDead=false;
+
 	SetActorLocation(RespawnLocation);
 
 	// Animation
@@ -385,6 +387,8 @@ void APlayerCharacter::Respawn()
 
 void APlayerCharacter::OnDie()
 {
+	IsDead=true;
+
 	// Animation
 	UPlayerAnimInstance* Anim=Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
 	if( Anim )
