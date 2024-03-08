@@ -30,6 +30,8 @@ public:
 	class UMaterial* mat;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class UMaterial* mat2;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool isChange=false;
 
 };

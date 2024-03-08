@@ -40,7 +40,6 @@ void AArmDoor::Tick(float DeltaTime)
 		isClosed=false;
 		armDoor->PlayAnimation(armDoorOpenAnim, false);
 		isOpened=false;
-		UE_LOG(LogTemp, Warning, TEXT("aaaaaaaa"));
 	}
 	if(isClosed )
 	{

@@ -161,7 +161,7 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 			else if ( CurrentActor->IsA< ACheckOpen>() ) //checkopen 보드 색상 변경
 			{
 				ACheckOpen* co=Cast<ACheckOpen>(CurrentActor);
-				co->checkOpen->SetMaterial(0, co->mat);
+				co->checkOpen->SetMaterial(0, co->mat2);
 			}
 		}
 	}
