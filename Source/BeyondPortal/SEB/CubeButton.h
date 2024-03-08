@@ -53,4 +53,5 @@ public:
 
 	void OpenNextDoor(int32 i);
 
+	/*bool SortByName(const AActor& currentActorA, const AActor& currentActorB);*/
 };

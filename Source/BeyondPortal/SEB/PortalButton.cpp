@@ -71,15 +71,13 @@ void APortalButton::activeSpawnCube()
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("열려라"));
 		TArray<AActor*> findArmMesh;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmMesh::StaticClass(), findArmMesh);
-
+		findArmMesh.Sort([](const AActor& a, const AActor& b)
+		{
+			return a.GetActorLabel() < b.GetActorLabel();
+		});
 		float Delay=0.1f;
 		for(auto currentArm : findArmMesh )
 		{
-			/*armMesh =Cast<AArmMesh>(currentArm);
-			armMesh->openMesh();*/
-
-
-
 			// 딜레이 후에 문 열기
 			AArmMesh* Mesh=Cast<AArmMesh>(currentArm);
 			FTimerHandle Handle;

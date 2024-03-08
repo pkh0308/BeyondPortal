@@ -68,10 +68,14 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag"); 
 		FName findTagName=FName(*findTag);
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
-		
-		float Delay=0.2f;
+		FoundActors.Sort([](const AActor& a, const AActor& b)
+		{
+			return a.GetActorLabel() < b.GetActorLabel();
+		});
+		float Delay=0.1f;
 		for ( auto CurrentActor : FoundActors )
 		{
+			
 			// 찾은 태그 중에 ArmDoor를 찾아서
 			if ( CurrentActor->IsA<AArmDoor>() )
 			{
@@ -82,7 +86,7 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 					{
 						Door->isOpened=true;
 					}), Delay, false);
-				Delay+=0.2f;
+				Delay+=0.1f;
 			}
 			
 			else if( CurrentActor->IsA<AFloorLine>() ) //FloorLine 색상 변경
@@ -126,7 +130,7 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 		FName findTagName=FName(*findTag);
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
 
-		float Delay=0.2f;
+		float Delay=0.1f;
 		for ( auto CurrentActor : FoundActors )
 		{
 
@@ -142,7 +146,7 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 					{
 						Door->isClosed=true;
 					}), Delay, false);
-				Delay+=0.2f;
+				Delay+=0.1f;
 
 			}
 			else if ( CurrentActor->IsA<AFloorLine>() ) //FloorLine 색상 변경
@@ -178,5 +182,12 @@ void ACubeButton::OpenNextDoor(int32 i)
 		
 	
 }
+
+/*
+bool ACubeButton::SortByName(const AActor& currentActorA, const AActor& currentActorB)
+{
+	return currentActorA.GetActorLabel() < currentActorB.GetActorLabel();
+}
+*/
 
 

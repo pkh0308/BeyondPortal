@@ -63,14 +63,16 @@ void ADestroyZone::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent
 		//cube 사라지는 이펙트 후 큐브 제거
 		AGrabCube* cube=Cast<AGrabCube>(OtherActor);
 		cube->OnDisappear();
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("큐브가 사라졌으니까"));
+		
 
 
 	}
 
-	//Barrier랑 Player랑 닿았을 때 포탈 초기화
+	
 	else if ( OtherActor->IsA< APlayerCharacter>() ) {
+
 		APlayerCharacter* player=Cast<APlayerCharacter>(OtherActor);
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("플레이어 충돌"));
 		player->OnDie();
 		player->ResetAllPortals();
 	}

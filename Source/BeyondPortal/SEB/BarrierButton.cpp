@@ -51,6 +51,7 @@ void ABarrierButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedCompone
 		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");//DestroyBarrier
 		FName findTagName=FName(*findTag);
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
+
 		for ( auto CurrentActor : FoundActors )
 		{
 			// 찾은 태그 중에 ArmDoor를 찾아서
