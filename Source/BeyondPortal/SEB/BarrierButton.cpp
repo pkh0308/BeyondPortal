@@ -57,6 +57,8 @@ void ABarrierButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedCompone
 			if ( CurrentActor->IsA<ABarrier>() )
 			{
 				CurrentActor->SetActorHiddenInGame(true);
+				ABarrier* b=Cast<ABarrier>(CurrentActor);
+				b->boxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			}
 
 			else if ( CurrentActor->IsA<AFloorLine>() )
@@ -94,6 +96,8 @@ void ABarrierButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AAc
 			if ( CurrentActor->IsA<ABarrier>() )
 			{
 				CurrentActor->SetActorHiddenInGame(false);
+				ABarrier* b=Cast<ABarrier>(CurrentActor);
+				b->boxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 			}
 
 			else if ( CurrentActor->IsA<AFloorLine>() )

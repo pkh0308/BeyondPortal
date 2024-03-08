@@ -71,6 +71,7 @@ void ADestroyZone::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent
 	//Barrier랑 Player랑 닿았을 때 포탈 초기화
 	else if ( OtherActor->IsA< APlayerCharacter>() ) {
 		APlayerCharacter* player=Cast<APlayerCharacter>(OtherActor);
+		player->OnDie();
 		player->ResetAllPortals();
 	}
 }
