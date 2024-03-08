@@ -126,8 +126,8 @@ void APlayerCharacter::BeginPlay()
 	}
 
 	// Gun Actor
-	GunActor = GetWorld()->SpawnActor<AGunActor>(GunActorClass);
-	GunActor->SetActive(false);
+	//GunActor = GetWorld()->SpawnActor<AGunActor>(GunActorClass);
+	//GunActor->SetActive(false);
 
 	// Respawn
 	RespawnLocation=GetActorLocation();
@@ -377,8 +377,8 @@ void APlayerCharacter::Respawn()
 	}
 
 	// Gun
-	GunComp->SetVisibility(true);
-	GunActor->SetActive(false);
+	/*GunComp->SetVisibility(true);
+	GunActor->SetActive(false);*/
 
 	// Camera
 	CameraComp->SetRelativeLocation(CameraDefaultLocation);
@@ -397,10 +397,10 @@ void APlayerCharacter::OnDie()
 	}
 
 	// Gun 
-	GunComp->SetVisibility(false);
+	/*GunComp->SetVisibility(false);
 	GunActor->SetActive(true);
 	GunActor->SetActorLocation(GunComp->GetComponentLocation());
-	GunActor->SetActorRotation(GunComp->GetComponentRotation());
+	GunActor->SetActorRotation(GunComp->GetComponentRotation());*/
 
 	// Camera
 	CameraComp->SetRelativeLocation(CameraOnDieLocation);
