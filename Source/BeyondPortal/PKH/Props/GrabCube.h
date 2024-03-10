@@ -34,6 +34,19 @@ public:
 
 	virtual void Drop() override;
 
+	// RPC
+	UFUNCTION(Server, Unreliable)
+	void RPC_Server_Grab(class APlayerCharacter* NewOwnPlayer);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void RPC_Multi_Grab(class APlayerCharacter* NewOwnPlayer);
+
+	UFUNCTION(Server, Unreliable)
+	void RPC_Server_Drop();
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void RPC_Multi_Drop();
+
 // Grab
 protected:
 	UPROPERTY(VisibleAnywhere)
@@ -88,19 +101,9 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_CubeRotationChanged)
 	FRotator Net_CubeRotation;
 
-	UPROPERTY(ReplicatedUsing = OnRep_OwnPlayerChanged)
-	TObjectPtr<class APlayerCharacter> Net_OwnPlayer;
-
 	UFUNCTION()
 	void OnRep_CubeLocationChanged();
 
 	UFUNCTION()
 	void OnRep_CubeRotationChanged();
-
-	UFUNCTION()
-	void OnRep_OwnPlayerChanged();
-
-	// RPC
-	UFUNCTION(Server, Unreliable)
-	void RPC_SetCubeOwner(class APlayerCharacter* NewOwner);
 };

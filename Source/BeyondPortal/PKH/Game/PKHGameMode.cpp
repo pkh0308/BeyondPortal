@@ -19,4 +19,28 @@ APKHGameMode::APKHGameMode()
 	{
 		PlayerControllerClass=ControllerRef.Class;
 	}
+
+	static ConstructorHelpers::FClassFinder<APlayerCharacter> P2CharacterClassRef(TEXT("/Game/PKH/Blueprint/BP_PlayerCharacter_P2.BP_PlayerCharacter_P2_C"));
+	if ( P2CharacterClassRef.Class )
+	{
+		P2CharacterClass = P2CharacterClassRef.Class;
+	}
+}
+
+void APKHGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	if( LogInCount == 1)
+	{
+		if(ACharacter* Character = NewPlayer->GetCharacter() )
+		{
+			Character->Destroy();
+		}
+
+		APlayerCharacter* Player=GetWorld()->SpawnActor<APlayerCharacter>(P2CharacterClass, FVector(900, -55, 50), FRotator::ZeroRotator);
+		NewPlayer->Possess(Player);
+	}
+	
+	LogInCount++;
 }

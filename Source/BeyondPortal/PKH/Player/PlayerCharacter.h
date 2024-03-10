@@ -102,13 +102,47 @@ protected:
 
 	float CurIntensity=0;
 
+	UPROPERTY(EditDefaultsOnly)
+	FLinearColor LColor;
+
+	UPROPERTY(EditDefaultsOnly)
+	FLinearColor RColor;
+
 public:
-	void PortalGunLightOn(FLinearColor NewColor);
+	void PortalGunLightOn(bool IsLeft);
 	void PortalGunLightOff();
 
 // Camera
 public:
 	FVector GetCameraLocation() const;
+
+// Portal
+public:
+	void PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void RPC_Multi_PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier);
+
+	UFUNCTION(Server, Unreliable)
+	void RPC_Server_SpawnPortal(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void RPC_Multi_SpawnPortal(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const;
+
+	UFUNCTION(Server, Unreliable)
+	void RPC_Server_LinkPortal() const;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void RPC_Multi_LinkPortal() const;
+
+// Particle
+	void SpawnFail(class UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const;
+
+	UFUNCTION(Server, Unreliable)
+	void RPC_Server_SpawnFail(class UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void RPC_Multi_SpawnFail(class UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const;
 
 // Grab
 protected:
@@ -180,9 +214,6 @@ public:
 
 // RPC
 protected:
-	UFUNCTION(Server, Unreliable)
-	void RPC_Server_SpawnPortal(class APortal* TargetPortal, const FVector& NewLocation, const FRotator& NewRotation) const;
-
 	UFUNCTION(Server, Unreliable)
 	void RPC_SetPlayerLocation(class ACharacter* ClientPlayer);
 };
