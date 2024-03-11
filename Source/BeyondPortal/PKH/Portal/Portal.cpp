@@ -91,26 +91,22 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		return;
 	}
 
-	// Location
-	OtherActor->SetActorLocation(LinkedPortal->GetTargetLocation());
+	// Location & Rotation
+	const FVector TargetLocation =  LinkedPortal->GetTargetLocation();
+	const FRotator TargetRotation = LinkedPortal->GetTargetRotation();
+	const FVector TargetDirection = GetLinkedPortal()->GetActorForwardVector();
 
 	// Player
 	APlayerCharacter* Character=Cast<APlayerCharacter>(OtherActor);
-	if( Character )
+	if( nullptr == Character )
 	{
-		// Rotation
-		const FRotator TargetRotation=LinkedPortal->GetTargetRotation();
-		Character->GetController()->SetControlRotation(TargetRotation);
-
-		// Velocity
+		return;
+	}
+	if( Character->HasAuthority() )
+	{
 		if( HasAuthority() )
 		{
-			APlayerCharacter* OwnPlayer=CastChecked<APlayerCharacter>(Player);
-			OwnPlayer->ChangeVelocity(LinkedPortal->GetActorForwardVector(), AccelMultiplier);
-		}
-		else
-		{
-			RPC_PortalOut(LinkedPortal->GetActorForwardVector()); UE_LOG(LogTemp, Warning, TEXT("[RPC_PortalOut] "));
+			Character->PortalOut(TargetLocation, TargetRotation, TargetDirection, AccelMultiplier);
 		}
 		return;
 	}
@@ -123,24 +119,15 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	}
 	if ( Box->IsSimulatingPhysics() )
 	{
+		// Location
+		OtherActor->SetActorLocation(TargetLocation);
+
+		// Velocity
 		const float NewVelocity=OtherActor->GetVelocity().Size() * AccelMultiplier;
 		const FVector ForwardVec=LinkedPortal->GetTargetDirection();
 		Box->AddForce(ForwardVec * NewVelocity * 10000);
 	}
 	//OtherActor->SetActorRotation(TargetRotation);
-}
-
-void APortal::RPC_PortalOut_Implementation(const FVector& NewDirection)
-{
-	// Velocity
-	ACharacter* OtherCharacter=UGameplayStatics::GetPlayerCharacter(GetWorld(), 1);
-	if ( OtherCharacter )
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[RPC_PortalOut] There is no idx 1 player"));
-		return;
-	}
-	APlayerCharacter* OtherPlayer=CastChecked<APlayerCharacter>(OtherCharacter);
-	OtherPlayer->ChangeVelocity(NewDirection, AccelMultiplier);
 }
 
 void APortal::Activate(const bool ActiveSelf)
@@ -184,7 +171,24 @@ void APortal::LinkPortal(APortal* NewLinkedPortal)
 	LinkedPortal=NewLinkedPortal;
 	IsLinked=true;
 	// Material
-	MeshComp->SetMaterial(0, LinkedMaterial);
+	if( HasAuthority() )
+	{
+		RPC_Multi_MaterialChange(LinkedMaterial);
+	}
+	else
+	{
+		RPC_Server_MaterialChange(LinkedMaterial);
+	}
+}
+
+void APortal::RPC_Server_MaterialChange_Implementation(class UMaterialInterface* NewMaterial)
+{
+	RPC_Multi_MaterialChange(LinkedMaterial);
+}
+
+void APortal::RPC_Multi_MaterialChange_Implementation(class UMaterialInterface* NewMaterial)
+{
+	MeshComp->SetMaterial(0, NewMaterial);
 }
 
 void APortal::UnlinkPortal()
@@ -290,6 +294,7 @@ void APortal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(APortal, Net_PortalTransform);
+	DOREPLIFETIME(APortal, Net_PortalScale);
 }
 
 void APortal::OnRep_PortalTransformChanged()

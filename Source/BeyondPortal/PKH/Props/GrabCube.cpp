@@ -12,7 +12,7 @@ AGrabCube::AGrabCube()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
-	NetUpdateFrequency = 60.0f;
+	NetUpdateFrequency = 100.0f;
 
 	BoxComp=CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCom"));
 	SetRootComponent(BoxComp);
@@ -47,15 +47,16 @@ void AGrabCube::BeginPlay()
 
 	InitDynamicMaterials();
 
-	// For Server
-	if ( false == HasAuthority() )
-	{
-		return;
-	}
-
 	// Set Network Owner
-	SetOwner(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-	UE_LOG(LogTemp, Warning, TEXT("SetOwner: %s"), *GetOwner()->GetName());
+	if ( HasAuthority() )
+	{
+		FTimerHandle Handle;
+		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([this]()
+		{
+			SetOwner(UGameplayStatics::GetPlayerController(GetWorld(), 1));
+			UE_LOG(LogTemp, Warning, TEXT("CubeSetOwner: %s"), *GetOwner()->GetName());
+		}), 3.0f, false);
+	}
 }
 
 void AGrabCube::Tick(float DeltaSeconds)
@@ -72,6 +73,7 @@ void AGrabCube::Tick(float DeltaSeconds)
 	}
 }
 
+// Region_Grab
 void AGrabCube::Grab(ACharacter* NewOwner)
 {
 	APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
@@ -82,39 +84,56 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 
 	if( HasAuthority() )
 	{
-		if ( nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject() )
-		{
-			OwnPlayer->DropObj();
-		}
-		OwnPlayer=Player;
-		OwnPlayer->GrabObj(this);
-		BoxComp->SetEnableGravity(false); UE_LOG(LogTemp, Warning, TEXT("Cube Grab"));
-		// Network
-		Net_OwnPlayer=Player;
+		RPC_Multi_Grab(Player); 
 	}
 	else
 	{
-		RPC_SetCubeOwner(Player);
+		RPC_Server_Grab(Player);
 	}
 }
 
+void AGrabCube::RPC_Server_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
+{
+	RPC_Multi_Grab(NewOwnPlayer);
+}
+
+void AGrabCube::RPC_Multi_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
+{
+	if ( nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject() )
+	{
+		OwnPlayer->DropObj();
+	}
+	OwnPlayer=NewOwnPlayer; 
+	OwnPlayer->GrabObj(this);
+	BoxComp->SetEnableGravity(false);
+}
+
+// Region_Drop
 void AGrabCube::Drop()
 {
 	if ( HasAuthority() )
 	{
-		if( OwnPlayer )
-		{
-			OwnPlayer->DropObj();
-		}
-		OwnPlayer=nullptr;
-		BoxComp->SetEnableGravity(true); UE_LOG(LogTemp, Warning, TEXT("Cube Drop"));
-		// Network
-		Net_OwnPlayer=nullptr;
+		RPC_Multi_Drop();
 	}
 	else
 	{
-		RPC_SetCubeOwner(nullptr);
+		RPC_Server_Drop();
 	}
+}
+
+void AGrabCube::RPC_Server_Drop_Implementation()
+{
+	RPC_Multi_Drop();
+}
+
+void AGrabCube::RPC_Multi_Drop_Implementation()
+{
+	if ( OwnPlayer )
+	{
+		OwnPlayer->DropObj();
+	}
+	OwnPlayer=nullptr;
+	BoxComp->SetEnableGravity(true);
 }
 
 void AGrabCube::TickGrab()
@@ -140,10 +159,6 @@ void AGrabCube::TickGrab()
 
 		Net_CubeLocation=GetActorLocation();
 		Net_CubeRotation=GetActorRotation();
-	}
-	else
-	{
-		
 	}
 }
 
@@ -196,7 +211,6 @@ void AGrabCube::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 
 	DOREPLIFETIME(AGrabCube, Net_CubeLocation);
 	DOREPLIFETIME(AGrabCube, Net_CubeRotation);
-	DOREPLIFETIME(AGrabCube, Net_OwnPlayer);
 }
 
 void AGrabCube::OnRep_CubeLocationChanged()
@@ -207,34 +221,4 @@ void AGrabCube::OnRep_CubeLocationChanged()
 void AGrabCube::OnRep_CubeRotationChanged()
 {
 	SetActorRotation(Net_CubeRotation);
-}
-
-void AGrabCube::OnRep_OwnPlayerChanged()
-{
-	if( Net_OwnPlayer )
-	{
-		if(nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject())
-		{
-			OwnPlayer->DropObj();
-		}
-		OwnPlayer=Net_OwnPlayer;
-
-		OwnPlayer->GrabObj(this);
-		BoxComp->SetEnableGravity(false);
-	}
-	else
-	{
-		if ( OwnPlayer )
-		{
-			OwnPlayer->DropObj();
-		}
-		OwnPlayer=Net_OwnPlayer;
-		BoxComp->SetEnableGravity(true);
-	}
-}
-
-void AGrabCube::RPC_SetCubeOwner_Implementation(APlayerCharacter* NewOwner)
-{
-	Net_OwnPlayer=NewOwner;
-	OnRep_OwnPlayerChanged();
 }

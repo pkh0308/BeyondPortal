@@ -123,11 +123,13 @@ public:
 	UFUNCTION()
 	void OnRep_PortalScaleChanged();
 
-
 // RPC
 	UFUNCTION(Server, Unreliable)
 	void RPC_PortalTransformChanged();
 
-	UFUNCTION(Server, Reliable)
-	void RPC_PortalOut(const FVector& NewDirection);
+	UFUNCTION(Server, Unreliable)
+	void RPC_Server_MaterialChange(class UMaterialInterface* NewMaterial);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void RPC_Multi_MaterialChange(class UMaterialInterface* NewMaterial);
 };

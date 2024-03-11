@@ -17,5 +17,14 @@ class BEYONDPORTAL_API APKHGameMode : public AGameModeBase
 public:
 	APKHGameMode();
 
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class APlayerCharacter> P2CharacterClass;
 
+	UPROPERTY(VisibleAnywhere)
+	int LogInCount=0;
+
+	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	
 };

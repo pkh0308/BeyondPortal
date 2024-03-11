@@ -185,11 +185,6 @@ void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 		return;
 	}
 
-	if( Owner->HasAuthority() )
-	{
-		
-	}
-
 	FHitResult HitResult;
 	FVector ImpactPoint = HitResult.ImpactPoint;
 	if( TrySpawnPortal(HitResult, ImpactPoint, true) )
@@ -199,9 +194,9 @@ void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 	else
 	{
 		const FRotator EmitterRotation=FRotationMatrix::MakeFromY(HitResult.ImpactNormal).Rotator();
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalLFail, HitResult.ImpactPoint, EmitterRotation);
+		Owner->SpawnFail(VFX_PortalLFail, HitResult.ImpactPoint, EmitterRotation);
 	}
-	Owner->PortalGunLightOn(FLinearColor::Blue);
+	Owner->PortalGunLightOn(true);
 }
 
 void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
@@ -224,9 +219,9 @@ void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 	else
 	{
 		const FRotator EmitterRotation =FRotationMatrix::MakeFromY(HitResult.ImpactNormal).Rotator();
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), VFX_PortalRFail, HitResult.ImpactPoint, EmitterRotation);
+		Owner->SpawnFail(VFX_PortalRFail, HitResult.ImpactPoint, EmitterRotation);
 	}
-	Owner->PortalGunLightOn(FLinearColor::FromSRGBColor(FColor::Orange));
+	Owner->PortalGunLightOn(false);
 }
 
 void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)

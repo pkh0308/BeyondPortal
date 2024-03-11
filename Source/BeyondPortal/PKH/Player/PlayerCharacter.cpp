@@ -119,15 +119,24 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 위치 조정(클라)
-	if( false == HasAuthority() )
+	// Set Network Owner
+	if( HasAuthority() )
 	{
-		//RPC_SetPlayerLocation(this);
+		FTimerHandle Handle;
+		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([this]()
+		{
+			SetOwner(GetController());
+			ACharacter* OtherPlayer = UGameplayStatics::GetPlayerCharacter(GetWorld(), 1); 
+			if( OtherPlayer )
+			{
+				OtherPlayer->SetOwner(UGameplayStatics::GetPlayerController(GetWorld(), 1));
+			}
+		}), 3.0f, false);
 	}
 
 	// Gun Actor
-	GunActor = GetWorld()->SpawnActor<AGunActor>(GunActorClass);
-	GunActor->SetActive(false);
+	//GunActor = GetWorld()->SpawnActor<AGunActor>(GunActorClass);
+	//GunActor->SetActive(false);
 
 	// Respawn
 	RespawnLocation=GetActorLocation();
@@ -140,10 +149,10 @@ void APlayerCharacter::BeginPlay()
 	}
 
 	// Portal
-	PortalLeft=GetWorld()->SpawnActor<APortal>(PortalLClass, FVector(-100), FRotator(0));
+	PortalLeft=GetWorld()->SpawnActor<APortal>(PortalLClass, FVector(-100), FRotator(0)); 
 	PortalRight=GetWorld()->SpawnActor<APortal>(PortalRClass, FVector(-100), FRotator(0));
 	PortalExtent=PortalLeft->GetComponentByClass<UBoxComponent>()->GetUnscaledBoxExtent();
-
+	
 	if( HasAuthority() )
 	{
 		PortalLeft->SetOwner(GetController());
@@ -153,19 +162,12 @@ void APlayerCharacter::BeginPlay()
 	}
 	else
 	{
-		RPC_Server_InitPortal();
+		//RPC_Server_InitPortal();
 
 		PortalLeft->SetCapturePlayer(this);
 		PortalRight->SetCapturePlayer(this);
-
-		APlayerCharacter* OtherPlayer=Cast< APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-		if ( nullptr == OtherPlayer )
-		{
-			UE_LOG(LogTemp, Log, TEXT("Set Capture Player Fail - idx 0 Player not exist"));
-			return;
-		}
-		OtherPlayer->PortalLeft->SetCapturePlayer(this);
-		OtherPlayer->PortalRight->SetCapturePlayer(this);
+		/*OtherPlayer->PortalLeft->SetCapturePlayer(this);
+		OtherPlayer->PortalRight->SetCapturePlayer(this);*/
 	}
 
 	// Particle
@@ -175,7 +177,7 @@ void APlayerCharacter::BeginPlay()
 
 void APlayerCharacter::RPC_Server_InitPortal_Implementation()
 {
-	APlayerCharacter* OtherPlayer=Cast< APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 1));
+	APlayerCharacter* OtherPlayer=Cast< APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if ( nullptr == OtherPlayer )
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[RPC_Server_InitPortal] There is no OtherPlayer"));
@@ -223,14 +225,12 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 
 	if( HasAuthority() )
 	{
-		TargetPortal->SetActorLocation(SpawnLocation);
-		TargetPortal->SetActorRotation(SpawnRotation);
+		RPC_Multi_SpawnPortal(IsLeft, SpawnLocation, SpawnRotation); 
 	}
 	else
 	{
-		RPC_Server_SpawnPortal(TargetPortal, SpawnLocation, SpawnRotation);
+		RPC_Server_SpawnPortal(IsLeft, SpawnLocation, SpawnRotation); 
 	}
-	TargetPortal->Activate(true);
 	CrosshairUI->PortalUI_Empty(IsLeft);
 
 	// Link
@@ -244,14 +244,73 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 		return;
 	}
 
-	TargetPortal->LinkPortal(OtherPortal);
-	OtherPortal->LinkPortal(TargetPortal);
+	if( HasAuthority() )
+	{
+		RPC_Multi_LinkPortal(); 
+	}
+	else
+	{
+		RPC_Server_LinkPortal();
+	}
 }
 
-void APlayerCharacter::RPC_Server_SpawnPortal_Implementation(APortal* TargetPortal, const FVector& NewLocation, const FRotator& NewRotation) const
+void APlayerCharacter::RPC_Server_SpawnPortal_Implementation(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const
 {
+	RPC_Multi_SpawnPortal(IsLeft, NewLocation, NewRotation);
+}
+
+void APlayerCharacter::RPC_Multi_SpawnPortal_Implementation(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const
+{
+	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
+
 	TargetPortal->SetActorLocation(NewLocation);
 	TargetPortal->SetActorRotation(NewRotation);
+	TargetPortal->Activate(true);
+}
+
+void APlayerCharacter::RPC_Server_LinkPortal_Implementation() const
+{
+	RPC_Multi_LinkPortal();
+}
+
+void APlayerCharacter::RPC_Multi_LinkPortal_Implementation() const
+{
+	PortalLeft->LinkPortal(PortalRight);
+	PortalRight->LinkPortal(PortalLeft);
+}
+
+// Spawn Fail
+void APlayerCharacter::SpawnFail(UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const
+{
+	if( HasAuthority() )
+	{
+		RPC_Multi_SpawnFail(TargetVFX, NewLocation, NewRotation);
+	}
+	else
+	{
+		RPC_Server_SpawnFail(TargetVFX, NewLocation, NewRotation);
+	}
+}
+
+void APlayerCharacter::RPC_Server_SpawnFail_Implementation(UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const
+{
+	RPC_Multi_SpawnFail(TargetVFX, NewLocation, NewRotation);
+}
+
+void APlayerCharacter::RPC_Multi_SpawnFail_Implementation(UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const
+{
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TargetVFX, NewLocation, NewRotation);
+}
+
+void APlayerCharacter::GrabObj(ICanGrab* NewObject)
+{
+	GrabObject=NewObject;
+	if ( GunParticleComp->Template )
+	{
+		GunParticleComp->SetActive(true);
+	}
+
+	CrosshairUI->SetVisibility(ESlateVisibility::Hidden); 
 }
 
 bool APlayerCharacter::IsOverlapPortal(bool IsLeft, FVector TargetCenter)
@@ -319,9 +378,9 @@ void APlayerCharacter::OnPlayerBeginOverlap(UPrimitiveComponent* OverlappedCompo
 	}
 }
 
-void APlayerCharacter::PortalGunLightOn(FLinearColor NewColor)
+void APlayerCharacter::PortalGunLightOn(bool IsLeft)
 {
-	LightComp->SetLightColor(NewColor);
+	LightComp->SetLightColor(IsLeft ? LColor : RColor);
 	LightComp->SetIntensity(MaxIntensity);
 }
 
@@ -335,15 +394,19 @@ FVector APlayerCharacter::GetCameraLocation() const
 	return CameraComp->GetComponentLocation();
 }
 
-void APlayerCharacter::GrabObj(ICanGrab* NewObject)
+void APlayerCharacter::PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier)
 {
-	GrabObject=NewObject;
-	if ( GunParticleComp->Template )
+	if( HasAuthority() )
 	{
-		GunParticleComp->SetActive(true);
+		RPC_Multi_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
 	}
+}
 
-	CrosshairUI->SetVisibility(ESlateVisibility::Hidden); UE_LOG(LogTemp, Warning, TEXT("Player Grab"));
+void APlayerCharacter::RPC_Multi_PortalOut_Implementation(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier)
+{
+	SetActorLocation(NewLocation);
+	if(GetController()) GetController()->SetControlRotation(NewRotation);
+	ChangeVelocity(NewDirection, AccelMultiplier);
 }
 
 void APlayerCharacter::DropObj()
@@ -354,7 +417,7 @@ void APlayerCharacter::DropObj()
 		GunParticleComp->SetActive(false);
 	}
 
-	CrosshairUI->SetVisibility(ESlateVisibility::Visible); UE_LOG(LogTemp, Warning, TEXT("Player Drop"));
+	CrosshairUI->SetVisibility(ESlateVisibility::Visible);
 }
 
 FVector APlayerCharacter::GetGrabPoint() const
@@ -377,8 +440,8 @@ void APlayerCharacter::Respawn()
 	}
 
 	// Gun
-	GunComp->SetVisibility(true);
-	GunActor->SetActive(false);
+	/*GunComp->SetVisibility(true);
+	GunActor->SetActive(false);*/
 
 	// Camera
 	CameraComp->SetRelativeLocation(CameraDefaultLocation);
@@ -397,10 +460,10 @@ void APlayerCharacter::OnDie()
 	}
 
 	// Gun 
-	GunComp->SetVisibility(false);
+	/*GunComp->SetVisibility(false);
 	GunActor->SetActive(true);
 	GunActor->SetActorLocation(GunComp->GetComponentLocation());
-	GunActor->SetActorRotation(GunComp->GetComponentRotation());
+	GunActor->SetActorRotation(GunComp->GetComponentRotation());*/
 
 	// Camera
 	CameraComp->SetRelativeLocation(CameraOnDieLocation);
