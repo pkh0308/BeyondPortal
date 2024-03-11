@@ -5,14 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "PKH/Interface/Interactible.h"
+#include "PKH/Props/GrabCube.h"
 #include "PortalButton.generated.h"
 
 UCLASS()
 class BEYONDPORTAL_API APortalButton : public AActor, public IInteractible
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	APortalButton();
 
@@ -20,12 +21,9 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	virtual void Tick(float DeltaTime) override;
 
-	//충돌처리
-	UFUNCTION()
-	void OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 public:
 	UPROPERTY(EditAnywhere)
@@ -36,21 +34,36 @@ public:
 	UAnimationAsset* pressButtonAnim;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool isPressed = false;
+	bool isPressed=false;
 
 	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	TSubclassOf<AActor> spawnCube;
 
+
 	void activeSpawnCube();
 
-	UPROPERTY(EditAnywhere)
-	bool isSpawned;
 
 	UPROPERTY()
 	class AArmMesh* armMesh;
 
+	//Network
+	UPROPERTY(EditAnywhere)
+	bool isSpawned;
 
+
+	void SpawnCube();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSpawnCube();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiSpawnCube();
+
+	
 
 public:
+	
 	virtual void DoInteraction() override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

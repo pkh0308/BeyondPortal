@@ -10,14 +10,15 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "PKH/Player/PlayerCharacter.h"
 #include "PKH/Props/GrabCube.h"
 
 // Sets default values
 APortalButton::APortalButton()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick=true;
 
 	// capsuleComp를 생성
 	capsuleComp=CreateDefaultSubobject<UCapsuleComponent>(TEXT("capsuleComp"));
@@ -38,35 +39,35 @@ APortalButton::APortalButton()
 		portalButton->SetRelativeLocation(FVector(0, 0, -70));
 		portalButton->SetRelativeScale3D(FVector(0.02f));
 	}
+
+	bReplicates=true;
 }
 
 // Called when the game starts or when spawned
 void APortalButton::BeginPlay()
 {
 	Super::BeginPlay();
-	capsuleComp->OnComponentBeginOverlap.AddDynamic(this, &APortalButton::OnMyCompBeginOverlap);
+	
 }
 
 // Called every frame
 void APortalButton::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
+
 }
 
-void APortalButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-}
 
 void APortalButton::activeSpawnCube()
 {
-;
-	// cube 스폰 -> 조금 흔들리다가 떨어뜨리기
 	ABarrier* foundActor=Cast<ABarrier>(UGameplayStatics::GetActorOfClass(GetWorld(), APortalButton::StaticClass()));
-	
 	FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
 	FName findTagName=FName(*findTag);
-	if(findTag == TEXT("open") )
+
+
+	// 발판 UP
+	if ( findTag == TEXT("open") )
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("열려라"));
 		TArray<AActor*> findArmMesh;
@@ -76,7 +77,7 @@ void APortalButton::activeSpawnCube()
 			return a.GetActorLabel() < b.GetActorLabel();
 		});
 		float Delay=0.1f;
-		for(auto currentArm : findArmMesh )
+		for ( auto currentArm : findArmMesh )
 		{
 			// 딜레이 후에 문 열기
 			AArmMesh* Mesh=Cast<AArmMesh>(currentArm);
@@ -88,18 +89,13 @@ void APortalButton::activeSpawnCube()
 			Delay+=0.1f;
 
 		}
-
-
-
-		/*AActor* findArmDoor=UGameplayStatics::GetActorOfClass(GetWorld(), AArmMesh::StaticClass());*/
-		/*armMesh=Cast<AArmMesh>(findArmDoor);
-		armMesh->openMesh();*/
 	}
+	// 큐브 스폰
 	else
 	{
-		if ( !isSpawned )
+		if (!isSpawned )
 		{
-
+			GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Green, TEXT("스폰!!"));
 			//tag가 CubeDropper인 액터 탐색
 			TArray<AActor*> FoundActors;
 			UGameplayStatics::GetAllActorsWithTag(GetWorld(), TEXT("CubeDropper"), FoundActors);
@@ -110,19 +106,34 @@ void APortalButton::activeSpawnCube()
 
 			//스폰된 Cube가 없다면 cube 스폰
 			AActor* cube=GetWorld()->SpawnActor<AActor>(spawnCube, FVector(NearestActor->GetActorLocation().X, NearestActor->GetActorLocation().Y, NearestActor->GetActorLocation().Z - 200), FRotator::ZeroRotator);
+			
 
 			cube->Tags.Add(findTagName);
 			isSpawned=true;
 
+
 		}
 		else
 		{
-			;
-
+			
 		}
+		
 	}
-	
-	
+
+}
+
+
+void APortalButton::SpawnCube()
+{
+}
+
+void APortalButton::ServerSpawnCube_Implementation()
+{
+	MultiSpawnCube();
+}
+
+void APortalButton::MultiSpawnCube_Implementation()
+{
 	
 }
 
@@ -131,10 +142,17 @@ void APortalButton::activeSpawnCube()
 //E 버튼 눌렸을 때
 void APortalButton::DoInteraction()
 {
-	
 	portalButton->PlayAnimation(pressButtonAnim, false);
-	activeSpawnCube();
+
+	//GetWorld()->SpawnActor<AGrabCube>(FVector(0, 0, 0), FRotator::ZeroRotator);
+
+	GetWorld()->SpawnActor<AActor>(spawnCube, FVector(0, 0, 1000), FRotator::ZeroRotator);
+	  
 }
 
 
 
+void APortalButton::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
