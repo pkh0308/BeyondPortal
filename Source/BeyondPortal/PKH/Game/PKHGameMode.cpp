@@ -35,6 +35,7 @@ void APKHGameMode::PostLogin(APlayerController* NewPlayer)
 	{
 		if(ACharacter* Character = NewPlayer->GetCharacter() )
 		{
+			NewPlayer->UnPossess();
 			Character->Destroy();
 		}
 

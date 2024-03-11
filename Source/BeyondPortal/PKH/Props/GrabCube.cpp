@@ -46,17 +46,6 @@ void AGrabCube::BeginPlay()
 	Super::BeginPlay();
 
 	InitDynamicMaterials();
-
-	// Set Network Owner
-	if ( HasAuthority() )
-	{
-		FTimerHandle Handle;
-		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([this]()
-		{
-			SetOwner(UGameplayStatics::GetPlayerController(GetWorld(), 1));
-			UE_LOG(LogTemp, Warning, TEXT("CubeSetOwner: %s"), *GetOwner()->GetName());
-		}), 3.0f, false);
-	}
 }
 
 void AGrabCube::Tick(float DeltaSeconds)
@@ -81,14 +70,15 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 	{
 		return;
 	}
+	SetOwner(Player);
 
 	if( HasAuthority() )
 	{
-		RPC_Multi_Grab(Player); 
+		RPC_Multi_Grab(Player); UE_LOG(LogTemp, Warning, TEXT("[Server] Grab"));
 	}
 	else
 	{
-		RPC_Server_Grab(Player);
+		RPC_Server_Grab(Player); UE_LOG(LogTemp, Warning, TEXT("[Client] Grab"));
 	}
 }
 

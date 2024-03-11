@@ -108,4 +108,11 @@ protected:
 
 	void CalcPortalLocation(FVector& ImpactPoint, const FVector& ImpactNormal, const FBox& WallBox) const;
 
+// InterAction
+public:
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_InterAction();
+
+
+
 };

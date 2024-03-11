@@ -226,15 +226,20 @@ void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 {
-	// Drop Object
 	if ( Owner->IsPlayerDead() )
 	{
 		return;
 	}
-	if( Owner->GetGrabObject() )
+
+	RPC_Server_InterAction();
+}
+
+void UPlayerInputComponent::RPC_Server_InterAction_Implementation()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[Server] InterAction"));
+	if ( Owner->GetGrabObject() )
 	{
 		Owner->GetGrabObject()->Drop();
-		//Owner->DropObj();
 		return;
 	}
 
@@ -243,31 +248,29 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 	UCameraComponent* Camera=Owner->GetCameraComp();
 	const FVector StartVec=Camera->GetComponentLocation();
 	const FVector EndVec=StartVec + Camera->GetForwardVector() * InteractionDistance;
-	//DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red, false, 3.0f);
 
 	FCollisionQueryParams Param;
 	Param.AddIgnoredActor(Owner);
 	bool IsHit=GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Visibility, Param);
-	if(false == IsHit)
+	if ( false == IsHit )
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[Server] Hit Nothing"));
 		return;
 	}
 
 	// Grab
-	ICanGrab* GrabActor =Cast<ICanGrab>(HitResult.GetActor());
-	if(GrabActor)
+	ICanGrab* GrabActor=Cast<ICanGrab>(HitResult.GetActor());
+	if ( GrabActor )
 	{
 		GrabActor->Grab(Owner);
-		//Owner->GrabObj(GrabActor);
 		return;
 	}
 
 	// Interaction
-	IInteractible* InteractibleActor = Cast<IInteractible>(HitResult.GetActor());
-	if( InteractibleActor )
+	IInteractible* InteractibleActor=Cast<IInteractible>(HitResult.GetActor());
+	if ( InteractibleActor )
 	{
 		InteractibleActor->DoInteraction();
-		return;
 	}
 }
 
