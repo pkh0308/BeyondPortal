@@ -292,6 +292,26 @@ void APlayerCharacter::SpawnFail(UParticleSystem* TargetVFX, const FVector& NewL
 	}
 }
 
+void APlayerCharacter::Look(float PItchInput, float YawInput)
+{
+	if(IsLocallyControlled())
+	{
+		RPC_Server_Look(PItchInput, YawInput);
+	}
+}
+
+void APlayerCharacter::RPC_Server_Look_Implementation(float PItchInput, float YawInput)
+{
+	APlayerCharacter* OtherPlayer=Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 1));
+	if( OtherPlayer )
+	{
+		UCameraComponent* Cam=OtherPlayer->GetCameraComp();
+		FRotator TargetRotation =Cam->GetComponentRotation();
+		TargetRotation.Pitch+=PItchInput * -2.5;
+		Cam->SetWorldRotation(TargetRotation);
+	}
+}
+
 void APlayerCharacter::RPC_Server_SpawnFail_Implementation(UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const
 {
 	RPC_Multi_SpawnFail(TargetVFX, NewLocation, NewRotation);
@@ -422,7 +442,7 @@ void APlayerCharacter::DropObj()
 
 FVector APlayerCharacter::GetGrabPoint() const
 {
-	const FVector GrabPoint = CameraComp->GetComponentLocation() + FVector(0, 0, 25) + CameraComp->GetForwardVector() * GrabDistance;
+	const FVector GrabPoint = CameraComp->GetComponentLocation() + GrabPointOffset + CameraComp->GetForwardVector() * GrabDistance;
 	return GrabPoint;
 }
 

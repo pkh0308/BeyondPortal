@@ -152,6 +152,8 @@ void UPlayerInputComponent::OnIALook(const FInputActionValue& Value)
 
 	Owner->AddControllerPitchInput(InputVec.X * MouseSensitivity);
 	Owner->AddControllerYawInput(InputVec.Y * MouseSensitivity);
+	// Network
+	Owner->Look(InputVec.X * MouseSensitivity, InputVec.Y * MouseSensitivity);
 }
 
 void UPlayerInputComponent::OnIAJump(const FInputActionValue& Value)
@@ -236,7 +238,7 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 
 void UPlayerInputComponent::RPC_Server_InterAction_Implementation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[Server] InterAction"));
+	UE_LOG(LogTemp, Warning, TEXT("%f, %f"),Owner->GetCameraComp()->GetComponentRotation().Pitch, Owner->GetCameraComp()->GetComponentRotation().Yaw);
 	if ( Owner->GetGrabObject() )
 	{
 		Owner->GetGrabObject()->Drop();
@@ -254,7 +256,6 @@ void UPlayerInputComponent::RPC_Server_InterAction_Implementation()
 	bool IsHit=GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Visibility, Param);
 	if ( false == IsHit )
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[Server] Hit Nothing"));
 		return;
 	}
 

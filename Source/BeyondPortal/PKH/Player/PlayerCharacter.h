@@ -144,6 +144,13 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void RPC_Multi_SpawnFail(class UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const;
 
+// Look
+public:
+	void Look(float PItchInput, float YawInput);
+
+	UFUNCTION(Server, Unreliable)
+	void RPC_Server_Look(float PItchInput, float YawInput);
+
 // Grab
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -151,7 +158,9 @@ protected:
 
 	class ICanGrab* GrabObject;
 
-	float GrabDistance=200.0f;
+	float GrabDistance=190.0f;
+
+	FVector GrabPointOffset = FVector(0, 0, 15);
 
 public:
 	void GrabObj(class ICanGrab* NewObject);
