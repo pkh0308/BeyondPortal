@@ -26,8 +26,17 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USkeletalMeshComponent* armMesh;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(Replicated)
 	UAnimationAsset* openMeshAnim;
 
 	void openMesh();
+
+	//Network
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_OpenMesh();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_OpenMesh();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

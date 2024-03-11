@@ -79,15 +79,7 @@ void APortalButton::activeSpawnCube()
 		float Delay=0.1f;
 		for ( auto currentArm : findArmMesh )
 		{
-			// 딜레이 후에 문 열기
-			AArmMesh* Mesh=Cast<AArmMesh>(currentArm);
-			FTimerHandle Handle;
-			GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Mesh]()
-				{
-					Mesh->openMesh();
-				}), Delay, false);
-			Delay+=0.1f;
-
+			RPC_Server_OpenMesh(currentArm, Delay);
 		}
 	}
 	// 큐브 스폰
@@ -122,37 +114,34 @@ void APortalButton::activeSpawnCube()
 
 }
 
-
-void APortalButton::SpawnCube()
+void APortalButton::RPC_Server_OpenMesh_Implementation(AActor* currentArm, float Delay)
 {
-}
-
-void APortalButton::ServerSpawnCube_Implementation()
-{
-	MultiSpawnCube();
-}
-
-void APortalButton::MultiSpawnCube_Implementation()
-{
-	
+	RPC_Multi_OpenMesh(currentArm, Delay);
 }
 
 
+void APortalButton::RPC_Multi_OpenMesh_Implementation(AActor* currentArm, float Delay)
+{
+	// 딜레이 후에 문 열기
+	AArmMesh* Mesh=Cast<AArmMesh>(currentArm);
+	FTimerHandle Handle;
+	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Mesh]()
+		{
+
+			Mesh->openMesh();
+		}), Delay, false);
+	Delay+=0.1f;
+
+}
 
 //E 버튼 눌렸을 때
 void APortalButton::DoInteraction()
 {
 	portalButton->PlayAnimation(pressButtonAnim, false);
 
-	//GetWorld()->SpawnActor<AGrabCube>(FVector(0, 0, 0), FRotator::ZeroRotator);
-
-	GetWorld()->SpawnActor<AActor>(spawnCube, FVector(0, 0, 1000), FRotator::ZeroRotator);
-	  
+	
+	activeSpawnCube();
 }
 
 
 
-void APortalButton::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-}

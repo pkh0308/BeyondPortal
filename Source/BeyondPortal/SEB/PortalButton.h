@@ -40,30 +40,26 @@ public:
 	TSubclassOf<AActor> spawnCube;
 
 
+	UPROPERTY(EditAnywhere)
+	bool isSpawned;
+
 	void activeSpawnCube();
 
 
 	UPROPERTY()
 	class AArmMesh* armMesh;
 
-	//Network
-	UPROPERTY(EditAnywhere)
-	bool isSpawned;
-
-
-	void SpawnCube();
+	
 
 	UFUNCTION(Server, Reliable)
-	void ServerSpawnCube();
+	void RPC_Server_OpenMesh(AActor* currentArm, float Delay);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MultiSpawnCube();
-
+	void RPC_Multi_OpenMesh(AActor* currentArm, float Delay);
 	
 
 public:
 	
 	virtual void DoInteraction() override;
 
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

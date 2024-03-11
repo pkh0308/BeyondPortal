@@ -3,6 +3,8 @@
 
 #include "SEB/ArmMesh.h"
 
+#include "Net/UnrealNetwork.h"
+
 // Sets default values
 AArmMesh::AArmMesh()
 {
@@ -18,6 +20,8 @@ AArmMesh::AArmMesh()
 	{
 		armMesh->SetSkeletalMesh(tempMesh.Object);
 	}
+
+	bReplicates=true;
 }
 
 // Called when the game starts or when spawned
@@ -39,3 +43,21 @@ void AArmMesh::openMesh()
 	armMesh->PlayAnimation(openMeshAnim, false);
 }
 
+
+
+void AArmMesh::RPC_Server_OpenMesh_Implementation()
+{
+	
+}
+
+
+void AArmMesh::RPC_Multi_OpenMesh_Implementation()
+{
+	
+}
+
+void AArmMesh::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AArmMesh, openMeshAnim);
+}
