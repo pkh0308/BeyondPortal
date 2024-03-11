@@ -142,10 +142,13 @@ void APlayerCharacter::BeginPlay()
 	RespawnLocation=GetActorLocation();
 
 	// UI
-	CrosshairUI=CreateWidget<UCrosshairUIWidget>(GetWorld(), CrosshairUIClass);
-	if( CrosshairUI )
+	if(IsLocallyControlled() )
 	{
-		CrosshairUI->AddToViewport();
+		CrosshairUI=CreateWidget<UCrosshairUIWidget>(GetWorld(), CrosshairUIClass);
+		if ( CrosshairUI )
+		{
+			CrosshairUI->AddToViewport();
+		}
 	}
 
 	// Portal
@@ -307,7 +310,7 @@ void APlayerCharacter::RPC_Server_Look_Implementation(float PItchInput, float Ya
 	{
 		UCameraComponent* Cam=OtherPlayer->GetCameraComp();
 		FRotator TargetRotation =Cam->GetComponentRotation();
-		TargetRotation.Pitch+=PItchInput * -2.5;
+		TargetRotation.Pitch+=PItchInput * -2.1;
 		Cam->SetWorldRotation(TargetRotation);
 	}
 }
@@ -420,6 +423,15 @@ void APlayerCharacter::PortalOut(const FVector& NewLocation, const FRotator& New
 	{
 		RPC_Multi_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
 	}
+	else
+	{
+		RPC_Server_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
+	}
+}
+
+void APlayerCharacter::RPC_Server_PortalOut_Implementation(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier)
+{
+	RPC_Multi_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
 }
 
 void APlayerCharacter::RPC_Multi_PortalOut_Implementation(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier)
