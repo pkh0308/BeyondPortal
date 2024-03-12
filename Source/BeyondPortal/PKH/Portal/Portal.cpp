@@ -84,8 +84,6 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	APortal* Portal=Cast<APortal>(OtherActor);
 	if( Portal )
 	{
-		UE_LOG(LogTemp, Log, TEXT("this->IsNew: %d"), IsNew);
-		UE_LOG(LogTemp, Log, TEXT("other->IsNew: %d"), Portal->IsNew);
 		if(Portal->LinkedPortal == this )
 		{
 			return;
@@ -147,7 +145,6 @@ void APortal::Activate(const bool ActiveSelf)
 	{
 		IsActivated=ActiveSelf;
 		IsCreating=ActiveSelf;
-		IsNew=false;
 
 		// Material
 		MeshComp->SetMaterial(0, DefaultMaterial);
@@ -219,7 +216,6 @@ void APortal::UnlinkPortal()
 
 FVector APortal::GetTargetLocation() const
 {
-	FVector v=ArrowComp->GetComponentLocation();
 	return ArrowComp->GetComponentLocation(); 
 }
 

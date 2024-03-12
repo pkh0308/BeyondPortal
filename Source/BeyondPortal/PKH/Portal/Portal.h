@@ -78,10 +78,6 @@ protected:
 
 	FTimerHandle DelayHandle;
 
-public:
-	bool IsNew=true;
-	void Refresh() { IsNew=true; }
-
 // Capture
 protected:
 	UPROPERTY()
