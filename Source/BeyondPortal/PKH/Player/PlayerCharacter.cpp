@@ -16,7 +16,6 @@
 #include "PKH/Portal/Portal.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "EngineUtils.h"
 #include "PKH/Props/GunActor.h"
 #include "SEB/Barrier.h"
 
@@ -112,6 +111,28 @@ APlayerCharacter::APlayerCharacter()
 	if( CrosshairUIClassRef.Class )
 	{
 		CrosshairUIClass=CrosshairUIClassRef.Class;
+	}
+
+	// Sound
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalLeftRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalSpawn.SFX_PortalSpawn'"));
+	if ( SFX_PortalLeftRef.Object )
+	{
+		SFX_PortalLeft=SFX_PortalLeftRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalRightRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalLink.SFX_PortalLink'"));
+	if ( SFX_PortalRightRef.Object )
+	{
+		SFX_PortalRight=SFX_PortalRightRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalOutWeakRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalOutWeak.SFX_PortalOutWeak'"));
+	if ( SFX_PortalOutWeakRef.Object )
+	{
+		SFX_PortalOutWeak=SFX_PortalOutWeakRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalOutStrongRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalOutStrong.SFX_PortalOutStrong'"));
+	if ( SFX_PortalOutStrongRef.Object )
+	{
+		SFX_PortalOutStrong=SFX_PortalOutStrongRef.Object;
 	}
 }
 
@@ -222,7 +243,6 @@ void APlayerCharacter::SpawnPortal(const bool IsLeft, const FVector& Location, c
 
 void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const FVector& Normal) const
 {
-	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
 	const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
 	const FRotator SpawnRotation=Normal.ToOrientationRotator();
 	
@@ -234,7 +254,16 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 	{
 		RPC_Server_SpawnPortal(IsLeft, SpawnLocation, SpawnRotation); 
 	}
-	CrosshairUI->PortalUI_Empty(IsLeft);
+	if(CrosshairUI)
+	{
+		CrosshairUI->PortalUI_Empty(IsLeft);
+	}
+
+	//Sound
+	if(IsLocallyControlled())
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), IsLeft ? SFX_PortalLeft : SFX_PortalRight, 1.0f);
+	}
 
 	// Link
 	APortal* OtherPortal=IsLeft ? PortalRight : PortalLeft;
@@ -266,7 +295,6 @@ void APlayerCharacter::RPC_Multi_SpawnPortal_Implementation(bool IsLeft, const F
 {
 	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
 
-	TargetPortal->Refresh();
 	TargetPortal->SetActorLocation(NewLocation);
 	TargetPortal->SetActorRotation(NewRotation);
 	TargetPortal->Activate(true);
@@ -405,8 +433,19 @@ void APlayerCharacter::ChangeVelocity(const FVector& NewDirection)
 	const FVector CurVelocity=GetCharacterMovement()->Velocity; 
 	const FVector NewVelocity=CurVelocity.Size() * NewDirection;
 	GetCharacterMovement()->Velocity=NewVelocity;
-	UE_LOG(LogTemp, Warning, TEXT("OldVelocity: %f %f %f"), CurVelocity.X, CurVelocity.Y, CurVelocity.Z);
-	UE_LOG(LogTemp, Warning, TEXT("NewVelocity: %f %f %f"), NewVelocity.X, NewVelocity.Y, NewVelocity.Z);
+
+	// Sound
+	if(IsLocallyControlled())
+	{
+		if ( NewVelocity.Size() > 1000 )
+		{
+			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutStrong, 1.0f);
+		}
+		else
+		{
+			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutWeak, 1.0f);
+		}
+	}
 }
 
 void APlayerCharacter::OnPlayerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

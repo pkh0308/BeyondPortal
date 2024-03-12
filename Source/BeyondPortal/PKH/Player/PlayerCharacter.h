@@ -228,4 +228,18 @@ public:
 protected:
 	UFUNCTION(Server, Unreliable)
 	void RPC_SetPlayerLocation(class ACharacter* ClientPlayer);
+
+// Sound
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_PortalLeft;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_PortalRight;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_PortalOutWeak;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_PortalOutStrong;
 };
