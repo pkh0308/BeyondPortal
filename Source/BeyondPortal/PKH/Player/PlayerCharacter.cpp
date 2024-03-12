@@ -204,7 +204,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
+	
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -225,7 +225,7 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
 	const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
 	const FRotator SpawnRotation=Normal.ToOrientationRotator();
-
+	
 	if( HasAuthority() )
 	{
 		RPC_Multi_SpawnPortal(IsLeft, SpawnLocation, SpawnRotation); 
@@ -246,7 +246,7 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 	{
 		return;
 	}
-
+	
 	if( HasAuthority() )
 	{
 		RPC_Multi_LinkPortal(); 
@@ -266,6 +266,7 @@ void APlayerCharacter::RPC_Multi_SpawnPortal_Implementation(bool IsLeft, const F
 {
 	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
 
+	TargetPortal->Refresh();
 	TargetPortal->SetActorLocation(NewLocation);
 	TargetPortal->SetActorRotation(NewRotation);
 	TargetPortal->Activate(true);
@@ -392,19 +393,20 @@ void APlayerCharacter::ResetAllPortals()
 	PortalRight->Activate(false);
 
 	// UI
-	CrosshairUI->PortalUI_Fill(true);
-	CrosshairUI->PortalUI_Fill(false);
+	if(CrosshairUI)
+	{
+		CrosshairUI->PortalUI_Fill(true);
+		CrosshairUI->PortalUI_Fill(false);
+	}
 }
 
-void APlayerCharacter::ChangeVelocity(const FVector& NewDirection, const float Multiplier)
+void APlayerCharacter::ChangeVelocity(const FVector& NewDirection)
 {
-	const float CurVelocitySize=GetCharacterMovement()->Velocity.Size();
-	if ( HasAuthority() ) UE_LOG(LogTemp, Warning, TEXT("[Server] VelocitySize: %f"), CurVelocitySize)
-	else				  UE_LOG(LogTemp, Warning, TEXT("[Client] VelocitySize: %f"), CurVelocitySize)
-	// Velocity가 클수록 증폭
-	const float Offset=FMath::Clamp(FMath::Atan(CurVelocitySize / 400), 0.9f, 1.1f);
-	const FVector NewVelocity=CurVelocitySize * Multiplier * Offset * NewDirection;
+	const FVector CurVelocity=GetCharacterMovement()->Velocity; 
+	const FVector NewVelocity=CurVelocity.Size() * NewDirection;
 	GetCharacterMovement()->Velocity=NewVelocity;
+	UE_LOG(LogTemp, Warning, TEXT("OldVelocity: %f %f %f"), CurVelocity.X, CurVelocity.Y, CurVelocity.Z);
+	UE_LOG(LogTemp, Warning, TEXT("NewVelocity: %f %f %f"), NewVelocity.X, NewVelocity.Y, NewVelocity.Z);
 }
 
 void APlayerCharacter::OnPlayerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -436,28 +438,28 @@ FVector APlayerCharacter::GetCameraLocation() const
 	return CameraComp->GetComponentLocation();
 }
 
-void APlayerCharacter::PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier)
+void APlayerCharacter::PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection)
 {
 	if( HasAuthority() )
 	{
-		RPC_Multi_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
+		RPC_Multi_PortalOut(NewLocation, NewRotation, NewDirection);
 	}
 	else
 	{
-		RPC_Server_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
+		RPC_Server_PortalOut(NewLocation, NewRotation, NewDirection);
 	}
 }
 
-void APlayerCharacter::RPC_Server_PortalOut_Implementation(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier)
+void APlayerCharacter::RPC_Server_PortalOut_Implementation(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection)
 {
-	RPC_Multi_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
+	RPC_Multi_PortalOut(NewLocation, NewRotation, NewDirection);
 }
 
-void APlayerCharacter::RPC_Multi_PortalOut_Implementation(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier)
+void APlayerCharacter::RPC_Multi_PortalOut_Implementation(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection)
 {
 	SetActorLocation(NewLocation);
 	if(GetController()) GetController()->SetControlRotation(NewRotation);
-	ChangeVelocity(NewDirection, AccelMultiplier);
+	ChangeVelocity(NewDirection);
 }
 
 FVector APlayerCharacter::GetGrabPoint() const
