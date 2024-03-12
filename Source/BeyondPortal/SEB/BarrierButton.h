@@ -33,4 +33,24 @@ public:
 	class UBoxComponent* boxComp;
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* barrierButton;
+
+	UPROPERTY(Replicated)
+	int32 cnt=0;
+
+
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_ActiveButton();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_ActiveButton();
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
+	TSubclassOf<AActor> spawnCube;
+	void Spawn();
+
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_Spawn();
+
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
