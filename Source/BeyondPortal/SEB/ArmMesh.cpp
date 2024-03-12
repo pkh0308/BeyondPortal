@@ -45,17 +45,6 @@ void AArmMesh::openMesh()
 
 
 
-void AArmMesh::RPC_Server_OpenMesh_Implementation()
-{
-	
-}
-
-
-void AArmMesh::RPC_Multi_OpenMesh_Implementation()
-{
-	
-}
-
 void AArmMesh::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

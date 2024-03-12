@@ -74,7 +74,7 @@ void ABarrier::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 	else if(OtherActor->IsA< APlayerCharacter>()){
 		
 		APlayerCharacter* player=Cast<APlayerCharacter>(OtherActor);
-		//player->ResetAllPortals();
+		player->ResetAllPortals();
 		
 	}
 }

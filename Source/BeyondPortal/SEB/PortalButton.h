@@ -52,10 +52,10 @@ public:
 	
 
 	UFUNCTION(Server, Reliable)
-	void RPC_Server_OpenMesh(AActor* currentArm, float Delay);
+	void RPC_Server_OpenMesh(const TArray<AActor*>& findArmMesh);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void RPC_Multi_OpenMesh(AActor* currentArm, float Delay);
+	void RPC_Multi_OpenMesh(const TArray<AActor*>& findArmMesh);
 	
 
 public:

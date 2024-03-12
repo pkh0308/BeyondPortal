@@ -76,11 +76,7 @@ void APortalButton::activeSpawnCube()
 		{
 			return a.GetActorLabel() < b.GetActorLabel();
 		});
-		float Delay=0.1f;
-		for ( auto currentArm : findArmMesh )
-		{
-			RPC_Server_OpenMesh(currentArm, Delay);
-		}
+		RPC_Server_OpenMesh(findArmMesh);
 	}
 	// 큐브 스폰
 	else
@@ -114,23 +110,29 @@ void APortalButton::activeSpawnCube()
 
 }
 
-void APortalButton::RPC_Server_OpenMesh_Implementation(AActor* currentArm, float Delay)
+void APortalButton::RPC_Server_OpenMesh_Implementation(const TArray<AActor*>& findArmMesh)
 {
-	RPC_Multi_OpenMesh(currentArm, Delay);
+	RPC_Multi_OpenMesh(findArmMesh);
 }
 
 
-void APortalButton::RPC_Multi_OpenMesh_Implementation(AActor* currentArm, float Delay)
+void APortalButton::RPC_Multi_OpenMesh_Implementation(const TArray<AActor*>& findArmMesh)
 {
-	// 딜레이 후에 문 열기
-	AArmMesh* Mesh=Cast<AArmMesh>(currentArm);
-	FTimerHandle Handle;
-	GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Mesh]()
-		{
 
-			Mesh->openMesh();
-		}), Delay, false);
-	Delay+=0.1f;
+	float Delay=0.1f;
+	for ( auto currentArm : findArmMesh )
+	{
+		// 딜레이 후에 문 열기
+		AArmMesh* Mesh=Cast<AArmMesh>(currentArm);
+		FTimerHandle Handle;
+		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Mesh]()
+			{
+
+				Mesh->openMesh();
+			}), Delay, false);
+		Delay+=0.1f;
+	}
+	
 
 }
 
