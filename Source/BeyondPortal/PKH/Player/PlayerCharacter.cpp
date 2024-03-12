@@ -142,10 +142,13 @@ void APlayerCharacter::BeginPlay()
 	RespawnLocation=GetActorLocation();
 
 	// UI
-	CrosshairUI=CreateWidget<UCrosshairUIWidget>(GetWorld(), CrosshairUIClass);
-	if( CrosshairUI )
+	if(IsLocallyControlled() )
 	{
-		CrosshairUI->AddToViewport();
+		CrosshairUI=CreateWidget<UCrosshairUIWidget>(GetWorld(), CrosshairUIClass);
+		if ( CrosshairUI )
+		{
+			CrosshairUI->AddToViewport();
+		}
 	}
 
 	// Portal
@@ -307,7 +310,7 @@ void APlayerCharacter::RPC_Server_Look_Implementation(float PItchInput, float Ya
 	{
 		UCameraComponent* Cam=OtherPlayer->GetCameraComp();
 		FRotator TargetRotation =Cam->GetComponentRotation();
-		TargetRotation.Pitch+=PItchInput * -2.5;
+		TargetRotation.Pitch+=PItchInput * -2.1;
 		Cam->SetWorldRotation(TargetRotation);
 	}
 }
@@ -330,7 +333,24 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject)
 		GunParticleComp->SetActive(true);
 	}
 
-	CrosshairUI->SetVisibility(ESlateVisibility::Hidden); 
+	if(CrosshairUI )
+	{
+		CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void APlayerCharacter::DropObj()
+{
+	GrabObject=nullptr;
+	if ( GunParticleComp->Template )
+	{
+		GunParticleComp->SetActive(false);
+	}
+
+	if ( CrosshairUI )
+	{
+		CrosshairUI->SetVisibility(ESlateVisibility::Visible);
+	}
 }
 
 bool APlayerCharacter::IsOverlapPortal(bool IsLeft, FVector TargetCenter)
@@ -379,10 +399,12 @@ void APlayerCharacter::ResetAllPortals()
 void APlayerCharacter::ChangeVelocity(const FVector& NewDirection, const float Multiplier)
 {
 	const float CurVelocitySize=GetCharacterMovement()->Velocity.Size();
-	const float Offset=FMath::Clamp(FMath::Atan(CurVelocitySize / 400), 0.9f, 1.15f);
+	if ( HasAuthority() ) UE_LOG(LogTemp, Warning, TEXT("[Server] VelocitySize: %f"), CurVelocitySize)
+	else				  UE_LOG(LogTemp, Warning, TEXT("[Client] VelocitySize: %f"), CurVelocitySize)
 	// Velocity가 클수록 증폭
-	const float NewVelocity=CurVelocitySize * Multiplier * 1.15f;
-	GetCharacterMovement()->Velocity=NewDirection * NewVelocity;
+	const float Offset=FMath::Clamp(FMath::Atan(CurVelocitySize / 400), 0.9f, 1.1f);
+	const FVector NewVelocity=CurVelocitySize * Multiplier * Offset * NewDirection;
+	GetCharacterMovement()->Velocity=NewVelocity;
 }
 
 void APlayerCharacter::OnPlayerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -420,6 +442,15 @@ void APlayerCharacter::PortalOut(const FVector& NewLocation, const FRotator& New
 	{
 		RPC_Multi_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
 	}
+	else
+	{
+		RPC_Server_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
+	}
+}
+
+void APlayerCharacter::RPC_Server_PortalOut_Implementation(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier)
+{
+	RPC_Multi_PortalOut(NewLocation, NewRotation, NewDirection, AccelMultiplier);
 }
 
 void APlayerCharacter::RPC_Multi_PortalOut_Implementation(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier)
@@ -427,17 +458,6 @@ void APlayerCharacter::RPC_Multi_PortalOut_Implementation(const FVector& NewLoca
 	SetActorLocation(NewLocation);
 	if(GetController()) GetController()->SetControlRotation(NewRotation);
 	ChangeVelocity(NewDirection, AccelMultiplier);
-}
-
-void APlayerCharacter::DropObj()
-{
-	GrabObject=nullptr;
-	if ( GunParticleComp->Template )
-	{
-		GunParticleComp->SetActive(false);
-	}
-
-	CrosshairUI->SetVisibility(ESlateVisibility::Visible);
 }
 
 FVector APlayerCharacter::GetGrabPoint() const

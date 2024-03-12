@@ -120,35 +120,38 @@ public:
 public:
 	void PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier);
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Server_PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier);
+
+	UFUNCTION(NetMulticast, Reliable)
 	void RPC_Multi_PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier);
 
-	UFUNCTION(Server, Unreliable)
+	UFUNCTION(Server, Reliable)
 	void RPC_Server_SpawnPortal(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const;
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void RPC_Multi_SpawnPortal(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const;
 
-	UFUNCTION(Server, Unreliable)
+	UFUNCTION(Server, Reliable)
 	void RPC_Server_LinkPortal() const;
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void RPC_Multi_LinkPortal() const;
 
 // Particle
 	void SpawnFail(class UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const;
 
-	UFUNCTION(Server, Unreliable)
+	UFUNCTION(Server, Reliable)
 	void RPC_Server_SpawnFail(class UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const;
 
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void RPC_Multi_SpawnFail(class UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const;
 
 // Look
 public:
 	void Look(float PItchInput, float YawInput);
 
-	UFUNCTION(Server, Unreliable)
+	UFUNCTION(Server, Reliable)
 	void RPC_Server_Look(float PItchInput, float YawInput);
 
 // Grab

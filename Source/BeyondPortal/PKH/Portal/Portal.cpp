@@ -104,10 +104,7 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	}
 	if( Character->HasAuthority() )
 	{
-		if( HasAuthority() )
-		{
-			Character->PortalOut(TargetLocation, TargetRotation, TargetDirection, AccelMultiplier);
-		}
+		Character->PortalOut(TargetLocation, TargetRotation, TargetDirection, AccelMultiplier);
 		return;
 	}
 
