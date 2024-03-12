@@ -6,8 +6,6 @@
 #include "Components/ArrowComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PKH/Player/PlayerCharacter.h"
@@ -22,7 +20,7 @@ APortal::APortal()
 	// Component
 	BoxComp =CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	SetRootComponent(BoxComp);
-	BoxComp->SetBoxExtent(FVector(5, 60, 100));
+	BoxComp->SetBoxExtent(FVector(25, 60, 100));
 	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &APortal::OnBeginOverlap);
 
 	MeshComp=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
@@ -83,13 +81,30 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	{
 		return;
 	}
-
 	APortal* Portal=Cast<APortal>(OtherActor);
 	if( Portal )
 	{
-
+		UE_LOG(LogTemp, Log, TEXT("this->IsNew: %d"), IsNew);
+		UE_LOG(LogTemp, Log, TEXT("other->IsNew: %d"), Portal->IsNew);
+		if(Portal->LinkedPortal == this )
+		{
+			return;
+		}
+		
+		Activate(false);
 		return;
 	}
+	// Check Delay
+	if ( IsInDelay )
+	{
+		return;
+	}
+	IsInDelay=true;
+
+	GetWorldTimerManager().SetTimer(DelayHandle, FTimerDelegate::CreateLambda([this]()
+	{
+		IsInDelay=false;
+	}), 0.1f, false);
 
 	// Location & Rotation
 	const FVector TargetLocation =  LinkedPortal->GetTargetLocation();
@@ -98,13 +113,12 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 
 	// Player
 	APlayerCharacter* Character=Cast<APlayerCharacter>(OtherActor);
-	if( nullptr == Character )
+	if( Character )
 	{
-		return;
-	}
-	if( Character->HasAuthority() )
-	{
-		Character->PortalOut(TargetLocation, TargetRotation, TargetDirection, AccelMultiplier);
+		if ( Character->HasAuthority() )
+		{
+			Character->PortalOut(TargetLocation, TargetRotation, TargetDirection);
+		}
 		return;
 	}
 
@@ -120,7 +134,7 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		OtherActor->SetActorLocation(TargetLocation);
 
 		// Velocity
-		const float NewVelocity=OtherActor->GetVelocity().Size() * AccelMultiplier;
+		const float NewVelocity=OtherActor->GetVelocity().Size();
 		const FVector ForwardVec=LinkedPortal->GetTargetDirection();
 		Box->AddForce(ForwardVec * NewVelocity * 10000);
 	}
@@ -133,6 +147,7 @@ void APortal::Activate(const bool ActiveSelf)
 	{
 		IsActivated=ActiveSelf;
 		IsCreating=ActiveSelf;
+		IsNew=false;
 
 		// Material
 		MeshComp->SetMaterial(0, DefaultMaterial);
@@ -146,6 +161,12 @@ void APortal::Activate(const bool ActiveSelf)
 		{
 			BoxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			MeshComp->SetVisibility(false);
+
+			if(IsLinked && LinkedPortal != nullptr)
+			{
+				LinkedPortal->UnlinkPortal();
+				this->UnlinkPortal();
+			}
 		}
 
 		// Network

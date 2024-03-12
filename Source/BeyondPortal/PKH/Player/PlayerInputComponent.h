@@ -113,6 +113,4 @@ public:
 	UFUNCTION(Server, Reliable)
 	void RPC_Server_InterAction();
 
-
-
 };

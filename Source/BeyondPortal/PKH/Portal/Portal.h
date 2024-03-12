@@ -60,9 +60,6 @@ protected:
 
 	bool IsLinked=false;
 
-	UPROPERTY(EditDefaultsOnly)
-	float AccelMultiplier=1.5f;
-
 public:
 	FORCEINLINE void SetIsLinked(bool NewIsLinked) { IsLinked = NewIsLinked; }
 	FORCEINLINE bool GetIsLinked() const { return IsLinked; }
@@ -74,6 +71,16 @@ public:
 	FVector GetTargetLocation() const;
 	FRotator GetTargetRotation() const;
 	FVector GetTargetDirection() const;
+
+// Exception handle
+protected:
+	bool IsInDelay=false;
+
+	FTimerHandle DelayHandle;
+
+public:
+	bool IsNew=true;
+	void Refresh() { IsNew=true; }
 
 // Capture
 protected:

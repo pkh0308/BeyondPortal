@@ -78,7 +78,7 @@ public:
 
 	void ResetAllPortals();
 
-	void ChangeVelocity(const FVector& NewDirection, const float Multiplier);
+	void ChangeVelocity(const FVector& NewDirection);
 
 	FORCEINLINE FVector GetPortalExtent() const { return PortalExtent; }
 
@@ -118,13 +118,13 @@ public:
 
 // Portal
 public:
-	void PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier);
+	void PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void RPC_Server_PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier);
+	void RPC_Server_PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void RPC_Multi_PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection, float AccelMultiplier);
+	void RPC_Multi_PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection);
 
 	UFUNCTION(Server, Reliable)
 	void RPC_Server_SpawnPortal(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const;
