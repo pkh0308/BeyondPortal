@@ -172,6 +172,8 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 				ACheckOpen* co=Cast<ACheckOpen>(CurrentActor);
 				co->checkOpen->SetMaterial(0, co->mat2);
 			}
+
+
 		}
 	}
 }
