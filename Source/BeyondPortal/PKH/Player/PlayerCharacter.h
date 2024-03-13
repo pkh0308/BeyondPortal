@@ -127,10 +127,10 @@ public:
 	void RPC_Multi_PortalOut(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewDirection);
 
 	UFUNCTION(Server, Reliable)
-	void RPC_Server_SpawnPortal(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const;
+	void RPC_Server_SpawnPortal(bool IsLeft, const FVector& NewLocation, FRotator NewRotation, const FVector& Normal) const;
 
 	UFUNCTION(NetMulticast, Reliable)
-	void RPC_Multi_SpawnPortal(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const;
+	void RPC_Multi_SpawnPortal(bool IsLeft, const FVector& NewLocation, FRotator NewRotation, const FVector& Normal) const;
 
 	UFUNCTION(Server, Reliable)
 	void RPC_Server_LinkPortal() const;
@@ -153,6 +153,9 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void RPC_Server_Look(float PItchInput, float YawInput);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_Look(float PItchInput, float YawInput);
 
 // Grab
 protected:
@@ -211,6 +214,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UCrosshairUIWidget> CrosshairUI;
 
+public:
+	void CrosshairFill(bool IsLeft);
+
 // Network
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -242,4 +248,19 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class USoundBase> SFX_PortalOutStrong;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_PortalFail;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_Grab;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_GrabLoop;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_Drop;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UAudioComponent> GunSoundComp;
 };

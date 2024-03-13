@@ -77,21 +77,22 @@ void APortal::Tick(float DeltaTime)
 void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	APortal* Portal=Cast<APortal>(OtherActor);
+	if ( Portal )
+	{
+		if(IsCreating)
+		{
+			return;
+		}
+		// Overlapped with other player's portal
+		Activate(false); UE_LOG(LogTemp, Warning, TEXT("Deactivate"));
+		return;
+	}
 	if( false == IsLinked )
 	{
 		return;
 	}
-	APortal* Portal=Cast<APortal>(OtherActor);
-	if( Portal )
-	{
-		if(Portal->LinkedPortal == this )
-		{
-			return;
-		}
-		
-		Activate(false);
-		return;
-	}
+	
 	// Check Delay
 	if ( IsInDelay )
 	{
@@ -141,37 +142,48 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 
 void APortal::Activate(const bool ActiveSelf)
 {
-	if(HasAuthority() ) // Server
+	if(HasAuthority())
 	{
-		IsActivated=ActiveSelf;
-		IsCreating=ActiveSelf;
-
-		// Material
-		MeshComp->SetMaterial(0, DefaultMaterial);
-
-		if(ActiveSelf)
-		{
-			BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-			MeshComp->SetVisibility(true);
-		}
-		else
-		{
-			BoxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			MeshComp->SetVisibility(false);
-
-			if(IsLinked && LinkedPortal != nullptr)
-			{
-				LinkedPortal->UnlinkPortal();
-				this->UnlinkPortal();
-			}
-		}
-
-		// Network
-		Net_PortalTransform=GetActorTransform();
+		RPC_Multi_Activate(ActiveSelf); 
 	}
-	else // Client
+	else
 	{
-		RPC_PortalTransformChanged();
+		RPC_Server_Activate(ActiveSelf);
+	}
+}
+
+void APortal::RPC_Server_Activate_Implementation(bool ActiveSelf)
+{
+	RPC_Multi_Activate(ActiveSelf);
+}
+
+void APortal::RPC_Multi_Activate_Implementation(bool ActiveSelf)
+{
+	IsActivated=ActiveSelf;
+
+	// Material
+	MeshComp->SetMaterial(0, DefaultMaterial);
+
+	if ( ActiveSelf )
+	{
+		IsCreating=true;
+		BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly); 
+		MeshComp->SetVisibility(true);
+	}
+	else
+	{
+		BoxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision); 
+		MeshComp->SetVisibility(false);
+		if(Player)
+		{
+			Player->CrosshairFill(_IsLeft);
+		}
+
+		if ( IsLinked && LinkedPortal != nullptr )
+		{
+			LinkedPortal->UnlinkPortal();
+			this->UnlinkPortal();
+		}
 	}
 }
 
@@ -183,26 +195,25 @@ void APortal::LinkPortal(APortal* NewLinkedPortal)
 	}
 
 	// Link
-	LinkedPortal=NewLinkedPortal;
-	IsLinked=true;
-	// Material
 	if( HasAuthority() )
 	{
-		RPC_Multi_MaterialChange(LinkedMaterial);
+		RPC_Multi_LinkPortal(NewLinkedPortal, LinkedMaterial);
 	}
 	else
 	{
-		RPC_Server_MaterialChange(LinkedMaterial);
+		RPC_Server_LinkPortal(NewLinkedPortal, LinkedMaterial);
 	}
 }
 
-void APortal::RPC_Server_MaterialChange_Implementation(class UMaterialInterface* NewMaterial)
+void APortal::RPC_Server_LinkPortal_Implementation(class APortal* NewLinkPortal, class UMaterialInterface* NewMaterial)
 {
-	RPC_Multi_MaterialChange(LinkedMaterial);
+	RPC_Multi_LinkPortal(NewLinkPortal, LinkedMaterial);
 }
 
-void APortal::RPC_Multi_MaterialChange_Implementation(class UMaterialInterface* NewMaterial)
+void APortal::RPC_Multi_LinkPortal_Implementation(class APortal* NewLinkPortal, class UMaterialInterface* NewMaterial)
 {
+	LinkedPortal=NewLinkPortal;
+	IsLinked=true;
 	MeshComp->SetMaterial(0, NewMaterial);
 }
 
@@ -307,22 +318,10 @@ void APortal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(APortal, Net_PortalTransform);
 	DOREPLIFETIME(APortal, Net_PortalScale);
-}
-
-void APortal::OnRep_PortalTransformChanged()
-{
-	SetActorTransform(Net_PortalTransform);
 }
 
 void APortal::OnRep_PortalScaleChanged()
 {
 	MeshComp->SetRelativeScale3D(Net_PortalScale);
-}
-
-void APortal::RPC_PortalTransformChanged_Implementation()
-{
-	Net_PortalTransform=GetActorTransform();
-	OnRep_PortalTransformChanged();
 }

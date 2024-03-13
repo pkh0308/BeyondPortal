@@ -37,6 +37,13 @@ protected:
 	UFUNCTION()
 	void OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+// IsLeft
+protected:
+	bool _IsLeft=false;
+
+public:
+	FORCEINLINE void SetIsLeft(bool IsLeft) { _IsLeft=IsLeft; };
+
 // Activate
 protected:
 	bool IsActivated=false;
@@ -112,13 +119,6 @@ protected:
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	// Portal Transform
-	UPROPERTY(ReplicatedUsing=OnRep_PortalTransformChanged)
-	FTransform Net_PortalTransform;
-
-	UFUNCTION()
-	void OnRep_PortalTransformChanged();
-
 	// Portal Scale
 	UPROPERTY(ReplicatedUsing=OnRep_PortalScaleChanged)
 	FVector Net_PortalScale;
@@ -128,11 +128,14 @@ public:
 
 // RPC
 	UFUNCTION(Server, Unreliable)
-	void RPC_PortalTransformChanged();
-
-	UFUNCTION(Server, Unreliable)
-	void RPC_Server_MaterialChange(class UMaterialInterface* NewMaterial);
+	void RPC_Server_Activate(bool ActiveSelf);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void RPC_Multi_MaterialChange(class UMaterialInterface* NewMaterial);
+	void RPC_Multi_Activate(bool ActiveSelf);
+
+	UFUNCTION(Server, Unreliable)
+	void RPC_Server_LinkPortal(class APortal* NewLinkPortal, class UMaterialInterface* NewMaterial);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void RPC_Multi_LinkPortal(class APortal* NewLinkPortal, class UMaterialInterface* NewMaterial);
 };
