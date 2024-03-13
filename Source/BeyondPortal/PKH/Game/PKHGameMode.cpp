@@ -45,3 +45,25 @@ void APKHGameMode::PostLogin(APlayerController* NewPlayer)
 	
 	LogInCount++;
 }
+
+void APKHGameMode::AddCount(int32 Key, int32 Value)
+{
+	if( CountMap.Contains(Key) )
+	{
+		CountMap[Key] += Value;
+	}
+	else
+	{
+		CountMap.Add(Key, Value);
+	}
+}
+
+int32 APKHGameMode::GetCount(int32 Key)
+{
+	if( CountMap.Contains(Key))
+	{
+		return CountMap[Key];
+	}
+
+	return -1;
+}

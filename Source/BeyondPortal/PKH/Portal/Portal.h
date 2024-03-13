@@ -128,7 +128,10 @@ public:
 
 // RPC
 	UFUNCTION(Server, Unreliable)
-	void RPC_PortalTransformChanged();
+	void RPC_Server_Activate(bool ActiveSelf);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void RPC_Multi_Activate(bool ActiveSelf);
 
 	UFUNCTION(Server, Unreliable)
 	void RPC_Server_MaterialChange(class UMaterialInterface* NewMaterial);

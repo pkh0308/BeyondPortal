@@ -84,12 +84,12 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 	APortal* Portal=Cast<APortal>(OtherActor);
 	if( Portal )
 	{
-		if(Portal->LinkedPortal == this )
+		/*if(Portal->LinkedPortal == this )
 		{
 			return;
-		}
-		
-		Activate(false);
+		}*/
+		// Overlapped with other player's portal
+		Activate(false); 
 		return;
 	}
 	// Check Delay
@@ -141,38 +141,48 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 
 void APortal::Activate(const bool ActiveSelf)
 {
-	if(HasAuthority() ) // Server
+	if(HasAuthority())
 	{
-		IsActivated=ActiveSelf;
-		IsCreating=ActiveSelf;
-
-		// Material
-		MeshComp->SetMaterial(0, DefaultMaterial);
-
-		if(ActiveSelf)
-		{
-			BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-			MeshComp->SetVisibility(true);
-		}
-		else
-		{
-			BoxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			MeshComp->SetVisibility(false);
-
-			if(IsLinked && LinkedPortal != nullptr)
-			{
-				LinkedPortal->UnlinkPortal();
-				this->UnlinkPortal();
-			}
-		}
-
-		// Network
-		Net_PortalTransform=GetActorTransform();
+		RPC_Multi_Activate(ActiveSelf); 
 	}
-	else // Client
+	/*else
 	{
-		RPC_PortalTransformChanged();
+		RPC_Server_Activate(ActiveSelf);
+	}*/
+}
+
+void APortal::RPC_Server_Activate_Implementation(bool ActiveSelf)
+{
+	RPC_Multi_Activate(ActiveSelf);
+}
+
+void APortal::RPC_Multi_Activate_Implementation(bool ActiveSelf)
+{
+	IsActivated=ActiveSelf;
+	IsCreating=ActiveSelf;
+
+	// Material
+	MeshComp->SetMaterial(0, DefaultMaterial);
+
+	if ( ActiveSelf )
+	{
+		BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		MeshComp->SetVisibility(true);
 	}
+	else
+	{
+		BoxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		MeshComp->SetVisibility(false); UE_LOG(LogTemp, Warning, TEXT("Deactivate"));
+
+		if ( IsLinked && LinkedPortal != nullptr )
+		{
+			LinkedPortal->UnlinkPortal();
+			this->UnlinkPortal();
+		}
+	}
+
+	// Network
+	Net_PortalTransform=GetActorTransform();
 }
 
 void APortal::LinkPortal(APortal* NewLinkedPortal)
@@ -319,10 +329,4 @@ void APortal::OnRep_PortalTransformChanged()
 void APortal::OnRep_PortalScaleChanged()
 {
 	MeshComp->SetRelativeScale3D(Net_PortalScale);
-}
-
-void APortal::RPC_PortalTransformChanged_Implementation()
-{
-	Net_PortalTransform=GetActorTransform();
-	OnRep_PortalTransformChanged();
 }

@@ -26,5 +26,12 @@ protected:
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
-	
+// Count
+protected:
+	UPROPERTY()
+	TMap<int32, int32> CountMap;
+
+public:
+	void AddCount(int32 Key, int32 Value = 1);
+	int32 GetCount(int32 Key);
 };

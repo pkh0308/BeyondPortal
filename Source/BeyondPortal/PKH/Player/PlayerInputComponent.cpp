@@ -150,8 +150,8 @@ void UPlayerInputComponent::OnIALook(const FInputActionValue& Value)
 
 	const FVector2D InputVec=Value.Get<FVector2D>();
 
-	Owner->AddControllerPitchInput(InputVec.X * MouseSensitivity);
-	Owner->AddControllerYawInput(InputVec.Y * MouseSensitivity);
+	//Owner->AddControllerPitchInput(InputVec.X * MouseSensitivity);
+	//Owner->AddControllerYawInput(InputVec.Y * MouseSensitivity);
 	// Network
 	Owner->Look(InputVec.X * MouseSensitivity, InputVec.Y * MouseSensitivity);
 }
@@ -232,7 +232,7 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 	{
 		return;
 	}
-
+	
 	RPC_Server_InterAction();
 }
 
@@ -250,7 +250,7 @@ void UPlayerInputComponent::RPC_Server_InterAction_Implementation()
 	UCameraComponent* Camera=Owner->GetCameraComp();
 	const FVector StartVec=Camera->GetComponentLocation();
 	const FVector EndVec=StartVec + Camera->GetForwardVector() * InteractionDistance;
-
+	DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red, false, 3.0f);
 	FCollisionQueryParams Param;
 	Param.AddIgnoredActor(Owner);
 	bool IsHit=GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Visibility, Param);
@@ -311,12 +311,6 @@ bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult, FVector& Imp
 	}
 	ImpactPoint=InHitResult.ImpactPoint;
 
-	// Prevent portal overlap
-	if(Owner->IsOverlapPortal(IsLeft, ImpactPoint))
-	{
-		return false;
-	}
-
 	// Check surface
 	const auto MI =InHitResult.GetComponent()->GetMaterial(0);
 	if( nullptr == MI )
@@ -339,18 +333,33 @@ bool UPlayerInputComponent::TrySpawnPortal(FHitResult& InHitResult, FVector& Imp
 	// Only for vertical wall
 	if( FMath::Abs(InHitResult.ImpactNormal.X) > 0.99f )
 	{
-		return CalcPortalLocationYZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox());
+		if(false == CalcPortalLocationYZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()))
+		{
+			return false;
+		}
 	}
 	if( FMath::Abs(InHitResult.ImpactNormal.Y) > 0.99f )
 	{
-		return CalcPortalLocationXZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
+		if(false == CalcPortalLocationXZ(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()))
+		{
+			return false;
+		}
 	}
 	if ( FMath::Abs(InHitResult.ImpactNormal.Z) > 0.99f )
 	{
-		return CalcPortalLocationXY(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()); 
+		if(false == CalcPortalLocationXY(ImpactPoint, InHitResult.GetActor()->GetComponentsBoundingBox()) )
+		{
+			return false;
+		}
 	}
 	//CalcPortalLocation(ImpactPoint, InHitResult.ImpactNormal, InHitResult.GetActor()->GetComponentsBoundingBox());
-	
+
+	// Prevent portal overlap
+	if ( Owner->IsOverlapPortal(IsLeft, ImpactPoint) )
+	{
+		return false;
+	}
+
 	return true;
 }
 

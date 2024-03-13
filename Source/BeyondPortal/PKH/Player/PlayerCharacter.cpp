@@ -6,6 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "PlayerInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/AudioComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/PointLightComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -114,12 +115,12 @@ APlayerCharacter::APlayerCharacter()
 	}
 
 	// Sound
-	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalLeftRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalSpawn.SFX_PortalSpawn'"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalLeftRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalLeft.SFX_PortalLeft'"));
 	if ( SFX_PortalLeftRef.Object )
 	{
 		SFX_PortalLeft=SFX_PortalLeftRef.Object;
 	}
-	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalRightRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalLink.SFX_PortalLink'"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalRightRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalRight.SFX_PortalRight'"));
 	if ( SFX_PortalRightRef.Object )
 	{
 		SFX_PortalRight=SFX_PortalRightRef.Object;
@@ -133,6 +134,26 @@ APlayerCharacter::APlayerCharacter()
 	if ( SFX_PortalOutStrongRef.Object )
 	{
 		SFX_PortalOutStrong=SFX_PortalOutStrongRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalFailRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalFail.SFX_PortalFail'"));
+	if ( SFX_PortalFailRef.Object )
+	{
+		SFX_PortalFail=SFX_PortalFailRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_GrabRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_Grab.SFX_Grab'"));
+	if ( SFX_GrabRef.Object )
+	{
+		SFX_Grab=SFX_GrabRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_GrabLoopRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_GrabLoop.SFX_GrabLoop'"));
+	if ( SFX_GrabLoopRef.Object )
+	{
+		SFX_GrabLoop=SFX_GrabLoopRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_DropRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_Drop.SFX_Drop'"));
+	if ( SFX_DropRef.Object )
+	{
+		SFX_Drop=SFX_DropRef.Object;
 	}
 }
 
@@ -197,6 +218,10 @@ void APlayerCharacter::BeginPlay()
 	// Particle
 	GunParticleComp->SetTemplate(VFX_GrabEffect);
 	GunParticleComp->SetActive(false);
+
+	// Sound
+	GunSoundComp=UGameplayStatics::SpawnSound2D(GetWorld(), SFX_GrabLoop, 1.0f);
+	GunSoundComp->Stop();
 }
 
 void APlayerCharacter::RPC_Server_InitPortal_Implementation()
@@ -248,11 +273,11 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 	
 	if( HasAuthority() )
 	{
-		RPC_Multi_SpawnPortal(IsLeft, SpawnLocation, SpawnRotation); 
+		RPC_Multi_SpawnPortal(IsLeft, SpawnLocation, SpawnRotation, Normal);
 	}
 	else
 	{
-		RPC_Server_SpawnPortal(IsLeft, SpawnLocation, SpawnRotation); 
+		RPC_Server_SpawnPortal(IsLeft, SpawnLocation, SpawnRotation, Normal);
 	}
 	if(CrosshairUI)
 	{
@@ -286,14 +311,21 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 	}
 }
 
-void APlayerCharacter::RPC_Server_SpawnPortal_Implementation(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const
+void APlayerCharacter::RPC_Server_SpawnPortal_Implementation(bool IsLeft, const FVector& NewLocation, FRotator NewRotation, const FVector& Normal) const
 {
-	RPC_Multi_SpawnPortal(IsLeft, NewLocation, NewRotation);
+	RPC_Multi_SpawnPortal(IsLeft, NewLocation, NewRotation, Normal);
 }
 
-void APlayerCharacter::RPC_Multi_SpawnPortal_Implementation(bool IsLeft, const FVector& NewLocation, const FRotator& NewRotation) const
+void APlayerCharacter::RPC_Multi_SpawnPortal_Implementation(bool IsLeft, const FVector& NewLocation, FRotator NewRotation, const FVector& Normal) const
 {
 	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
+
+	// 바닥이나 천장
+	if( FMath::Abs(Normal.Z) > 0.9f )
+	{
+		NewRotation.Roll = GetActorRotation().Yaw * -1;
+		NewRotation.Yaw=180;
+	}
 
 	TargetPortal->SetActorLocation(NewLocation);
 	TargetPortal->SetActorRotation(NewRotation);
@@ -322,11 +354,21 @@ void APlayerCharacter::SpawnFail(UParticleSystem* TargetVFX, const FVector& NewL
 	{
 		RPC_Server_SpawnFail(TargetVFX, NewLocation, NewRotation);
 	}
+
+	if(IsLocallyControlled())
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalFail, 1.0f);
+	}
 }
 
 void APlayerCharacter::Look(float PItchInput, float YawInput)
 {
-	if(IsLocallyControlled())
+	if ( HasAuthority() )
+	{
+		AddControllerPitchInput(PItchInput);
+		AddControllerYawInput(YawInput);
+	}
+	else
 	{
 		RPC_Server_Look(PItchInput, YawInput);
 	}
@@ -334,14 +376,15 @@ void APlayerCharacter::Look(float PItchInput, float YawInput)
 
 void APlayerCharacter::RPC_Server_Look_Implementation(float PItchInput, float YawInput)
 {
-	APlayerCharacter* OtherPlayer=Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 1));
-	if( OtherPlayer )
-	{
-		UCameraComponent* Cam=OtherPlayer->GetCameraComp();
-		FRotator TargetRotation =Cam->GetComponentRotation();
-		TargetRotation.Pitch+=PItchInput * -2.1;
-		Cam->SetWorldRotation(TargetRotation);
-	}
+	RPC_Multi_Look(PItchInput, YawInput);
+}
+
+void APlayerCharacter::RPC_Multi_Look_Implementation(float PItchInput, float YawInput)
+{
+	AddControllerPitchInput(PItchInput);
+	AddControllerYawInput(YawInput);
+
+	CameraComp->SetWorldRotation(GetController()->GetControlRotation());
 }
 
 void APlayerCharacter::RPC_Server_SpawnFail_Implementation(UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const
@@ -366,6 +409,15 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject)
 	{
 		CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
 	}
+
+	if(IsLocallyControlled())
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Grab, 1.0f);
+		if(GunSoundComp)
+		{
+			GunSoundComp->Play();
+		}
+	}
 }
 
 void APlayerCharacter::DropObj()
@@ -380,25 +432,33 @@ void APlayerCharacter::DropObj()
 	{
 		CrosshairUI->SetVisibility(ESlateVisibility::Visible);
 	}
+
+	if ( IsLocallyControlled() )
+	{
+		if ( GunSoundComp )
+		{
+			GunSoundComp->Stop();
+		}
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Drop, 1.5f);
+	}
 }
 
 bool APlayerCharacter::IsOverlapPortal(bool IsLeft, FVector TargetCenter)
 {
-	APortal* TargetPortal=IsLeft ? PortalLeft : PortalRight;
-	if( false == TargetPortal->GetIsActivated())
+	const APortal* OtherPortal=IsLeft ? PortalRight : PortalLeft;
+	if( false == OtherPortal->GetIsActivated())
 	{
 		return false;
-	}
+	} 
 
-	const FVector TargetBox=TargetPortal->GetComponentsBoundingBox().GetExtent();
-	const float TargetMaxX=TargetCenter.X + TargetBox.X;
+	const FVector TargetBox=OtherPortal->GetComponentsBoundingBox().GetExtent();
+	const float TargetMaxX=TargetCenter.X + TargetBox.X; 
 	const float TargetMinX=TargetCenter.X - TargetBox.X;
 	const float TargetMaxY=TargetCenter.Y + TargetBox.Y;
 	const float TargetMinY=TargetCenter.Y - TargetBox.Y;
 	const float TargetMaxZ=TargetCenter.Z + TargetBox.Z;
 	const float TargetMinZ=TargetCenter.Z - TargetBox.Z;
-
-	const APortal* OtherPortal=IsLeft ? PortalRight : PortalLeft;
+	
 	const FVector LinkedCenter=OtherPortal->GetActorLocation();
 	const FVector LinkedBox=OtherPortal->GetComponentsBoundingBox().GetExtent();
 	const float LinkedMaxX=LinkedCenter.X + LinkedBox.X;
@@ -407,11 +467,11 @@ bool APlayerCharacter::IsOverlapPortal(bool IsLeft, FVector TargetCenter)
 	const float LinkedMinY=LinkedCenter.Y - LinkedBox.Y;
 	const float LinkedMaxZ=LinkedCenter.Z + LinkedBox.Z;
 	const float LinkedMinZ=LinkedCenter.Z - LinkedBox.Z;
-
-	const bool XOverlap = (TargetCenter.X < LinkedCenter.X && TargetMaxX >= LinkedMinX) || (TargetCenter.X > LinkedCenter.X && TargetMinX <= LinkedMaxX);
-	const bool YOverlap = (TargetCenter.Y < LinkedCenter.Y && TargetMaxY >= LinkedMinY) || (TargetCenter.Y > LinkedCenter.Y && TargetMinY <= LinkedMaxY);
-	const bool ZOverlap = (TargetCenter.Z < LinkedCenter.Z && TargetMaxZ >= LinkedMinZ) || (TargetCenter.Z > LinkedCenter.Z && TargetMinZ <= LinkedMaxZ);
-
+	
+	const bool XOverlap = (TargetCenter.X <= LinkedCenter.X && TargetMaxX >= LinkedMinX) || (TargetCenter.X >= LinkedCenter.X && TargetMinX <= LinkedMaxX);
+	const bool YOverlap = (TargetCenter.Y <= LinkedCenter.Y && TargetMaxY >= LinkedMinY) || (TargetCenter.Y >= LinkedCenter.Y && TargetMinY <= LinkedMaxY);
+	const bool ZOverlap = (TargetCenter.Z <= LinkedCenter.Z && TargetMaxZ >= LinkedMinZ) || (TargetCenter.Z >= LinkedCenter.Z && TargetMinZ <= LinkedMaxZ);
+	
 	return XOverlap && YOverlap && ZOverlap;
 }
 
@@ -439,11 +499,11 @@ void APlayerCharacter::ChangeVelocity(const FVector& NewDirection)
 	{
 		if ( NewVelocity.Size() > 1000 )
 		{
-			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutStrong, 1.0f);
+			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutStrong, 2.0f);
 		}
 		else
 		{
-			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutWeak, 1.0f);
+			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutWeak, 1.5f);
 		}
 	}
 }
