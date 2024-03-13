@@ -204,15 +204,15 @@ void APlayerCharacter::BeginPlay()
 		PortalRight->SetOwner(GetController());
 		PortalLeft->SetCapturePlayer(this);
 		PortalRight->SetCapturePlayer(this);
+		PortalLeft->SetIsLeft(true);
+		PortalRight->SetIsLeft(false);
 	}
 	else
 	{
-		//RPC_Server_InitPortal();
-
 		PortalLeft->SetCapturePlayer(this);
 		PortalRight->SetCapturePlayer(this);
-		/*OtherPlayer->PortalLeft->SetCapturePlayer(this);
-		OtherPlayer->PortalRight->SetCapturePlayer(this);*/
+		PortalLeft->SetIsLeft(true);
+		PortalRight->SetIsLeft(false);
 	}
 
 	// Particle
@@ -222,6 +222,7 @@ void APlayerCharacter::BeginPlay()
 	// Sound
 	GunSoundComp=UGameplayStatics::SpawnSound2D(GetWorld(), SFX_GrabLoop, 1.0f);
 	GunSoundComp->Stop();
+	GunSoundComp->bAutoDestroy=false;
 }
 
 void APlayerCharacter::RPC_Server_InitPortal_Implementation()
@@ -626,6 +627,14 @@ void APlayerCharacter::PlayerCrouch()
 	{
 		Crouch();
 		IsCrouching=true;
+	}
+}
+
+void APlayerCharacter::CrosshairFill(bool IsLeft)
+{
+	if(CrosshairUI)
+	{
+		CrosshairUI->PortalUI_Fill(IsLeft);
 	}
 }
 

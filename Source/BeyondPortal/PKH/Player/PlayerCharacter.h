@@ -214,6 +214,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UCrosshairUIWidget> CrosshairUI;
 
+public:
+	void CrosshairFill(bool IsLeft);
+
 // Network
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
