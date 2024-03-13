@@ -5,6 +5,7 @@
 
 #include "ArmDoor.h"
 #include "CheckOpen.h"
+#include "Door.h"
 #include "FloorLine.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -109,7 +110,11 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 				ACheckOpen* co=Cast<ACheckOpen>(CurrentActor);
 				co->checkOpen->SetMaterial(0, co->mat);
 			}
-
+			else if(CurrentActor->IsA< ADoor>() )
+			{
+				ADoor* door=Cast<ADoor>(CurrentActor);
+				door->RPC_Server_OpenDoor();
+			}
 		}
 
 	}

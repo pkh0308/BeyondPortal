@@ -49,7 +49,7 @@ void ABarrierButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedCompone
 	if ( OtherActor->IsA<APlayerCharacter>() ) {
 
 		TArray<AActor*> FoundActors;
-
+		isCheck=true;
 		//Barrier없어짐.
 		FString findTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");//DestroyBarrier
 		FName findTagName=FName(*findTag);
@@ -83,14 +83,10 @@ void ABarrierButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedCompone
 			{
 				ACheckOpen* co=Cast<ACheckOpen>(CurrentActor);
 				co->checkOpen->SetMaterial(0, co->mat);
+				isCheck=true;
 			}
 		}
 		
-		UE_LOG(LogTemp, Error, TEXT("begin : cnt : %d"), cnt);
-		
-		// 몇개를 밟았는지 체크
-		RPC_Server_ActiveButton();
-		RPC_Server_Spawn();
 	}
 }
 
@@ -147,47 +143,10 @@ void ABarrierButton::Tick(float DeltaTime)
 	
 }
 
-void ABarrierButton::RPC_Server_ActiveButton_Implementation()
-{
-	
-	UE_LOG(LogTemp, Error, TEXT("Server : cnt : %d"), cnt);
-	
-	RPC_Multi_ActiveButton();
-}
-
-void ABarrierButton::RPC_Multi_ActiveButton_Implementation()
-{
-	
-	cnt++;
-	
-	UE_LOG(LogTemp, Error, TEXT("Multi : cnt : %d"), cnt);
-	if ( cnt >= 2 )
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("밟은게 두개!!!"));
-	}
-	
-}
 
 
-void ABarrierButton::Spawn()
-{
-	if(cnt >= 1 ) //나중에 2로 수정
-	{
-		TArray<AActor*> FoundActors;
-		UGameplayStatics::GetAllActorsWithTag(GetWorld(), TEXT("CubeDropper"), FoundActors);
 
-		float NearestActorDistance=1000.0f;
-		AActor* NearestActor=UGameplayStatics::FindNearestActor(GetActorLocation(), FoundActors, NearestActorDistance);
 
-		//스폰된 Cube가 없다면 cube 스폰
-		AActor* cube=GetWorld()->SpawnActor<AActor>(spawnCube, FVector(NearestActor->GetActorLocation().X, NearestActor->GetActorLocation().Y, NearestActor->GetActorLocation().Z - 200), FRotator::ZeroRotator);
-	}
-}
-
-void ABarrierButton::RPC_Server_Spawn_Implementation()
-{
-	Spawn();
-}
 
 void ABarrierButton::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

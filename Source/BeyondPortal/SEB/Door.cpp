@@ -39,8 +39,7 @@ void ADoor::BeginPlay()
 	Super::BeginPlay();
 	boxComp->OnComponentBeginOverlap.AddDynamic(this, &ADoor::OnMyCompBeginOverlap);
 	boxComp->OnComponentEndOverlap.AddDynamic(this, &ADoor::OnMyCompEndOverlap);
-	
-	
+
 }
 
 // Called every frame
@@ -99,9 +98,6 @@ void ADoor::RPC_Multi_OpenDoor_Implementation()
 	door->PlayAnimation(openDoorAnim, false);
 	isOpened=true;
 }
-
-
-
 
 void ADoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

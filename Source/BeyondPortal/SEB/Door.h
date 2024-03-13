@@ -60,5 +60,8 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void RPC_Multi_OpenDoor();
 
+
+	
+
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
