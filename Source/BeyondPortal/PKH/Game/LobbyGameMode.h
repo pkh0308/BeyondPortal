@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -13,5 +13,17 @@ UCLASS()
 class BEYONDPORTAL_API ALobbyGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
+public:
+	ALobbyGameMode();
+
+protected:
+	virtual void BeginPlay() override;
+
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class ULobbyUIWidget> LobbyUIClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class ULobbyUIWidget> LobbyUI;
 };

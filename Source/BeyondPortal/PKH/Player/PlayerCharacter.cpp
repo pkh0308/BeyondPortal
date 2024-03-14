@@ -17,6 +17,8 @@
 #include "PKH/Portal/Portal.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "PKH/Props/GrabCube.h"
 #include "PKH/Props/GunActor.h"
 #include "SEB/Barrier.h"
 
@@ -80,6 +82,9 @@ APlayerCharacter::APlayerCharacter()
 	CameraComp->SetupAttachment(RootComponent);
 	CameraComp->AddRelativeLocation(FVector(17, 7, 28));
 	CameraComp->bUsePawnControlRotation=true;
+
+	// PhysicsHandle
+	PhysicsHandleComp=CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandleComp"));
 
 	// Gun Actor
 	static ConstructorHelpers::FClassFinder<AGunActor> GunActorClassRef(TEXT("/Game/PKH/Blueprint/Props/BP_GunActor.BP_GunActor_C"));
@@ -251,7 +256,11 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	
+	// Grab
+	if(nullptr != GrabObject)
+	{
+		TickGrab();
+	}
 }
 
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -398,19 +407,36 @@ void APlayerCharacter::RPC_Multi_SpawnFail_Implementation(UParticleSystem* Targe
 	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), TargetVFX, NewLocation, NewRotation);
 }
 
-void APlayerCharacter::GrabObj(ICanGrab* NewObject)
+void APlayerCharacter::TickGrab()
+{
+	if ( HasAuthority() )
+	{
+		PhysicsHandleComp->SetTargetLocation(GetGrabPoint());
+
+		// Check Velocity
+		AGrabCube* Cube=Cast<AGrabCube>(GrabObject);
+		if(Cube)
+		{
+			Cube->VelocityCheck();
+		}
+	}
+}
+
+void APlayerCharacter::GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetComp)
 {
 	GrabObject=NewObject;
+	PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
+	// Particle
 	if ( GunParticleComp->Template )
 	{
 		GunParticleComp->SetActive(true);
 	}
-
+	// UI
 	if(CrosshairUI )
 	{
 		CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
 	}
-
+	// Sound
 	if(IsLocallyControlled())
 	{
 		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Grab, 1.0f);
@@ -423,17 +449,19 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject)
 
 void APlayerCharacter::DropObj()
 {
+	PhysicsHandleComp->ReleaseComponent();
 	GrabObject=nullptr;
+	//Particle
 	if ( GunParticleComp->Template )
 	{
 		GunParticleComp->SetActive(false);
 	}
-
+	// UI
 	if ( CrosshairUI )
 	{
 		CrosshairUI->SetVisibility(ESlateVisibility::Visible);
 	}
-
+	// Sound
 	if ( IsLocallyControlled() )
 	{
 		if ( GunSoundComp )
@@ -564,8 +592,29 @@ void APlayerCharacter::RPC_Multi_PortalOut_Implementation(const FVector& NewLoca
 
 FVector APlayerCharacter::GetGrabPoint() const
 {
-	const FVector GrabPoint = CameraComp->GetComponentLocation() + GrabPointOffset + CameraComp->GetForwardVector() * GrabDistance;
-	return GrabPoint;
+	AActor* Cube=Cast<AActor>(GrabObject);
+	const float CubeRadius=Cube->GetComponentsBoundingBox().GetExtent().X;
+	const FVector StartVec = CameraComp->GetComponentLocation();
+	const FVector EndVec = StartVec + GrabPointOffset + CameraComp->GetForwardVector() * (GrabDistance + CubeRadius);
+
+	// 경로에 포탈이 있다면 해당 포탈의 타겟 로케이션을 반환
+	FHitResult HitResult;
+	FCollisionQueryParams Param;
+	Param.AddIgnoredActor(this);
+	Param.AddIgnoredActor(Cube);
+	bool IsHit = GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Camera, Param);
+	if( IsHit )
+	{
+		if( APortal* Portal = Cast<APortal>(HitResult.GetActor()) )
+		{
+			if( Portal->GetIsLinked() )
+			{
+				return Portal->GetLinkedPortal()->GetTargetLocation();
+			}
+		}
+	}
+	// 아니라면 카메라 앞 일정 거리를 반환
+	return StartVec + GrabPointOffset + CameraComp->GetForwardVector() * GrabDistance;;
 }
 
 void APlayerCharacter::Respawn()

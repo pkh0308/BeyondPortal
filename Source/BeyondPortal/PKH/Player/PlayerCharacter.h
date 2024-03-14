@@ -46,6 +46,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UParticleSystemComponent> GunParticleComp;
 
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UPhysicsHandleComponent> PhysicsHandleComp;
+
 public:
 	FORCEINLINE UCameraComponent* GetCameraComp()const  { return CameraComp; }
 
@@ -168,8 +171,10 @@ protected:
 
 	FVector GrabPointOffset = FVector(0, 0, 15);
 
+	void TickGrab();
+
 public:
-	void GrabObj(class ICanGrab* NewObject);
+	void GrabObj(class ICanGrab* NewObject, UPrimitiveComponent* TargetComp);
 	void DropObj();
 	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; }
 

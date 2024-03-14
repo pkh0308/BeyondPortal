@@ -3,7 +3,6 @@
 
 #include "PKH/Props/GrabCube.h"
 #include "Components/BoxComponent.h"
-#include "Kismet/GameplayStatics.h"
 #include "PKH/Player/PlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 
@@ -52,10 +51,6 @@ void AGrabCube::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if( OwnPlayer )
-	{
-		TickGrab();
-	}
 	if(IsDissolving)
 	{
 		TickDisappear(DeltaSeconds);
@@ -93,8 +88,8 @@ void AGrabCube::RPC_Multi_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
 	{
 		OwnPlayer->DropObj();
 	}
-	OwnPlayer=NewOwnPlayer; 
-	OwnPlayer->GrabObj(this);
+	OwnPlayer=NewOwnPlayer;
+	OwnPlayer->GrabObj(this, BoxComp);
 	BoxComp->SetEnableGravity(false);
 }
 
@@ -118,7 +113,7 @@ void AGrabCube::RPC_Server_Drop_Implementation()
 
 void AGrabCube::RPC_Multi_Drop_Implementation()
 {
-	if ( OwnPlayer )
+	if(OwnPlayer)
 	{
 		OwnPlayer->DropObj();
 	}
@@ -126,17 +121,13 @@ void AGrabCube::RPC_Multi_Drop_Implementation()
 	BoxComp->SetEnableGravity(true);
 }
 
-void AGrabCube::TickGrab()
+void AGrabCube::VelocityCheck()
 {
-	// Server
-	if( HasAuthority() )
+	if ( HasAuthority() )
 	{
-		const FVector NewLocation=OwnPlayer->GetGrabPoint();
-		SetActorLocation(NewLocation);
-
 		// Check Velocity
 		// if velocity is too big, drop cube
-		const FVector CurVelocity=BoxComp->GetComponentVelocity();
+		/*const FVector CurVelocity=BoxComp->GetComponentVelocity();
 		if ( CurVelocity.Size() > DropVelocity )
 		{
 			BoxComp->SetPhysicsLinearVelocity(CurVelocity * VelocityCut);
@@ -145,7 +136,7 @@ void AGrabCube::TickGrab()
 		else
 		{
 			BoxComp->SetWorldRotation(FRotator::ZeroRotator);
-		}
+		}*/
 
 		Net_CubeLocation=GetActorLocation();
 		Net_CubeRotation=GetActorRotation();
