@@ -8,6 +8,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
+#include "Interfaces/OnlineSessionInterface.h"
 
 void UPortalGameInstance::Init()
 {
@@ -43,25 +44,21 @@ void UPortalGameInstance::CreateRoom(int32 MaxPlayerCount, FString RoomName)
 	// 7. 커스텀 정보 설정
 	Settings.Set(TEXT("HOST_NAME"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	Settings.Set(TEXT("ROOM_NAME"), RoomName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-	UE_LOG(LogTemp, Warning, TEXT("ID: %s"), *MyNetID->ToString());
-	SessionInterface->CreateSession(12184357, FName(*RoomName), Settings);
+	
+	ULocalPlayer* _Player=GetWorld()->GetFirstLocalPlayerFromController();
+	SessionInterface->CreateSession(*_Player->GetPreferredUniqueNetId(), FName(*RoomName), Settings);
+	UE_LOG(LogTemp, Warning, TEXT("ID: %s"), *_Player->GetPreferredUniqueNetId()->ToString());
 }
 
 void UPortalGameInstance::OnCreateRoomComplete(FName SessionName, bool bWasSuccessful)
 {
 	if(false == bWasSuccessful)
 	{
-		return;
+		UE_LOG(LogTemp, Warning, TEXT("Create Room Failed: %s"), *SessionName.ToString());
 	}
-
-	for ( auto r : RoomSearchSettings->SearchResults )
+	else
 	{
-		if ( false == r.IsValid() )
-			continue;
-
-		FString RoomName;
-		r.Session.SessionSettings.Get(TEXT("ROOM_NAME"), RoomName);
-		UE_LOG(LogTemp, Warning, TEXT("%s"), *RoomName);
+		UE_LOG(LogTemp, Warning, TEXT("Create Room Success: %s"), *SessionName.ToString());
 	}
 }
 
@@ -79,30 +76,44 @@ void UPortalGameInstance::FindOtherRooms(FOnFindRoomCompleteDelegate OnFindRoomC
 	auto SubSystem=IOnlineSubsystem::Get();
 	RoomSearchSettings->bIsLanQuery=SubSystem->GetSubsystemName().IsEqual("NULL");
 	// 3. 검색을 하고싶다.
-	MyNetID=GetWorld()->GetFirstLocalPlayerFromController()->GetUniqueNetIdForPlatformUser().GetUniqueNetId();
-	UE_LOG(LogTemp, Warning, TEXT("ID: %s"), *MyNetID->ToString());
-	SessionInterface->FindSessions(12184357, RoomSearchSettings.ToSharedRef());
+	SessionInterface->FindSessions(0, RoomSearchSettings.ToSharedRef());
 }
 
 void UPortalGameInstance::OnFindOtherRoomsComplete(bool bWasSuccessful)
 {
 	if( RoomSearchSettings->SearchResults.Num() > 0 )
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Find Room Success"));
-		OnMyFindRoomDelegate.ExecuteIfBound(true);
+		for( auto Result : RoomSearchSettings->SearchResults )
+		{
+			if ( false == Result.IsValid() )
+			{
+				continue;
+			}
+
+			FString RoomName;
+			Result.Session.SessionSettings.Get(TEXT("ROOM_NAME"), RoomName);
+			UE_LOG(LogTemp, Warning, TEXT("Room Name: %s"), *RoomName);
+
+			if ( RoomName.Equals("BeyondPortal") )
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Find Room Success"));
+				OnMyFindRoomDelegate.ExecuteIfBound(true);
+				return;
+			}
+		}
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Find Room Failed"));
-		OnMyFindRoomDelegate.ExecuteIfBound(false);
-	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("Find Room Failed"));
+	OnMyFindRoomDelegate.ExecuteIfBound(false);
 }
 
 void UPortalGameInstance::JoinRoom(FString RoomName)
 {
 	FOnlineSessionSearchResult SearchResult;
-	UE_LOG(LogTemp, Warning, TEXT("ID: %s"), *MyNetID->ToString());
-	SessionInterface->JoinSession(12184357, FName(*RoomName), SearchResult);
+
+	ULocalPlayer* _Player=GetWorld()->GetFirstLocalPlayerFromController();
+	SessionInterface->JoinSession(*_Player->GetPreferredUniqueNetId(), FName(*RoomName), SearchResult);
+	UE_LOG(LogTemp, Warning, TEXT("ID: %s"), *_Player->GetPreferredUniqueNetId()->ToString());
 }
 
 void UPortalGameInstance::OnJoinRoomComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)

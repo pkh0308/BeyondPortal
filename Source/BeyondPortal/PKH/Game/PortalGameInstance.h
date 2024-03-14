@@ -46,7 +46,6 @@ public:
 	// Response for find sessions
 	void OnFindOtherRoomsComplete(bool bWasSuccessful);
 
-
 public:
 	// Request to join session
 	void JoinRoom(FString RoomName);
