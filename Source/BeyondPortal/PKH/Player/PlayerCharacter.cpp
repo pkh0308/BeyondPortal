@@ -29,7 +29,7 @@ APlayerCharacter::APlayerCharacter()
 	
 	// Replicate
 	bReplicates=true;
-	NetUpdateFrequency=100.0f;
+	NetUpdateFrequency=60.0f;
 
 	// Rotation Setting
 	bUseControllerRotationRoll=false;
@@ -414,11 +414,11 @@ void APlayerCharacter::TickGrab()
 		PhysicsHandleComp->SetTargetLocation(GetGrabPoint());
 
 		// Check Velocity
-		AGrabCube* Cube=Cast<AGrabCube>(GrabObject);
+		/*AGrabCube* Cube=Cast<AGrabCube>(GrabObject);
 		if(Cube)
 		{
 			Cube->VelocityCheck();
-		}
+		}*/
 	}
 }
 

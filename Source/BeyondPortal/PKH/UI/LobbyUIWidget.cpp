@@ -29,16 +29,16 @@ void ULobbyUIWidget::OnClicked_StartGame()
 	GameInst->FindOtherRooms(OnFindRoomComplete);
 }
 
-void ULobbyUIWidget::DoesRoomExist(bool bExist)
+void ULobbyUIWidget::DoesRoomExist(bool bExist, class FOnlineSessionSearchResult* result)
 {
 	// 이미 방이 있다면 Join
-	if( bExist )
+	if( result  )
 	{
-		GameInst->JoinRoom(TEXT("BeyondPortal"));
+		GameInst->JoinRoom(TEXT("BeyondPortal"), result);
 	}
 	// 방이 없다면 새로 Create & 팝업 띄우기
 	else
 	{
-		GameInst->CreateRoom(2, TEXT("BeyondPortal"));
+		GameInst->CreateRoom(10, TEXT("BeyondPortal"));
 	}
 }

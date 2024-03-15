@@ -38,8 +38,8 @@ void APKHGameMode::PostLogin(APlayerController* NewPlayer)
 			NewPlayer->UnPossess();
 			Character->Destroy();
 		}
-
-		APlayerCharacter* Player=GetWorld()->SpawnActor<APlayerCharacter>(P2CharacterClass, FVector(900, -55, 50), FRotator::ZeroRotator);
+		
+		APlayerCharacter* Player=GetWorld()->SpawnActor<APlayerCharacter>(P2CharacterClass, FVector(220, -548, 92), FRotator::ZeroRotator);
 		NewPlayer->Possess(Player);
 	}
 	

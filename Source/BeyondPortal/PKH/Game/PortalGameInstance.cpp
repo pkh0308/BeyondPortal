@@ -63,7 +63,10 @@ void UPortalGameInstance::OnCreateRoomComplete(FName SessionName, bool bWasSucce
 		// 레벨 입장
 		UWorld* _World=GetWorld();
 		ensure(_World);
-		_World->ServerTravel("/Game/SEB/Maps/BeyondPortalMap?listen");
+		if ( GetWorld()->GetFirstPlayerController()->HasAuthority() )
+		{
+			GetWorld()->ServerTravel("/Game/SEB/Maps/BeyondPortalMap?listen");
+		}
 	}
 }
 
@@ -103,20 +106,20 @@ void UPortalGameInstance::OnFindOtherRoomsComplete(bool bWasSuccessful)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Find Room Success"));
 				TargetSearchResult=Result;
-				OnMyFindRoomDelegate.ExecuteIfBound(true);
+				OnMyFindRoomDelegate.ExecuteIfBound(true, &Result);
 				return;
 			}
 		}
 	}
 	
 	UE_LOG(LogTemp, Warning, TEXT("Find Room Failed"));
-	OnMyFindRoomDelegate.ExecuteIfBound(false);
+	OnMyFindRoomDelegate.ExecuteIfBound(false, nullptr);
 }
 
-void UPortalGameInstance::JoinRoom(FString RoomName)
+void UPortalGameInstance::JoinRoom(FString RoomName, FOnlineSessionSearchResult* result)
 {
 	ULocalPlayer* _Player=GetWorld()->GetFirstLocalPlayerFromController();
-	SessionInterface->JoinSession(*_Player->GetPreferredUniqueNetId(), FName(*RoomName), TargetSearchResult);
+	SessionInterface->JoinSession(*_Player->GetPreferredUniqueNetId(), FName(*RoomName), *result);
 	UE_LOG(LogTemp, Warning, TEXT("ID: %s"), *_Player->GetPreferredUniqueNetId()->ToString());
 }
 

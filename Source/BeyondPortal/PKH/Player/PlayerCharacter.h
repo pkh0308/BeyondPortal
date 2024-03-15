@@ -154,10 +154,10 @@ public:
 public:
 	void Look(float PItchInput, float YawInput);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Unreliable)
 	void RPC_Server_Look(float PItchInput, float YawInput);
 
-	UFUNCTION(NetMulticast, Reliable)
+	UFUNCTION(NetMulticast, Unreliable)
 	void RPC_Multi_Look(float PItchInput, float YawInput);
 
 // Grab

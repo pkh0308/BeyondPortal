@@ -20,7 +20,7 @@ APortal::APortal()
 	// Component
 	BoxComp =CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	SetRootComponent(BoxComp);
-	BoxComp->SetBoxExtent(FVector(25, 60, 100));
+	BoxComp->SetBoxExtent(FVector(30, 60, 100));
 	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &APortal::OnBeginOverlap);
 
 	MeshComp=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));

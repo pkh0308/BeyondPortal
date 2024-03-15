@@ -55,7 +55,7 @@ protected:
 
 public:
 	// Request to join session
-	void JoinRoom(FString RoomName);
+	void JoinRoom(FString RoomName, FOnlineSessionSearchResult* result);
 
 	// Response for join session
 	void OnJoinRoomComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);

@@ -6,7 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "LobbyUIWidget.generated.h"
 
-DECLARE_DELEGATE_OneParam(FOnFindRoomCompleteDelegate, bool /*bExist*/)
+DECLARE_DELEGATE_TwoParams(FOnFindRoomCompleteDelegate, bool, class FOnlineSessionSearchResult* /*bExist*/)
 
 /**
  * 
@@ -41,6 +41,5 @@ protected:
 public:
 	FOnFindRoomCompleteDelegate OnFindRoomComplete;
 
-	UFUNCTION()
-	void DoesRoomExist(bool bExist);
+	void DoesRoomExist(bool bExist, class FOnlineSessionSearchResult* result);
 };
