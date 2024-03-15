@@ -25,6 +25,7 @@ void ULobbyUIWidget::NativeConstruct()
 
 void ULobbyUIWidget::OnClicked_StartGame()
 {
+	PopUp_WaitPlayer->SetVisibility(ESlateVisibility::Visible);
 	GameInst->FindOtherRooms(OnFindRoomComplete);
 }
 
@@ -39,6 +40,5 @@ void ULobbyUIWidget::DoesRoomExist(bool bExist)
 	else
 	{
 		GameInst->CreateRoom(2, TEXT("BeyondPortal"));
-		PopUp_WaitPlayer->SetVisibility(ESlateVisibility::Visible);
 	}
 }

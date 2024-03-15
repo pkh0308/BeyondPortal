@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "OnlineSessionSettings.h"
 #include "Engine/GameInstance.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "PKH/UI/LobbyUIWidget.h"
@@ -27,6 +28,7 @@ protected:
 	
 	FString HostName = TEXT("PSP");
 
+// Create
 public:
 	// Request to create session
 	void CreateRoom(int32 MaxPlayerCount, FString RoomName);
@@ -34,6 +36,7 @@ public:
 	// Response for create session
 	void OnCreateRoomComplete(FName SessionName, bool bWasSuccessful);
 
+// Find
 protected:
 	TSharedPtr<FOnlineSessionSearch> RoomSearchSettings;
 
@@ -45,6 +48,10 @@ public:
 
 	// Response for find sessions
 	void OnFindOtherRoomsComplete(bool bWasSuccessful);
+
+// Join
+protected:
+	FOnlineSessionSearchResult TargetSearchResult;
 
 public:
 	// Request to join session
