@@ -58,7 +58,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float VelocityCut = 0.5f;
 
-	void TickGrab();
+public:
+	void VelocityCheck();
 
 // Success
 protected:

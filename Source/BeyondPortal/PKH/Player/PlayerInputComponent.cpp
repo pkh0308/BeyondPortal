@@ -250,7 +250,7 @@ void UPlayerInputComponent::RPC_Server_InterAction_Implementation()
 	UCameraComponent* Camera=Owner->GetCameraComp();
 	const FVector StartVec=Camera->GetComponentLocation();
 	const FVector EndVec=StartVec + Camera->GetForwardVector() * InteractionDistance;
-	DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red, false, 3.0f);
+	//DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red, false, 3.0f);
 	FCollisionQueryParams Param;
 	Param.AddIgnoredActor(Owner);
 	bool IsHit=GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Visibility, Param);
