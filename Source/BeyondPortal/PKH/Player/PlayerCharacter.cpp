@@ -18,6 +18,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "PKH/Interface/Interactible.h"
 #include "PKH/Props/GrabCube.h"
 #include "PKH/Props/GunActor.h"
 #include "SEB/Barrier.h"
@@ -29,7 +30,7 @@ APlayerCharacter::APlayerCharacter()
 	
 	// Replicate
 	bReplicates=true;
-	NetUpdateFrequency=60.0f;
+	NetUpdateFrequency=100.0f;
 
 	// Rotation Setting
 	bUseControllerRotationRoll=false;
@@ -225,7 +226,7 @@ void APlayerCharacter::BeginPlay()
 	GunParticleComp->SetActive(false);
 
 	// Sound
-	GunSoundComp=UGameplayStatics::SpawnSound2D(GetWorld(), SFX_GrabLoop, 1.0f);
+	GunSoundComp=UGameplayStatics::SpawnSound2D(GetWorld(), SFX_GrabLoop, 0.7f);
 	GunSoundComp->Stop();
 	GunSoundComp->bAutoDestroy=false;
 }
@@ -373,12 +374,7 @@ void APlayerCharacter::SpawnFail(UParticleSystem* TargetVFX, const FVector& NewL
 
 void APlayerCharacter::Look(float PItchInput, float YawInput)
 {
-	if ( HasAuthority() )
-	{
-		AddControllerPitchInput(PItchInput);
-		AddControllerYawInput(YawInput);
-	}
-	else
+	if ( false == HasAuthority() )
 	{
 		RPC_Server_Look(PItchInput, YawInput);
 	}
@@ -386,15 +382,32 @@ void APlayerCharacter::Look(float PItchInput, float YawInput)
 
 void APlayerCharacter::RPC_Server_Look_Implementation(float PItchInput, float YawInput)
 {
-	RPC_Multi_Look(PItchInput, YawInput);
-}
-
-void APlayerCharacter::RPC_Multi_Look_Implementation(float PItchInput, float YawInput)
-{
 	AddControllerPitchInput(PItchInput);
 	AddControllerYawInput(YawInput);
 
 	CameraComp->SetWorldRotation(GetController()->GetControlRotation());
+}
+
+void APlayerCharacter::RPC_Multi_Look_Implementation(float PItchInput, float YawInput)
+{
+	
+}
+
+void APlayerCharacter::SetClientCameraRotation()
+{
+	if ( IsLocallyControlled() )
+	{
+		AController* _Controller=GetController();
+		if ( _Controller )
+		{
+			RPC_Server_SetCameraRotation(_Controller->GetControlRotation());
+		}
+	}
+}
+
+void APlayerCharacter::RPC_Server_SetCameraRotation_Implementation(FRotator NewRotation)
+{
+	CameraComp->SetWorldRotation(NewRotation);
 }
 
 void APlayerCharacter::RPC_Server_SpawnFail_Implementation(UParticleSystem* TargetVFX, const FVector& NewLocation, const FRotator& NewRotation) const
@@ -439,7 +452,7 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetC
 	// Sound
 	if(IsLocallyControlled())
 	{
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Grab, 1.0f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Grab, 0.5f);
 		if(GunSoundComp)
 		{
 			GunSoundComp->Play();
@@ -468,7 +481,7 @@ void APlayerCharacter::DropObj()
 		{
 			GunSoundComp->Stop();
 		}
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Drop, 1.5f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Drop, 1.3f);
 	}
 }
 
@@ -615,6 +628,44 @@ FVector APlayerCharacter::GetGrabPoint() const
 	}
 	// 아니라면 카메라 앞 일정 거리를 반환
 	return StartVec + GrabPointOffset + CameraComp->GetForwardVector() * GrabDistance;;
+}
+
+void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDistance)
+{
+	if ( GrabObject )
+	{
+		GrabObject->Drop();
+		return;
+	}
+
+	// Check object with line tracing
+	FHitResult HitResult;
+	const FVector StartVec=CameraComp->GetComponentLocation();
+	const FVector EndVec=StartVec + CameraComp->GetForwardVector() * InteractionDistance;
+	//DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red, false, 3.0f);
+
+	FCollisionQueryParams Param;
+	Param.AddIgnoredActor(Owner);
+	bool IsHit=GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Visibility, Param);
+	if ( false == IsHit )
+	{
+		return;
+	}
+
+	// Grab
+	ICanGrab* GrabActor=Cast<ICanGrab>(HitResult.GetActor());
+	if ( GrabActor )
+	{
+		GrabActor->Grab(this);
+		return;
+	}
+
+	// Interaction
+	IInteractible* InteractibleActor=Cast<IInteractible>(HitResult.GetActor());
+	if ( InteractibleActor )
+	{
+		InteractibleActor->DoInteraction(); UE_LOG(LogTemp, Warning, TEXT("Do Interaction"));
+	}
 }
 
 void APlayerCharacter::Respawn()

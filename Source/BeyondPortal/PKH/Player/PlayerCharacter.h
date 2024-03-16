@@ -160,6 +160,11 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void RPC_Multi_Look(float PItchInput, float YawInput);
 
+	void SetClientCameraRotation();
+
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_SetCameraRotation(FRotator NewRotation);
+
 // Grab
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -179,6 +184,11 @@ public:
 	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; }
 
 	FVector GetGrabPoint() const;
+
+// InterAction RPC
+public:
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_Interaction(float InteractionDistance);
 
 // Die & Respawn
 protected:
