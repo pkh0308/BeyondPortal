@@ -85,7 +85,7 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 			return;
 		}
 		// Overlapped with other player's portal
-		Activate(false); UE_LOG(LogTemp, Warning, TEXT("Deactivate"));
+		Activate(false);
 		return;
 	}
 	if( false == IsLinked )

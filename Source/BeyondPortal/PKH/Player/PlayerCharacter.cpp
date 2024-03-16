@@ -272,16 +272,17 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	InputComp->SetupInput(EnhancedComp);
 }
 
-void APlayerCharacter::SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const
+void APlayerCharacter::SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal)
 {
 	Spawn(IsLeft, Location, Normal);
 }
 
-void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const FVector& Normal) const
+void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const FVector& Normal)
 {
 	const FVector SpawnLocation=Location + Normal * PortalSpawnOffset;
 	const FRotator SpawnRotation=Normal.ToOrientationRotator();
-	
+
+	// Network
 	if( HasAuthority() )
 	{
 		RPC_Multi_SpawnPortal(IsLeft, SpawnLocation, SpawnRotation, Normal);
@@ -295,9 +296,10 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 		CrosshairUI->PortalUI_Empty(IsLeft);
 	}
 
-	//Sound
+	// Count & Sound
 	if(IsLocallyControlled())
 	{
+		AddPortalCount();
 		UGameplayStatics::PlaySound2D(GetWorld(), IsLeft ? SFX_PortalLeft : SFX_PortalRight, 1.0f);
 	}
 
