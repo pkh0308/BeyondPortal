@@ -150,10 +150,13 @@ void UPlayerInputComponent::OnIALook(const FInputActionValue& Value)
 
 	const FVector2D InputVec=Value.Get<FVector2D>();
 
-	//Owner->AddControllerPitchInput(InputVec.X * MouseSensitivity);
-	//Owner->AddControllerYawInput(InputVec.Y * MouseSensitivity);
-	// Network
-	Owner->Look(InputVec.X * MouseSensitivity, InputVec.Y * MouseSensitivity);
+	Owner->AddControllerPitchInput(InputVec.X * MouseSensitivity);
+	Owner->AddControllerYawInput(InputVec.Y * MouseSensitivity);
+
+	if(Owner->IsLocallyControlled() )
+	{
+		Owner->Look(InputVec.X * MouseSensitivity, InputVec.Y * MouseSensitivity);
+	}
 }
 
 void UPlayerInputComponent::OnIAJump(const FInputActionValue& Value)
@@ -233,7 +236,7 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 		return;
 	}
 	
-	RPC_Server_InterAction();
+	Owner->RPC_Server_Interaction(InteractionDistance);
 }
 
 void UPlayerInputComponent::RPC_Server_InterAction_Implementation()
@@ -251,6 +254,7 @@ void UPlayerInputComponent::RPC_Server_InterAction_Implementation()
 	const FVector StartVec=Camera->GetComponentLocation();
 	const FVector EndVec=StartVec + Camera->GetForwardVector() * InteractionDistance;
 	//DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red, false, 3.0f);
+
 	FCollisionQueryParams Param;
 	Param.AddIgnoredActor(Owner);
 	bool IsHit=GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Visibility, Param);

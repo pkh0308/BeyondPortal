@@ -20,7 +20,7 @@ APortal::APortal()
 	// Component
 	BoxComp =CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComp"));
 	SetRootComponent(BoxComp);
-	BoxComp->SetBoxExtent(FVector(30, 60, 100));
+	BoxComp->SetBoxExtent(FVector(35, 60, 100));
 	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &APortal::OnBeginOverlap);
 
 	MeshComp=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
@@ -85,7 +85,7 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 			return;
 		}
 		// Overlapped with other player's portal
-		Activate(false); UE_LOG(LogTemp, Warning, TEXT("Deactivate"));
+		Activate(false);
 		return;
 	}
 	if( false == IsLinked )

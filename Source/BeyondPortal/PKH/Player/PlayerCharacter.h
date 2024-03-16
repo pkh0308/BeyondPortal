@@ -72,12 +72,12 @@ protected:
 	FVector PortalExtent;
 
 protected:
-	void Spawn(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
+	void Spawn(const bool IsLeft, const FVector& Location, const FVector& Normal);
 
 public:
 	bool IsOverlapPortal(bool IsLeft, FVector TargetCenter);
 
-	void SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal) const;
+	void SpawnPortal(const bool IsLeft, const FVector& Location, const FVector& Normal);
 
 	void ResetAllPortals();
 
@@ -92,6 +92,14 @@ public:
 protected:
 	UFUNCTION(Server, Unreliable)
 	void RPC_Server_InitPortal();
+
+// Portal
+protected:
+	int32 PortalCount=0;
+
+public:
+	FORCEINLINE void AddPortalCount() { ++PortalCount; UE_LOG(LogTemp, Warning, TEXT("PortalCount: %d"), PortalCount) }
+	FORCEINLINE int32 GetPortalCount() const { return PortalCount; }
 
 // Overlap
 protected:
@@ -160,6 +168,11 @@ public:
 	UFUNCTION(NetMulticast, Unreliable)
 	void RPC_Multi_Look(float PItchInput, float YawInput);
 
+	void SetClientCameraRotation();
+
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_SetCameraRotation(FRotator NewRotation);
+
 // Grab
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -179,6 +192,11 @@ public:
 	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; }
 
 	FVector GetGrabPoint() const;
+
+// InterAction RPC
+public:
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_Interaction(float InteractionDistance);
 
 // Die & Respawn
 protected:
