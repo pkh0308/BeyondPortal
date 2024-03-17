@@ -7,7 +7,7 @@
 
 ALoadingGameMode::ALoadingGameMode()
 {
-	static ConstructorHelpers::FClassFinder<ULobbyUIWidget> LoadingUIClassRef(TEXT("/Game/PKH/UI/WBP_Loading.WBP_Loading_C"));
+	static ConstructorHelpers::FClassFinder<UUserWidget> LoadingUIClassRef(TEXT("/Game/PKH/UI/WBP_Loading.WBP_Loading_C"));
 	if ( LoadingUIClassRef.Class )
 	{
 		LoadingUIClass=LoadingUIClassRef.Class;
@@ -18,7 +18,7 @@ void ALoadingGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 
-	LoadingUI=Cast<ULobbyUIWidget>(CreateWidget(GetWorld(), LoadingUIClass));
+	LoadingUI=Cast<UUserWidget>(CreateWidget(GetWorld(), LoadingUIClass));
 	if ( LoadingUI )
 	{
 		LoadingUI->AddToViewport();
