@@ -22,5 +22,11 @@ protected:
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UUserWidget> LoadingUIClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UUserWidget> LoadingUI;
 
 };
