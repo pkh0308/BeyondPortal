@@ -59,4 +59,8 @@ public:
 
 	// Response for join session
 	void OnJoinRoomComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
+// Enter Chapter 1
+public:
+	void TravelToChapter1();
 };

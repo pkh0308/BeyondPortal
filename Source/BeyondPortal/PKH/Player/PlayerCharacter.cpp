@@ -441,21 +441,29 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetC
 {
 	GrabObject=NewObject;
 	PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
+
+	RPC_Multi_GrabObj(TargetComp);
+}
+
+void APlayerCharacter::RPC_Multi_GrabObj_Implementation(UPrimitiveComponent* TargetComp)
+{
+	//GrabObject=NewObject;
+	//PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
 	// Particle
 	if ( GunParticleComp->Template )
 	{
 		GunParticleComp->SetActive(true);
 	}
 	// UI
-	if(CrosshairUI )
+	if ( CrosshairUI )
 	{
 		CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
 	}
 	// Sound
-	if(IsLocallyControlled())
+	if ( IsLocallyControlled() )
 	{
 		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Grab, 0.5f);
-		if(GunSoundComp)
+		if ( GunSoundComp )
 		{
 			GunSoundComp->Play();
 		}
@@ -463,6 +471,11 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetC
 }
 
 void APlayerCharacter::DropObj()
+{
+	RPC_Multi_DropObj();
+}
+
+void APlayerCharacter::RPC_Multi_DropObj_Implementation()
 {
 	PhysicsHandleComp->ReleaseComponent();
 	GrabObject=nullptr;
@@ -636,7 +649,7 @@ void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDi
 {
 	if ( GrabObject )
 	{
-		GrabObject->Drop();
+		DropObj();
 		return;
 	}
 
@@ -658,7 +671,7 @@ void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDi
 	ICanGrab* GrabActor=Cast<ICanGrab>(HitResult.GetActor());
 	if ( GrabActor )
 	{
-		GrabActor->Grab(this);
+		GrabObj(GrabActor, HitResult.GetComponent());
 		return;
 	}
 

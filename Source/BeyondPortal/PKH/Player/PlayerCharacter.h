@@ -198,6 +198,12 @@ public:
 	UFUNCTION(Server, Reliable)
 	void RPC_Server_Interaction(float InteractionDistance);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_GrabObj(UPrimitiveComponent* TargetComp);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_DropObj();
+
 // Die & Respawn
 protected:
 	UPROPERTY(EditDefaultsOnly)
