@@ -18,10 +18,13 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
+#include "PKH/Game/PKHGameMode.h"
+#include "PKH/Game/PortalGameInstance.h"
 #include "PKH/Interface/Interactible.h"
 #include "PKH/Props/GrabCube.h"
 #include "PKH/Props/GunActor.h"
 #include "SEB/Barrier.h"
+#include "PKH/UI/GameClearUIWidget.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -119,6 +122,11 @@ APlayerCharacter::APlayerCharacter()
 	{
 		CrosshairUIClass=CrosshairUIClassRef.Class;
 	}
+	static ConstructorHelpers::FClassFinder<UCrosshairUIWidget> GameClearUIClassRef(TEXT("/Game/PKH/UI/WBP_GameClear.WBP_GameClear_C"));
+	if ( GameClearUIClassRef.Class )
+	{
+		GameClearUIClass=GameClearUIClassRef.Class;
+	}
 
 	// Sound
 	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalLeftRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalLeft.SFX_PortalLeft'"));
@@ -196,6 +204,13 @@ void APlayerCharacter::BeginPlay()
 		if ( CrosshairUI )
 		{
 			CrosshairUI->AddToViewport();
+		}
+
+		GameClearUI=CreateWidget<UGameClearUIWidget>(GetWorld(), GameClearUIClass);
+		if ( GameClearUI )
+		{
+			GameClearUI->AddToViewport();
+			GameClearUI->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 
@@ -427,7 +442,7 @@ void APlayerCharacter::TickGrab()
 	if ( HasAuthority() )
 	{
 		PhysicsHandleComp->SetTargetLocation(GetGrabPoint());
-
+		
 		// Check Velocity
 		/*AGrabCube* Cube=Cast<AGrabCube>(GrabObject);
 		if(Cube)
@@ -440,7 +455,7 @@ void APlayerCharacter::TickGrab()
 void APlayerCharacter::GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetComp)
 {
 	GrabObject=NewObject;
-	PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
+	//PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
 
 	RPC_Multi_GrabObj(TargetComp);
 }
@@ -472,7 +487,8 @@ void APlayerCharacter::RPC_Multi_GrabObj_Implementation(UPrimitiveComponent* Tar
 
 void APlayerCharacter::DropObj()
 {
-	PhysicsHandleComp->ReleaseComponent();
+	//PhysicsHandleComp->ReleaseComponent();
+	Cast<ICanGrab>(GrabObject)->Drop();
 	GrabObject=nullptr;
 
 	RPC_Multi_DropObj();
@@ -650,7 +666,7 @@ void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDi
 {
 	if ( GrabObject )
 	{
-		GrabObject->Drop();
+		Cast<ICanGrab>(GrabObject)->Drop();
 		DropObj();
 		return;
 	}
@@ -756,16 +772,35 @@ void APlayerCharacter::CrosshairFill(bool IsLeft)
 	}
 }
 
+void APlayerCharacter::GameClear()
+{
+	if(HasAuthority())
+	{
+		APKHGameMode* GM=CastChecked<APKHGameMode>(GetWorld()->GetAuthGameMode());
+		UPortalGameInstance* GI=CastChecked<UPortalGameInstance>(GetWorld()->GetGameInstance());
+		const int32 PlayTime=GM->GetPlayTime() + GI->GetPlayTime();
+		const int32 TotalPortalCount=PortalCount;
+
+		RPC_Multi_GameClear(PlayTime);
+	}
+}
+
+void APlayerCharacter::RPC_Multi_GameClear_Implementation(int32 PlayTime)
+{
+	if(IsLocallyControlled())
+	{
+		if(GameClearUI)
+		{
+			GameClearUI->SetClearUI(PlayTime, PortalCount);
+		}
+	}
+}
+
 void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(APlayerCharacter, Net_ControlRotation);
-}
-
-void APlayerCharacter::OnRep_ControlRotationChanged()
-{
-	GetController()->SetControlRotation(Net_ControlRotation);
+	
 }
 
 void APlayerCharacter::RPC_SetPlayerLocation_Implementation(ACharacter* ClientPlayer)
