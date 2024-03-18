@@ -18,7 +18,7 @@ ALobbyGameMode::ALobbyGameMode()
 void ALobbyGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	LobbyUI=Cast<ULobbyUIWidget>(CreateWidget(GetWorld(), LobbyUIClass));
 	if( LobbyUI )
 	{

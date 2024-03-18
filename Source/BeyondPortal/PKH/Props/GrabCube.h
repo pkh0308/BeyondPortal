@@ -94,7 +94,7 @@ protected:
 
 // Network
 public:
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	/*virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UPROPERTY(ReplicatedUsing = OnRep_CubeLocationChanged)
 	FVector Net_CubeLocation;
@@ -106,5 +106,5 @@ public:
 	void OnRep_CubeLocationChanged();
 
 	UFUNCTION()
-	void OnRep_CubeRotationChanged();
+	void OnRep_CubeRotationChanged();*/
 };

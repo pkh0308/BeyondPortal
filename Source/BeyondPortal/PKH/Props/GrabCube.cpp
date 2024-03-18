@@ -60,7 +60,7 @@ void AGrabCube::Tick(float DeltaSeconds)
 // Region_Grab
 void AGrabCube::Grab(ACharacter* NewOwner)
 {
-	APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
+	/*APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
 	if ( nullptr == Player )
 	{
 		return;
@@ -74,7 +74,16 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 	else
 	{
 		RPC_Server_Grab(Player); UE_LOG(LogTemp, Warning, TEXT("[Client] Grab"));
+	}*/
+
+	APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
+	if ( nullptr == Player )
+	{
+		return;
 	}
+	SetOwner(Player);
+
+	BoxComp->SetEnableGravity(false);
 }
 
 void AGrabCube::RPC_Server_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
@@ -84,26 +93,31 @@ void AGrabCube::RPC_Server_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
 
 void AGrabCube::RPC_Multi_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
 {
-	if ( nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject() )
+	/*if ( nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject() )
 	{
 		OwnPlayer->DropObj();
 	}
-	OwnPlayer=NewOwnPlayer;
-	OwnPlayer->GrabObj(this, BoxComp);
+	OwnPlayer=NewOwnPlayer;*/
 	BoxComp->SetEnableGravity(false);
+
+	/*if ( HasAuthority() )
+	{
+		OwnPlayer->GrabObj(this, BoxComp);
+	}*/
 }
 
 // Region_Drop
 void AGrabCube::Drop()
 {
-	if ( HasAuthority() )
+	/*if ( HasAuthority() )
 	{
 		RPC_Multi_Drop();
 	}
 	else
 	{
 		RPC_Server_Drop();
-	}
+	}*/
+	BoxComp->SetEnableGravity(true);
 }
 
 void AGrabCube::RPC_Server_Drop_Implementation()
@@ -138,8 +152,8 @@ void AGrabCube::VelocityCheck()
 			BoxComp->SetWorldRotation(FRotator::ZeroRotator);
 		}*/
 
-		Net_CubeLocation=GetActorLocation();
-		Net_CubeRotation=GetActorRotation();
+		//Net_CubeLocation=GetActorLocation();
+		//Net_CubeRotation=GetActorRotation();
 	}
 }
 
@@ -186,20 +200,20 @@ void AGrabCube::TickDisappear(float DeltaSeconds)
 	}
 }
 
-void AGrabCube::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(AGrabCube, Net_CubeLocation);
-	DOREPLIFETIME(AGrabCube, Net_CubeRotation);
-}
-
-void AGrabCube::OnRep_CubeLocationChanged()
-{
-	SetActorLocation(Net_CubeLocation);
-}
-
-void AGrabCube::OnRep_CubeRotationChanged()
-{
-	SetActorRotation(Net_CubeRotation);
-}
+//void AGrabCube::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+//{
+//	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+//
+//	DOREPLIFETIME(AGrabCube, Net_CubeLocation);
+//	DOREPLIFETIME(AGrabCube, Net_CubeRotation);
+//}
+//
+//void AGrabCube::OnRep_CubeLocationChanged()
+//{
+//	SetActorLocation(Net_CubeLocation);
+//}
+//
+//void AGrabCube::OnRep_CubeRotationChanged()
+//{
+//	SetActorRotation(Net_CubeRotation);
+//}

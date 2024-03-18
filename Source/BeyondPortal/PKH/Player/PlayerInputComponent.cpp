@@ -235,8 +235,11 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 	{
 		return;
 	}
-	
-	Owner->RPC_Server_Interaction(InteractionDistance);
+
+	if(Owner->IsLocallyControlled())
+	{
+		Owner->RPC_Server_Interaction(InteractionDistance);
+	}
 }
 
 void UPlayerInputComponent::RPC_Server_InterAction_Implementation()

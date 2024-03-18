@@ -65,7 +65,7 @@ void UPortalGameInstance::OnCreateRoomComplete(FName SessionName, bool bWasSucce
 		ensure(_World);
 		if ( GetWorld()->GetFirstPlayerController()->HasAuthority() )
 		{
-			GetWorld()->ServerTravel("/Game/SEB/Maps/BeyondPortalMap?listen");
+			GetWorld()->ServerTravel("/Game/PKH/Maps/LoadingMap?listen");
 		}
 	}
 }
@@ -151,5 +151,27 @@ void UPortalGameInstance::OnJoinRoomComplete(FName SessionName, EOnJoinSessionCo
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Join Failed"));
 		UE_LOG(LogTemp, Warning, TEXT("Users: %d"), GetWorld()->GetAuthGameMode()->GetNumPlayers());
+	}
+}
+
+void UPortalGameInstance::TravelToChapter1()
+{
+	// 레벨 입장
+	UWorld* _World=GetWorld();
+	ensure(_World);
+	if ( _World->GetFirstPlayerController()->HasAuthority() )
+	{
+		_World->ServerTravel("/Game/SEB/Maps/BeyondPortalMap?listen");
+	}
+}
+
+void UPortalGameInstance::TravelToChapter2()
+{
+	// 레벨 입장
+	UWorld* _World=GetWorld();
+	ensure(_World);
+	if ( _World->GetFirstPlayerController()->HasAuthority() )
+	{
+		_World->ServerTravel("/Game/SEB/Maps/BeyondPortalMap_Chapter2?listen");
 	}
 }
