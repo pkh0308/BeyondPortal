@@ -60,7 +60,7 @@ void AGrabCube::Tick(float DeltaSeconds)
 // Region_Grab
 void AGrabCube::Grab(ACharacter* NewOwner)
 {
-	APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
+	/*APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
 	if ( nullptr == Player )
 	{
 		return;
@@ -74,7 +74,16 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 	else
 	{
 		RPC_Server_Grab(Player); UE_LOG(LogTemp, Warning, TEXT("[Client] Grab"));
+	}*/
+
+	APlayerCharacter* Player=Cast<APlayerCharacter>(NewOwner);
+	if ( nullptr == Player )
+	{
+		return;
 	}
+	SetOwner(Player);
+
+	BoxComp->SetEnableGravity(false);
 }
 
 void AGrabCube::RPC_Server_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
@@ -84,30 +93,31 @@ void AGrabCube::RPC_Server_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
 
 void AGrabCube::RPC_Multi_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
 {
-	if ( nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject() )
+	/*if ( nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject() )
 	{
 		OwnPlayer->DropObj();
 	}
-	OwnPlayer=NewOwnPlayer;
+	OwnPlayer=NewOwnPlayer;*/
 	BoxComp->SetEnableGravity(false);
 
-	if ( HasAuthority() )
+	/*if ( HasAuthority() )
 	{
 		OwnPlayer->GrabObj(this, BoxComp);
-	}
+	}*/
 }
 
 // Region_Drop
 void AGrabCube::Drop()
 {
-	if ( HasAuthority() )
+	/*if ( HasAuthority() )
 	{
 		RPC_Multi_Drop();
 	}
 	else
 	{
 		RPC_Server_Drop();
-	}
+	}*/
+	BoxComp->SetEnableGravity(true);
 }
 
 void AGrabCube::RPC_Server_Drop_Implementation()

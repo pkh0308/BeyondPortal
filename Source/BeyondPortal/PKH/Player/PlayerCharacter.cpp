@@ -447,7 +447,7 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetC
 
 void APlayerCharacter::RPC_Multi_GrabObj_Implementation(UPrimitiveComponent* TargetComp)
 {
-	//GrabObject=NewObject;
+	//GrabObject=Cast<ICanGrab>(NewObject);
 	//PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
 	// Particle
 	if ( GunParticleComp->Template )
@@ -472,13 +472,14 @@ void APlayerCharacter::RPC_Multi_GrabObj_Implementation(UPrimitiveComponent* Tar
 
 void APlayerCharacter::DropObj()
 {
+	PhysicsHandleComp->ReleaseComponent();
+	GrabObject=nullptr;
+
 	RPC_Multi_DropObj();
 }
 
 void APlayerCharacter::RPC_Multi_DropObj_Implementation()
 {
-	PhysicsHandleComp->ReleaseComponent();
-	GrabObject=nullptr;
 	//Particle
 	if ( GunParticleComp->Template )
 	{
@@ -649,6 +650,7 @@ void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDi
 {
 	if ( GrabObject )
 	{
+		GrabObject->Drop();
 		DropObj();
 		return;
 	}
@@ -671,6 +673,7 @@ void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDi
 	ICanGrab* GrabActor=Cast<ICanGrab>(HitResult.GetActor());
 	if ( GrabActor )
 	{
+		GrabActor->Grab(this);
 		GrabObj(GrabActor, HitResult.GetComponent());
 		return;
 	}

@@ -187,7 +187,7 @@ protected:
 	void TickGrab();
 
 public:
-	void GrabObj(class ICanGrab* NewObject, UPrimitiveComponent* TargetComp);
+	void GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetComp);
 	void DropObj();
 	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; }
 
