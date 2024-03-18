@@ -62,7 +62,9 @@ public:
 
 // Enter Chapter
 public:
+	UFUNCTION(BlueprintCallable)
 	void TravelToChapter1();
 
+	UFUNCTION(BlueprintCallable)
 	void TravelToChapter2();
 };
