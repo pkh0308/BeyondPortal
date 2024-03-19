@@ -122,7 +122,7 @@ APlayerCharacter::APlayerCharacter()
 	{
 		CrosshairUIClass=CrosshairUIClassRef.Class;
 	}
-	static ConstructorHelpers::FClassFinder<UCrosshairUIWidget> GameClearUIClassRef(TEXT("/Game/PKH/UI/WBP_GameClear.WBP_GameClear_C"));
+	static ConstructorHelpers::FClassFinder<UGameClearUIWidget> GameClearUIClassRef(TEXT("/Game/PKH/UI/WBP_GameClear.WBP_GameClear_C"));
 	if ( GameClearUIClassRef.Class )
 	{
 		GameClearUIClass=GameClearUIClassRef.Class;
@@ -455,7 +455,7 @@ void APlayerCharacter::TickGrab()
 void APlayerCharacter::GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetComp)
 {
 	GrabObject=NewObject;
-	//PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
+	PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
 
 	RPC_Multi_GrabObj(TargetComp);
 }
@@ -487,8 +487,8 @@ void APlayerCharacter::RPC_Multi_GrabObj_Implementation(UPrimitiveComponent* Tar
 
 void APlayerCharacter::DropObj()
 {
-	//PhysicsHandleComp->ReleaseComponent();
-	Cast<ICanGrab>(GrabObject)->Drop();
+	PhysicsHandleComp->ReleaseComponent();
+	GrabObject->Drop();
 	GrabObject=nullptr;
 
 	RPC_Multi_DropObj();
@@ -666,7 +666,7 @@ void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDi
 {
 	if ( GrabObject )
 	{
-		Cast<ICanGrab>(GrabObject)->Drop();
+		GrabObject->Drop();
 		DropObj();
 		return;
 	}
