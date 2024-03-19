@@ -83,8 +83,8 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 	}
 	SetOwner(Player);
 
-	//BoxComp->SetSimulatePhysics(false);
-	RPC_Multi_Grab(Player);
+	BoxComp->SetEnableGravity(false);
+	//RPC_Multi_Grab(Player);
 }
 
 void AGrabCube::RPC_Server_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
