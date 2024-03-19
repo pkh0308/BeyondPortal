@@ -3,6 +3,8 @@
 
 #include "SEB/ArmDoor.h"
 
+#include "Net/UnrealNetwork.h"
+
 // Sets default values
 AArmDoor::AArmDoor()
 {
@@ -35,18 +37,51 @@ void AArmDoor::BeginPlay()
 void AArmDoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if(isOpened )
+	RPC_Server_MoveDoor();
+}
+
+void AArmDoor::RPC_Server_MoveDoor_Implementation()
+{
+	RPC_Multi_MoveDoor();
+}
+
+void AArmDoor::RPC_Multi_MoveDoor_Implementation()
+{
+	if ( isOpened )
 	{
 		isClosed=false;
 		armDoor->PlayAnimation(armDoorOpenAnim, false);
 		isOpened=false;
 	}
-	if(isClosed )
+	if ( isClosed )
 	{
-		
+
 		armDoor->PlayAnimation(armDoorCloseAnim, false);
 		isClosed=false;
 		isOpened=false;
 	}
+}
+
+void AArmDoor::closeDoor()
+{
+	armDoor->PlayAnimation(armDoorCloseAnim, false);
+	isClosed=false;
+	isOpened=false;
+}
+
+void AArmDoor::openDoor()
+{
+	isClosed=false;
+	armDoor->PlayAnimation(armDoorOpenAnim, false);
+	isOpened=false;
+}
+
+void AArmDoor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AArmDoor, armDoorIdleAnim);
+	DOREPLIFETIME(AArmDoor, armDoorOpenAnim);
+	DOREPLIFETIME(AArmDoor, armDoorCloseAnim);
+
 }
 

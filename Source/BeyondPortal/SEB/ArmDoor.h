@@ -32,13 +32,25 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	bool isClosed=false;
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(Replicated)
 	UAnimationAsset* armDoorIdleAnim;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(Replicated)
 	UAnimationAsset* armDoorOpenAnim;
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(Replicated)
 	UAnimationAsset* armDoorCloseAnim;
+
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_MoveDoor();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_MoveDoor();
+
+	void closeDoor();
+
+	void openDoor();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 };

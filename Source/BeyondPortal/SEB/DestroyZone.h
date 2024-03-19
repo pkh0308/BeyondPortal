@@ -32,4 +32,19 @@ public:
 	//충돌처리
 	UFUNCTION()
 	void OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UPROPERTY(Replicated)
+	bool isCheckClosed=false;
+
+	UPROPERTY(Replicated)
+	int32 cnt=0;
+
+	
+	TArray<AActor*> FoundDoors;
+	
+
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+
 };

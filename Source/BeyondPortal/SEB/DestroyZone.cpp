@@ -3,9 +3,11 @@
 
 #include "SEB/DestroyZone.h"
 
+#include "ArmDoor.h"
 #include "PortalButton.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 #include "PKH/Player/PlayerCharacter.h"
 #include "PKH/Props/GrabCube.h"
 
@@ -56,25 +58,65 @@ void ADestroyZone::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent
 			}
 		}
 
-
-
-
-
 		//cube 사라지는 이펙트 후 큐브 제거
 		AGrabCube* cube=Cast<AGrabCube>(OtherActor);
 		cube->OnDisappear();
 		
-
-
 	}
 
 	
 	else if ( OtherActor->IsA< APlayerCharacter>() ) {
+		
+		FString findMyTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
 
-		APlayerCharacter* player=Cast<APlayerCharacter>(OtherActor);
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("플레이어 충돌"));
-		player->OnDie();
-		player->ResetAllPortals();
+		if( findMyTag == "opendoor" )
+		{
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmDoor::StaticClass(), FoundDoors);
+			float Delay=0.1f;
+			for ( auto findDoor : FoundDoors )
+			{
+				// 딜레이 후에 문 열기
+				AArmDoor* Door=Cast<AArmDoor>(findDoor);
+				FTimerHandle Handle;
+				GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Door]()
+					{
+						Door->isOpened=true;
+					}), Delay, false);
+				Delay+=0.1f;
+			}
+		}
+		else if( findMyTag == "closedoor" && !isCheckClosed ) 
+		{
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmDoor::StaticClass(), FoundDoors);
+			cnt++;
+			UE_LOG(LogTemp, Error, TEXT("cnt : %d"), cnt);
+			float Delay=0.1f;
+			for ( auto findDoor : FoundDoors )
+			{
+				// 딜레이 후에 문 열기
+				AArmDoor* Door=Cast<AArmDoor>(findDoor);
+				if(cnt>=2 )
+					Door->closeDoor();
+			}
+			
+		}
+		else if(findMyTag == "NoTag" )
+		{
+			APlayerCharacter* player=Cast<APlayerCharacter>(OtherActor);
+			player->OnDie();
+			player->ResetAllPortals();
+		}
+		
 	}
+}
+
+
+
+void ADestroyZone::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ADestroyZone, cnt);
+	DOREPLIFETIME(ADestroyZone, isCheckClosed);
+	
 }
 
