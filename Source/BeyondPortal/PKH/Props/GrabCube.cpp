@@ -83,7 +83,8 @@ void AGrabCube::Grab(ACharacter* NewOwner)
 	}
 	SetOwner(Player);
 
-	BoxComp->SetEnableGravity(false);
+	//BoxComp->SetSimulatePhysics(false);
+	RPC_Multi_Grab(Player);
 }
 
 void AGrabCube::RPC_Server_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
@@ -159,6 +160,11 @@ void AGrabCube::VelocityCheck()
 
 void AGrabCube::ChangeMaterial(bool Success)
 {
+	if(CubeType != ECubeType::GrabCube)
+	{
+		return;
+	}
+
 	if(Success)
 	{
 		DMArray[2]->SetTextureParameterValue(FName(TEXT("Emissive")), SuccessTexture);
@@ -171,6 +177,11 @@ void AGrabCube::ChangeMaterial(bool Success)
 
 void AGrabCube::InitDynamicMaterials()
 {
+	if ( CubeType != ECubeType::GrabCube )
+	{
+		return;
+	}
+
 	const int32 Nums=MeshComp->GetNumMaterials();
 	for ( int i = 0; i < Nums; i++ )
 	{
@@ -181,6 +192,11 @@ void AGrabCube::InitDynamicMaterials()
 
 void AGrabCube::OnDisappear()
 {
+	if ( CubeType != ECubeType::GrabCube )
+	{
+		return;
+	}
+
 	IsDissolving=true; 
 }
 

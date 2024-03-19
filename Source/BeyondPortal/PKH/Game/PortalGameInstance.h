@@ -67,4 +67,23 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void TravelToChapter2();
+
+// Timer
+protected:
+	int32 PlayTime = 0;
+
+public:
+	void AddPlayTime(int32 InPlayTime);
+
+	FORCEINLINE int32 GetPlayTime() const { return PlayTime; }
+
+// Portal Count
+protected:
+	int32 PortalCount_P1 = 0;
+	int32 PortalCount_P2=0;
+
+public:
+	void AddPortalCount(int32 InPortalCont);
+
+	int32 GetPortalCount() const;
 };

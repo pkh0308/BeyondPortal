@@ -247,7 +247,7 @@ void UPlayerInputComponent::RPC_Server_InterAction_Implementation()
 	UE_LOG(LogTemp, Warning, TEXT("%f, %f"),Owner->GetCameraComp()->GetComponentRotation().Pitch, Owner->GetCameraComp()->GetComponentRotation().Yaw);
 	if ( Owner->GetGrabObject() )
 	{
-		Owner->GetGrabObject()->Drop();
+		//Owner->GetGrabObject()->Drop();
 		return;
 	}
 

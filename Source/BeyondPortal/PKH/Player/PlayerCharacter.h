@@ -187,7 +187,7 @@ protected:
 	void TickGrab();
 
 public:
-	void GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetComp);
+	void GrabObj(class ICanGrab* NewObject, UPrimitiveComponent* TargetComp);
 	void DropObj();
 	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; }
 
@@ -243,21 +243,23 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UCrosshairUIWidget> CrosshairUI;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UGameClearUIWidget> GameClearUIClass;;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UGameClearUIWidget> GameClearUI;
+
 public:
 	void CrosshairFill(bool IsLeft);
+
+	void GameClear();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_GameClear(int32 PlayTime);
 
 // Network
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-	UPROPERTY(ReplicatedUsing=OnRep_ControlRotationChanged)
-	FRotator Net_ControlRotation;
-
-	UFUNCTION()
-	void OnRep_ControlRotationChanged();
-
-public:
-	FORCEINLINE void Net_SetControlRotation(const FRotator& TargetRotation) { Net_ControlRotation=TargetRotation; }
 
 // RPC
 protected:

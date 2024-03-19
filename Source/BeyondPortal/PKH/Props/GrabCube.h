@@ -7,6 +7,13 @@
 #include "PKH/Interface/CanGrab.h"
 #include "GrabCube.generated.h"
 
+UENUM()
+enum class ECubeType : uint8
+{
+	GrabCube = 0,
+	LaserCube
+};
+
 UCLASS()
 class BEYONDPORTAL_API AGrabCube : public AActor, public ICanGrab
 {
@@ -27,6 +34,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UStaticMeshComponent> MeshComp;
+
+	// CubeType
+	UPROPERTY(EditDefaultsOnly)
+	ECubeType CubeType;
 
 // Interface
 public:

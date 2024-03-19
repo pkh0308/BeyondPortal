@@ -5,6 +5,7 @@
 
 #include "OnlineSessionSettings.h"
 #include "OnlineSubsystemUtils.h"
+#include "PKHGameMode.h"
 #include "GameFramework/GameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
@@ -167,6 +168,13 @@ void UPortalGameInstance::TravelToChapter1()
 
 void UPortalGameInstance::TravelToChapter2()
 {
+	// 플레이타임 누적
+	APKHGameMode* GM=Cast<APKHGameMode>(GetWorld()->GetAuthGameMode());
+	if( GM )
+	{
+		AddPlayTime(GM->GetPlayTime());
+	}
+
 	// 레벨 입장
 	UWorld* _World=GetWorld();
 	ensure(_World);
@@ -174,4 +182,14 @@ void UPortalGameInstance::TravelToChapter2()
 	{
 		_World->ServerTravel("/Game/SEB/Maps/BeyondPortalMap_Chapter2?listen");
 	}
+}
+
+void UPortalGameInstance::AddPlayTime(int32 InPlayTime)
+{
+	PlayTime += InPlayTime;
+}
+
+int32 UPortalGameInstance::GetPortalCount() const
+{
+	return -1;
 }

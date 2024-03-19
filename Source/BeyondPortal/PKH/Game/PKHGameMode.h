@@ -18,6 +18,9 @@ public:
 	APKHGameMode();
 
 protected:
+	virtual void BeginPlay() override;
+
+protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class APlayerCharacter> P2CharacterClass;
 
@@ -34,4 +37,13 @@ protected:
 public:
 	void AddCount(int32 Key, int32 Value = 1);
 	int32 GetCount(int32 Key);
+
+// Timer
+protected:
+	int32 Seconds = 0;
+
+	FTimerHandle TimeHandle;
+
+public:
+	FORCEINLINE int32 GetPlayTime() const { return Seconds; };
 };

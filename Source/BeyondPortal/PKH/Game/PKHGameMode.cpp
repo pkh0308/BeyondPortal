@@ -27,6 +27,16 @@ APKHGameMode::APKHGameMode()
 	}
 }
 
+void APKHGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	GetWorldTimerManager().SetTimer(TimeHandle, FTimerDelegate::CreateLambda([this]()
+	{
+		Seconds++;
+	}), 1.0f, false);
+}
+
 void APKHGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
