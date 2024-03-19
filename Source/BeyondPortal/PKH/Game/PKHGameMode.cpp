@@ -3,6 +3,7 @@
 
 #include "PKH/Game/PKHGameMode.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "PKH/Player/PKHPlayerController.h"
 #include "PKH/Player/PlayerCharacter.h"
 
@@ -48,8 +49,10 @@ void APKHGameMode::PostLogin(APlayerController* NewPlayer)
 			NewPlayer->UnPossess();
 			Character->Destroy();
 		}
-		
-		APlayerCharacter* Player=GetWorld()->SpawnActor<APlayerCharacter>(P2CharacterClass, FVector(220, -548, 92), FRotator::ZeroRotator);
+
+		const bool IsChapter1 = UGameplayStatics::GetCurrentLevelName(GetWorld()).Equals(TEXT("BeyondPortalMap"));
+		const FVector SpawnLocation=IsChapter1 ? FVector(220, -548, 92) : FVector(0, 0, 0 );
+		APlayerCharacter* Player=GetWorld()->SpawnActor<APlayerCharacter>(P2CharacterClass, SpawnLocation, FRotator::ZeroRotator);
 		NewPlayer->Possess(Player);
 	}
 	

@@ -61,6 +61,12 @@ UPlayerInputComponent::UPlayerInputComponent()
 	{
 		IA_Interaction=IA_InteractionRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_EmotionRef(TEXT("/Script/EnhancedInput.InputAction'/Game/PKH/Input/IA_Portal_Emotion.IA_Portal_Emotion'"));
+	if ( IA_EmotionRef.Object )
+	{
+		IA_Emotion=IA_EmotionRef.Object;
+	}
 }
 
 void UPlayerInputComponent::BeginPlay()
@@ -120,6 +126,10 @@ void UPlayerInputComponent::SetupInput(UEnhancedInputComponent* PlayerInputCompo
 	InputComp->BindAction(IA_FireRight, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAFireRight);
 	// Grab
 	InputComp->BindAction(IA_Interaction, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAInteraction);
+
+	// Emotion
+	InputComp->BindAction(IA_Emotion, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAEmotionUIOn);
+	InputComp->BindAction(IA_Emotion, ETriggerEvent::Completed, this, &UPlayerInputComponent::OnIAEmotionUIOff);
 }
 
 void UPlayerInputComponent::OnIAMove(const FInputActionValue& Value)
@@ -143,7 +153,7 @@ void UPlayerInputComponent::OnIAMove(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIALook(const FInputActionValue& Value)
 {
-	if ( Owner->IsPlayerDead() )
+	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
 	{
 		return;
 	}
@@ -242,44 +252,14 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 	}
 }
 
-void UPlayerInputComponent::RPC_Server_InterAction_Implementation()
+void UPlayerInputComponent::OnIAEmotionUIOn(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%f, %f"),Owner->GetCameraComp()->GetComponentRotation().Pitch, Owner->GetCameraComp()->GetComponentRotation().Yaw);
-	if ( Owner->GetGrabObject() )
-	{
-		//Owner->GetGrabObject()->Drop();
-		return;
-	}
+	Owner->SetEmotionUI(true); 
+}
 
-	// Check object with line tracing
-	FHitResult HitResult;
-	UCameraComponent* Camera=Owner->GetCameraComp();
-	const FVector StartVec=Camera->GetComponentLocation();
-	const FVector EndVec=StartVec + Camera->GetForwardVector() * InteractionDistance;
-	//DrawDebugLine(GetWorld(), StartVec, EndVec, FColor::Red, false, 3.0f);
-
-	FCollisionQueryParams Param;
-	Param.AddIgnoredActor(Owner);
-	bool IsHit=GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Visibility, Param);
-	if ( false == IsHit )
-	{
-		return;
-	}
-
-	// Grab
-	ICanGrab* GrabActor=Cast<ICanGrab>(HitResult.GetActor());
-	if ( GrabActor )
-	{
-		GrabActor->Grab(Owner);
-		return;
-	}
-
-	// Interaction
-	IInteractible* InteractibleActor=Cast<IInteractible>(HitResult.GetActor());
-	if ( InteractibleActor )
-	{
-		InteractibleActor->DoInteraction();
-	}
+void UPlayerInputComponent::OnIAEmotionUIOff(const FInputActionValue& Value)
+{
+	Owner->SetEmotionUI(false);
 }
 
 void UPlayerInputComponent::PlayFireMontage() const

@@ -123,11 +123,7 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 
 	// Other Actors
 	UBoxComponent* Box=Cast<UBoxComponent>(OtherActor->GetRootComponent());
-	if ( nullptr ==  Box )
-	{
-		return;
-	}
-	if ( Box->IsSimulatingPhysics() )
+	if ( nullptr != Box && Box->IsSimulatingPhysics() )
 	{
 		// Location
 		OtherActor->SetActorLocation(TargetLocation);
@@ -136,6 +132,11 @@ void APortal::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* O
 		const float NewVelocity=OtherActor->GetVelocity().Size();
 		const FVector ForwardVec=LinkedPortal->GetTargetDirection();
 		Box->AddForce(ForwardVec * NewVelocity * 10000);
+	}
+	else
+	{
+		// Location
+		OtherActor->SetActorLocation(TargetLocation);
 	}
 	//OtherActor->SetActorRotation(TargetRotation);
 }

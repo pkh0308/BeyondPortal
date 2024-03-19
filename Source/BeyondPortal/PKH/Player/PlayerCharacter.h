@@ -162,11 +162,8 @@ public:
 public:
 	void Look(float PItchInput, float YawInput);
 
-	UFUNCTION(Server, Unreliable)
+	UFUNCTION(Server, Reliable)
 	void RPC_Server_Look(float PItchInput, float YawInput);
-
-	UFUNCTION(NetMulticast, Unreliable)
-	void RPC_Multi_Look(float PItchInput, float YawInput);
 
 	void SetClientCameraRotation();
 
@@ -203,6 +200,30 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void RPC_Multi_DropObj();
+
+// Emotion
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	FVector CameraLocationInEmotion=FVector(-300, 0, 80);
+
+	UPROPERTY(EditDefaultsOnly)
+	FVector CameraLocationInNormal=FVector(17, 7, 28);
+
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_Emotion(float Degree);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_Emotion(float Degree);
+
+	bool IsShowingEmotion = false;
+
+public:
+	void SetEmotionUI(bool ActiveSelf);
+
+	void BeginEmotion();
+	void EndEmotion();
+
+	FORCEINLINE bool GetIsShowingEmotion() const { return IsShowingEmotion; }
 
 // Die & Respawn
 protected:
@@ -248,6 +269,12 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UGameClearUIWidget> GameClearUI;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UEmotionUIWidget> EmotionUIClass;;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UEmotionUIWidget> EmotionUI;
 
 public:
 	void CrosshairFill(bool IsLeft);
