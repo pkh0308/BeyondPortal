@@ -61,6 +61,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UInputAction> IA_Interaction;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UInputAction> IA_Emotion;
+
 	// Bind Functions
 	UFUNCTION()
 	void OnIAMove(const FInputActionValue& Value);
@@ -82,6 +85,12 @@ protected:
 
 	UFUNCTION()
 	void OnIAInteraction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnIAEmotionUIOn(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnIAEmotionUIOff(const FInputActionValue& Value);
 
 	// Values
 	UPROPERTY(EditAnywhere)
@@ -107,10 +116,4 @@ protected:
 	bool CalcPortalLocationXY(FVector& ImpactPoint, const FBox& WallBox) const;
 
 	void CalcPortalLocation(FVector& ImpactPoint, const FVector& ImpactNormal, const FBox& WallBox) const;
-
-// InterAction
-public:
-	UFUNCTION(Server, Reliable)
-	void RPC_Server_InterAction();
-
 };

@@ -23,6 +23,7 @@
 #include "PKH/Interface/Interactible.h"
 #include "PKH/Props/GrabCube.h"
 #include "PKH/Props/GunActor.h"
+#include "PKH/UI/EmotionUIWidget.h"
 #include "SEB/Barrier.h"
 #include "PKH/UI/GameClearUIWidget.h"
 
@@ -127,6 +128,11 @@ APlayerCharacter::APlayerCharacter()
 	{
 		GameClearUIClass=GameClearUIClassRef.Class;
 	}
+	static ConstructorHelpers::FClassFinder<UEmotionUIWidget> EmotionUIClassRef(TEXT("/Game/PKH/UI/WBP_EmotionUI.WBP_EmotionUI_C"));
+	if ( EmotionUIClassRef.Class )
+	{
+		EmotionUIClass=EmotionUIClassRef.Class;
+	}
 
 	// Sound
 	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalLeftRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalLeft.SFX_PortalLeft'"));
@@ -211,6 +217,13 @@ void APlayerCharacter::BeginPlay()
 		{
 			GameClearUI->AddToViewport();
 			GameClearUI->SetVisibility(ESlateVisibility::Hidden);
+		}
+
+		EmotionUI=CreateWidget<UEmotionUIWidget>(GetWorld(), EmotionUIClass);
+		if ( EmotionUI )
+		{
+			EmotionUI->AddToViewport();
+			EmotionUI->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 
@@ -405,11 +418,6 @@ void APlayerCharacter::RPC_Server_Look_Implementation(float PItchInput, float Ya
 	CameraComp->SetWorldRotation(GetController()->GetControlRotation());
 }
 
-void APlayerCharacter::RPC_Multi_Look_Implementation(float PItchInput, float YawInput)
-{
-	
-}
-
 void APlayerCharacter::SetClientCameraRotation()
 {
 	if ( IsLocallyControlled() )
@@ -462,8 +470,6 @@ void APlayerCharacter::GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetC
 
 void APlayerCharacter::RPC_Multi_GrabObj_Implementation(UPrimitiveComponent* TargetComp)
 {
-	//GrabObject=Cast<ICanGrab>(NewObject);
-	//PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
 	// Particle
 	if ( GunParticleComp->Template )
 	{
@@ -660,6 +666,94 @@ FVector APlayerCharacter::GetGrabPoint() const
 	}
 	// 아니라면 카메라 앞 일정 거리를 반환
 	return StartVec + GrabPointOffset + CameraComp->GetForwardVector() * GrabDistance;;
+}
+
+void APlayerCharacter::SetEmotionUI(bool ActiveSelf)
+{
+	APlayerController* MyController=Cast<APlayerController>(GetController());
+	if ( nullptr == MyController || false == MyController->IsLocalController())
+	{
+		return;
+	}
+	if ( nullptr == EmotionUI )
+	{
+		return;
+	}
+	if ( nullptr == CrosshairUI )
+	{
+		return;
+	}
+
+	const FVector2D ViewportSize=FVector2D(GEngine->GameViewport->Viewport->GetSizeXY());
+	const FVector2D CenterPoint=FVector2D(ViewportSize.X / 2, ViewportSize.Y / 2); 
+
+	if( ActiveSelf )
+	{
+		IsShowingEmotion=true;
+		CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
+		EmotionUI->SetVisibility(ESlateVisibility::Visible);
+		MyController->SetShowMouseCursor(true);
+		MyController->SetMouseLocation(CenterPoint.X, CenterPoint.Y);
+	}
+	else
+	{
+		EmotionUI->SetVisibility(ESlateVisibility::Hidden);
+		MyController->SetShowMouseCursor(false);
+
+		// Check Angle
+		FVector2D MousePoint;
+		MyController->GetMousePosition(MousePoint.X, MousePoint.Y);
+		const bool OverHalf=MousePoint.X < CenterPoint.X;
+
+		const float DeltaX=MousePoint.X - CenterPoint.X;
+		const float DeltaY=(ViewportSize.Y - MousePoint.Y) - CenterPoint.Y;
+
+		float Degree = FMath::RadiansToDegrees(FMath::Atan(DeltaX / DeltaY));
+		if(Degree < 0)
+		{
+			Degree = 90 + (90 + Degree);
+		}
+		if ( OverHalf ) Degree+=180; 
+
+		BeginEmotion();
+		RPC_Server_Emotion(Degree);
+	}
+}
+
+void APlayerCharacter::BeginEmotion()
+{
+	GunComp->SetVisibility(false);
+	LightComp->SetIntensity(0);
+	CameraComp->SetRelativeLocation(CameraLocationInEmotion);
+	GetMesh()->SetOwnerNoSee(false);
+}
+
+void APlayerCharacter::EndEmotion()
+{
+	if( CrosshairUI )
+	{
+		CrosshairUI->SetVisibility(ESlateVisibility::Visible);
+	}
+
+	IsShowingEmotion=false;
+	GunComp->SetVisibility(true);
+	LightComp->SetIntensity(MaxIntensity);
+	CameraComp->SetRelativeLocation(CameraLocationInNormal);
+	GetMesh()->SetOwnerNoSee(true);
+}
+
+void APlayerCharacter::RPC_Server_Emotion_Implementation(float Degree)
+{
+	RPC_Multi_Emotion(Degree);
+}
+
+void APlayerCharacter::RPC_Multi_Emotion_Implementation(float Degree)
+{
+	UPlayerAnimInstance* AnimInst=Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
+	if ( AnimInst )
+	{
+		AnimInst->PlayMontage_Emotion(Degree);
+	}
 }
 
 void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDistance)

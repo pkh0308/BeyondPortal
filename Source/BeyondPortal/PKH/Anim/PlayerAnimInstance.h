@@ -56,7 +56,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UAnimMontage> Montage_Dead;
 
+// Emotion
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TArray<TObjectPtr<class UAnimMontage>> Emotions;
+
 public:
 	void PlayMontage_Fire();
 	void PlayMontage_Dead();
+
+	void PlayMontage_Emotion(float Degree);
+
+	UFUNCTION()
+	void AnimNotify_EmotionEnd();
 };

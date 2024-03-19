@@ -9,6 +9,23 @@
 UPlayerAnimInstance::UPlayerAnimInstance()
 {
 	WalkThreshold=10.0f;
+
+	// Emotions
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> EmotionGreetingRef(TEXT("/Script/Engine.AnimMontage'/Game/PKH/Animation/AM_Greeting.AM_Greeting'"));
+	if( EmotionGreetingRef.Object )
+	{
+		Emotions.Add(EmotionGreetingRef.Object);
+	}
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> EmotionClapRef(TEXT("/Script/Engine.AnimMontage'/Game/PKH/Animation/AM_Clap.AM_Clap'"));
+	if ( EmotionClapRef.Object )
+	{
+		Emotions.Add(EmotionClapRef.Object);
+	}
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> EmotionThumbDownRef(TEXT("/Script/Engine.AnimMontage'/Game/PKH/Animation/AM_ThumbDown.AM_ThumbDown'"));
+	if ( EmotionThumbDownRef.Object )
+	{
+		Emotions.Add(EmotionThumbDownRef.Object);
+	}
 }
 
 void UPlayerAnimInstance::NativeInitializeAnimation()
@@ -16,7 +33,7 @@ void UPlayerAnimInstance::NativeInitializeAnimation()
 	Super::NativeInitializeAnimation();
 
 	Owner=Cast<APlayerCharacter>(GetOwningActor());
-	if(Owner )
+	if(Owner)
 	{
 		PlayerMoveComp=Owner->GetCharacterMovement();
 	}
@@ -60,3 +77,22 @@ void UPlayerAnimInstance::PlayMontage_Dead()
 	}
 }
 
+void UPlayerAnimInstance::PlayMontage_Emotion(float Degree)
+{
+	if(Emotions.IsEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("There is no emotion montage"));
+		return;
+	}
+
+	int idx = Degree / (360 / Emotions.Num()); 
+	if(Emotions[idx])
+	{
+		Montage_Play(Emotions[idx]);
+	}
+}
+
+void UPlayerAnimInstance::AnimNotify_EmotionEnd()
+{
+	Owner->EndEmotion();
+}
