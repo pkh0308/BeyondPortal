@@ -246,11 +246,13 @@ void APlayerCharacter::BeginPlay()
 			EmotionUI->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
+	// Target UI
 	TargetPointUI=CreateWidget<UTargetPointUIWidget>(GetWorld(), TargetPointUIClass);
 	if ( TargetPointUI )
 	{
 		TargetPointUI->AddToViewport();
 		TargetPointUI->SetVisibility(ESlateVisibility::Hidden);
+		TargetPointUI->SetTargetWidget(TargetUIComp);
 	}
 
 	// Portal
@@ -818,13 +820,13 @@ void APlayerCharacter::RPC_Multi_SetTargetUI_Implementation(const FVector& HitLo
 {
 	TargetUIComp->SetWorldLocationAndRotation(HitLocation, HitRotation);
 	TargetUIComp->SetVisibility(true);
-	//TargetPointUI->SetVisibility(ESlateVisibility::Visible);
+	TargetPointUI->Activate(true);
 }
 
 void APlayerCharacter::RPC_Multi_TargetUIOff_Implementation()
 {
 	TargetUIComp->SetVisibility(false);
-	//TargetPointUI->SetVisibility(ESlateVisibility::Hidden);
+	TargetPointUI->Activate(false);
 }
 
 void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDistance)
