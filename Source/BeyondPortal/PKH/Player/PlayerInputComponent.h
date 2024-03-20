@@ -64,6 +64,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UInputAction> IA_Emotion;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UInputAction> IA_Target;
+
 	// Bind Functions
 	UFUNCTION()
 	void OnIAMove(const FInputActionValue& Value);
@@ -91,6 +94,9 @@ protected:
 
 	UFUNCTION()
 	void OnIAEmotionUIOff(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnIATarget(const FInputActionValue& Value);
 
 	// Values
 	UPROPERTY(EditAnywhere)
