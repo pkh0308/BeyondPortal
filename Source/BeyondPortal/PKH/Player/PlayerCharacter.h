@@ -49,6 +49,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UPhysicsHandleComponent> PhysicsHandleComp;
 
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UWidgetComponent> TargetUIComp;
+
 public:
 	FORCEINLINE UCameraComponent* GetCameraComp()const  { return CameraComp; }
 
@@ -224,6 +227,23 @@ public:
 	void EndEmotion();
 
 	FORCEINLINE bool GetIsShowingEmotion() const { return IsShowingEmotion; }
+
+// TargetUI
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UTargetUIWidget> TargetUIClass;
+
+public:
+	void SetTargetUI();
+
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_SetTargetUI();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_SetTargetUI(const FVector& HitLocation, const FRotator& HitRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_TargetUIOff();
 
 // Die & Respawn
 protected:

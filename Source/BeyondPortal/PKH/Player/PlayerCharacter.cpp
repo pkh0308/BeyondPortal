@@ -11,12 +11,12 @@
 #include "Components/PointLightComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
 #include "PKH/UI/CrosshairUIWidget.h"
 #include "PKH/Anim/PlayerAnimInstance.h"
 #include "PKH/Portal/Portal.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/WidgetComponent.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "PKH/Game/PKHGameMode.h"
 #include "PKH/Game/PortalGameInstance.h"
@@ -26,6 +26,7 @@
 #include "PKH/UI/EmotionUIWidget.h"
 #include "SEB/Barrier.h"
 #include "PKH/UI/GameClearUIWidget.h"
+#include "PKH/UI/TargetUIWidget.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -90,6 +91,18 @@ APlayerCharacter::APlayerCharacter()
 
 	// PhysicsHandle
 	PhysicsHandleComp=CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandleComp"));
+
+	// Widget for target UI
+	TargetUIComp=CreateDefaultSubobject<UWidgetComponent>(TEXT("TargetUIComp"));
+	TargetUIComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	TargetUIComp->SetWorldScale3D(FVector(0.2f));
+	TargetUIComp->SetVisibility(false);
+	static ConstructorHelpers::FClassFinder<UTargetUIWidget> TargetUIClassRef(TEXT("/Game/PKH/UI/WBP_TargetUI_P1.WBP_TargetUI_P1_C"));
+	if( TargetUIClassRef.Class )
+	{
+		TargetUIClass=TargetUIClassRef.Class;
+		TargetUIComp->SetWidgetClass(TargetUIClass);
+	}
 
 	// Gun Actor
 	static ConstructorHelpers::FClassFinder<AGunActor> GunActorClassRef(TEXT("/Game/PKH/Blueprint/Props/BP_GunActor.BP_GunActor_C"));
@@ -755,6 +768,48 @@ void APlayerCharacter::RPC_Multi_Emotion_Implementation(float Degree)
 	{
 		AnimInst->PlayMontage_Emotion(Degree);
 	}
+}
+
+void APlayerCharacter::SetTargetUI()
+{
+	RPC_Server_SetTargetUI();
+}
+
+void APlayerCharacter::RPC_Server_SetTargetUI_Implementation()
+{
+	// Already spawn
+	if(TargetUIComp->IsVisible())
+	{
+		RPC_Multi_TargetUIOff();
+		return;
+	}
+
+	// Not spawn now
+	// Line trace 
+	const FVector StartVec=CameraComp->GetComponentLocation();
+	const FVector EndVec=StartVec + CameraComp->GetForwardVector() * 10000;
+
+	FHitResult HitResult;
+	FCollisionQueryParams Param;
+	Param.AddIgnoredActor(this);
+	bool IsHit=GetWorld()->LineTraceSingleByChannel(HitResult, StartVec, EndVec, ECC_Visibility, Param);
+	if ( IsHit )
+	{
+		const FVector TargetLocation = HitResult.ImpactPoint + HitResult.ImpactNormal * 2;
+		const FRotator TargetRotation = HitResult.ImpactNormal.ToOrientationRotator();
+		RPC_Multi_SetTargetUI(TargetLocation, TargetRotation);
+	}
+}
+
+void APlayerCharacter::RPC_Multi_SetTargetUI_Implementation(const FVector& HitLocation, const FRotator& HitRotation)
+{
+	TargetUIComp->SetWorldLocationAndRotation(HitLocation, HitRotation);
+	TargetUIComp->SetVisibility(true);
+}
+
+void APlayerCharacter::RPC_Multi_TargetUIOff_Implementation()
+{
+	TargetUIComp->SetVisibility(false);
 }
 
 void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDistance)

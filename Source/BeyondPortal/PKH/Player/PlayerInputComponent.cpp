@@ -61,11 +61,17 @@ UPlayerInputComponent::UPlayerInputComponent()
 	{
 		IA_Interaction=IA_InteractionRef.Object;
 	}
-
+	// Emotion
 	static ConstructorHelpers::FObjectFinder<UInputAction> IA_EmotionRef(TEXT("/Script/EnhancedInput.InputAction'/Game/PKH/Input/IA_Portal_Emotion.IA_Portal_Emotion'"));
 	if ( IA_EmotionRef.Object )
 	{
 		IA_Emotion=IA_EmotionRef.Object;
+	}
+	// Target
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_TargetRef(TEXT("/Script/EnhancedInput.InputAction'/Game/PKH/Input/IA_Portal_Target.IA_Portal_Target'"));
+	if ( IA_TargetRef.Object )
+	{
+		IA_Target=IA_TargetRef.Object;
 	}
 }
 
@@ -130,6 +136,9 @@ void UPlayerInputComponent::SetupInput(UEnhancedInputComponent* PlayerInputCompo
 	// Emotion
 	InputComp->BindAction(IA_Emotion, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIAEmotionUIOn);
 	InputComp->BindAction(IA_Emotion, ETriggerEvent::Completed, this, &UPlayerInputComponent::OnIAEmotionUIOff);
+
+	// Target
+	InputComp->BindAction(IA_Target, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIATarget);
 }
 
 void UPlayerInputComponent::OnIAMove(const FInputActionValue& Value)
@@ -260,6 +269,11 @@ void UPlayerInputComponent::OnIAEmotionUIOn(const FInputActionValue& Value)
 void UPlayerInputComponent::OnIAEmotionUIOff(const FInputActionValue& Value)
 {
 	Owner->SetEmotionUI(false);
+}
+
+void UPlayerInputComponent::OnIATarget(const FInputActionValue& Value)
+{
+	Owner->SetTargetUI();
 }
 
 void UPlayerInputComponent::PlayFireMontage() const
