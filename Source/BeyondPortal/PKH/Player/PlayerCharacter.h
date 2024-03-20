@@ -233,6 +233,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class UTargetUIWidget> TargetUIClass;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class UTargetPointUIWidget> TargetPointUIClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UTargetPointUIWidget> TargetPointUI;
+
 public:
 	void SetTargetUI();
 

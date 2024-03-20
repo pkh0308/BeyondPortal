@@ -5,6 +5,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "PlayerInputComponent.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/BoxComponent.h"
@@ -27,6 +28,7 @@
 #include "SEB/Barrier.h"
 #include "PKH/UI/GameClearUIWidget.h"
 #include "PKH/UI/TargetUIWidget.h"
+#include "PKH/UI/TargetPointUIWidget.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -146,6 +148,11 @@ APlayerCharacter::APlayerCharacter()
 	{
 		EmotionUIClass=EmotionUIClassRef.Class;
 	}
+	static ConstructorHelpers::FClassFinder<UTargetPointUIWidget> TargetPointUIClassRef(TEXT("/Game/PKH/UI/WBP_TargetPoint_P1.WBP_TargetPoint_P1_C"));
+	if ( TargetPointUIClassRef.Class )
+	{
+		TargetPointUIClass=TargetPointUIClassRef.Class;
+	}
 
 	// Sound
 	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalLeftRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_PortalLeft.SFX_PortalLeft'"));
@@ -238,6 +245,12 @@ void APlayerCharacter::BeginPlay()
 			EmotionUI->AddToViewport();
 			EmotionUI->SetVisibility(ESlateVisibility::Hidden);
 		}
+	}
+	TargetPointUI=CreateWidget<UTargetPointUIWidget>(GetWorld(), TargetPointUIClass);
+	if ( TargetPointUI )
+	{
+		TargetPointUI->AddToViewport();
+		TargetPointUI->SetVisibility(ESlateVisibility::Hidden);
 	}
 
 	// Portal
@@ -805,11 +818,13 @@ void APlayerCharacter::RPC_Multi_SetTargetUI_Implementation(const FVector& HitLo
 {
 	TargetUIComp->SetWorldLocationAndRotation(HitLocation, HitRotation);
 	TargetUIComp->SetVisibility(true);
+	//TargetPointUI->SetVisibility(ESlateVisibility::Visible);
 }
 
 void APlayerCharacter::RPC_Multi_TargetUIOff_Implementation()
 {
 	TargetUIComp->SetVisibility(false);
+	//TargetPointUI->SetVisibility(ESlateVisibility::Hidden);
 }
 
 void APlayerCharacter::RPC_Server_Interaction_Implementation(float InteractionDistance)
