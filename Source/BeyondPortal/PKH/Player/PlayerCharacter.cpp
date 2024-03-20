@@ -722,8 +722,6 @@ void APlayerCharacter::SetEmotionUI(bool ActiveSelf)
 
 void APlayerCharacter::BeginEmotion()
 {
-	GunComp->SetVisibility(false);
-	LightComp->SetIntensity(0);
 	CameraComp->SetRelativeLocation(CameraLocationInEmotion);
 	GetMesh()->SetOwnerNoSee(false);
 }
@@ -749,6 +747,9 @@ void APlayerCharacter::RPC_Server_Emotion_Implementation(float Degree)
 
 void APlayerCharacter::RPC_Multi_Emotion_Implementation(float Degree)
 {
+	GunComp->SetVisibility(false);
+	LightComp->SetIntensity(0);
+
 	UPlayerAnimInstance* AnimInst=Cast<UPlayerAnimInstance>(GetMesh()->GetAnimInstance());
 	if ( AnimInst )
 	{
