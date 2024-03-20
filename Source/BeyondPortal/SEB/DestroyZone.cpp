@@ -28,6 +28,7 @@ void ADestroyZone::BeginPlay()
 {
 	Super::BeginPlay();
 	boxComp->OnComponentBeginOverlap.AddDynamic(this, &ADestroyZone::OnMyCompBeginOverlap);
+	boxComp->OnComponentEndOverlap.AddDynamic(this, &ADestroyZone::OnMyCompEndOverlap);
 }
 
 // Called every frame
@@ -73,31 +74,35 @@ void ADestroyZone::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent
 		{
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmDoor::StaticClass(), FoundDoors);
 			float Delay=0.1f;
+			cnt1++;
 			for ( auto findDoor : FoundDoors )
 			{
 				// 딜레이 후에 문 열기
 				AArmDoor* Door=Cast<AArmDoor>(findDoor);
-				FTimerHandle Handle;
-				GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Door]()
-					{
-						Door->isOpened=true;
-					}), Delay, false);
+				if ( cnt1 >= 2 )
+					Door->openDoor(findDoor, Delay);
 				Delay+=0.1f;
 			}
 		}
 		else if( findMyTag == "closedoor" && !isCheckClosed ) 
 		{
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmDoor::StaticClass(), FoundDoors);
-			cnt++;
-			UE_LOG(LogTemp, Error, TEXT("cnt : %d"), cnt);
 			float Delay=0.1f;
+			cnt2++;
+			UE_LOG(LogTemp, Error, TEXT("cnt : %d"), cnt2);
+			//float Delay=0.1f;
 			for ( auto findDoor : FoundDoors )
 			{
 				// 딜레이 후에 문 열기
 				AArmDoor* Door=Cast<AArmDoor>(findDoor);
-				if(cnt>=2 )
-					Door->closeDoor();
+				if(cnt2>=2 )
+				{
+					Door->closeDoor(findDoor, Delay);
+					isCheckClosed=true;
+				}
+				Delay+=0.1f;
 			}
+
 			
 		}
 		else if(findMyTag == "NoTag" )
@@ -110,13 +115,35 @@ void ADestroyZone::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent
 	}
 }
 
+void ADestroyZone::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	FString findMyTag=this->Tags.Num() > 0 ? this->Tags[0].ToString() : TEXT("NoTag");
+
+	if ( OtherActor->IsA< APlayerCharacter>() )
+	{
+		if ( findMyTag == "opendoor" )
+		{
+			
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmDoor::StaticClass(), FoundDoors);
+			float Delay=0.1f;
+			cnt1--;
+			
+			
+		}
+		
+	}
+}
 
 
 void ADestroyZone::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(ADestroyZone, cnt);
+	DOREPLIFETIME(ADestroyZone, cnt1);
+	DOREPLIFETIME(ADestroyZone, cnt2);
 	DOREPLIFETIME(ADestroyZone, isCheckClosed);
+	//DOREPLIFETIME(ADestroyZone, Handle);
+	//DOREPLIFETIME(ADestroyZone, Delay);
 	
 }
 

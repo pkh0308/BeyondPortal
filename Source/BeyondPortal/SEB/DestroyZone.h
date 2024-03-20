@@ -33,15 +33,20 @@ public:
 	UFUNCTION()
 	void OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	UFUNCTION()
+	void OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 	UPROPERTY(Replicated)
 	bool isCheckClosed=false;
 
 	UPROPERTY(Replicated)
-	int32 cnt=0;
+	int32 cnt1=0;
 
-	
+	UPROPERTY(Replicated)
+	int32 cnt2=0;
+
 	TArray<AActor*> FoundDoors;
-	
+
 
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

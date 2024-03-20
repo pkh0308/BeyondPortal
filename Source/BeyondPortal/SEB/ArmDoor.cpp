@@ -62,17 +62,42 @@ void AArmDoor::RPC_Multi_MoveDoor_Implementation()
 	}
 }
 
-void AArmDoor::closeDoor()
+void AArmDoor::closeDoor(AActor* findDoor, float Delay)
 {
-	armDoor->PlayAnimation(armDoorCloseAnim, false);
+
+	// 딜레이 후에 문 열기
+	AArmDoor* Door=Cast<AArmDoor>(findDoor);
+	UAnimationAsset* CloseAnim=armDoorCloseAnim;
+	TObjectPtr<class USkeletalMeshComponent> arm=armDoor;
+	FTimerHandle Handle;
+
+	GetWorldTimerManager().SetTimer(Handle, [Door, arm, CloseAnim]()
+		{
+			arm->PlayAnimation(CloseAnim, false);
+		}, Delay, false);
+
+
+	//armDoor->PlayAnimation(armDoorCloseAnim, false);
 	isClosed=false;
 	isOpened=false;
 }
 
-void AArmDoor::openDoor()
+void AArmDoor::openDoor(AActor* findDoor, float Delay)
 {
+	// 딜레이 후에 문 열기
+	AArmDoor* Door=Cast<AArmDoor>(findDoor);
+	UAnimationAsset* OpenAnim=armDoorOpenAnim;
+	TObjectPtr<class USkeletalMeshComponent> arm=armDoor;
+	FTimerHandle Handle;
+
+	GetWorldTimerManager().SetTimer(Handle, [Door, arm, OpenAnim]()
+		{
+			arm->PlayAnimation(OpenAnim, false);
+		}, Delay, false);
+	
+
 	isClosed=false;
-	armDoor->PlayAnimation(armDoorOpenAnim, false);
+	//armDoor->PlayAnimation(armDoorOpenAnim, false);
 	isOpened=false;
 }
 

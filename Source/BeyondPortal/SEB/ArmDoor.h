@@ -47,9 +47,12 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void RPC_Multi_MoveDoor();
 
-	void closeDoor();
+	void closeDoor(AActor* findDoor, float Delay);
 
-	void openDoor();
+	UFUNCTION(BlueprintCallable)
+	void openDoor(AActor* findDoor, float Delay);
+
+
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
