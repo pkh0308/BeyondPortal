@@ -3,7 +3,6 @@
 
 #include "PKH/UI/TargetPointUIWidget.h"
 
-#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/WidgetComponent.h"
 
 void UTargetPointUIWidget::NativeConstruct()
@@ -20,45 +19,60 @@ void UTargetPointUIWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	if(false == IsInViewport())
+	if(IsActiveNow )
 	{
-		return;
+		SetPointLocation();
 	}
+}
 
-	// Test
-	UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(TargetController, TargetWidget->GetComponentLocation(), ScreenLocation, true);
-	ScreenLocation.Y = ViewportSize.Y - ScreenLocation.Y;
-	
-	// Screen in
-	if( IsInScreen() )
+void UTargetPointUIWidget::Activate(bool IsActive)
+{
+	IsActiveNow=IsActive;
+	if( IsActive )
 	{
-		SetPositionInViewport(ScreenLocation);
+		SetVisibility(ESlateVisibility::Visible);
+		SetPointLocation();
+	}
+	else
+	{
+		SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void UTargetPointUIWidget::SetPointLocation()
+{
+	// Test
+	const bool IsInScreen=TargetController->ProjectWorldLocationToScreen(TargetWidget->GetComponentLocation(), ScreenLocation, true);
+
+	// Screen in
+	if ( IsInScreen )
+	{
+		SetPositionInViewport(ScreenLocation); //UE_LOG(LogTemp, Log, TEXT("%f, %f"), ScreenLocation.X, ScreenLocation.Y);
 	}
 	// Screen off
 	else
 	{
-		/*FVector2D TargetPosition;
-		if( ScreenLocation.X > ScreenLocation.Y )
+		FVector2D TargetPosition;
+		if ( ScreenLocation.Y < 30 )
 		{
-			TargetPosition.X = ViewportSize.X;
+			TargetPosition.Y=30;
+			TargetPosition.X=(ScreenLocation.X * TargetPosition.Y) / ScreenLocation.Y;
 		}
-		else
+		else if ( ScreenLocation.X > ViewportSize.X - 30 )
 		{
-			TargetPosition.Y = ViewportSize.Y;
-		}*/
+			TargetPosition.X=ViewportSize.X - 30;
+			TargetPosition.Y=(TargetPosition.X * ScreenLocation.Y) / ScreenLocation.X;
+		}
+		else if ( ScreenLocation.Y > ViewportSize.Y - 30 )
+		{
+			TargetPosition.Y=ViewportSize.Y - 30;
+			TargetPosition.X=(ScreenLocation.X * TargetPosition.Y) / ScreenLocation.Y;
+		}
+		else if ( ScreenLocation.X < 30 )
+		{
+			TargetPosition.X=30;
+			TargetPosition.Y=(TargetPosition.X * ScreenLocation.Y) / ScreenLocation.X;
+		}
+		SetPositionInViewport(TargetPosition);
 	}
-}
-
-bool UTargetPointUIWidget::IsInScreen()
-{
-	if ( ScreenLocation.X < 0 || ScreenLocation.X > ViewportSize.X )
-	{
-		return false;
-	}
-	if ( ScreenLocation.Y < 0 || ScreenLocation.Y > ViewportSize.Y )
-	{
-		return false;
-	}
-
-	return true;
 }

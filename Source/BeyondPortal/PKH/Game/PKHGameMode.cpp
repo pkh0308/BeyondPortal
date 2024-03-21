@@ -51,7 +51,7 @@ void APKHGameMode::PostLogin(APlayerController* NewPlayer)
 		}
 		
 		const bool IsChapter1 = UGameplayStatics::GetCurrentLevelName(GetWorld()).Equals(TEXT("BeyondPortalMap"));
-		const FVector SpawnLocation=IsChapter1 ? FVector(220, -548, 92) : FVector(-324, -213, 107 );
+		const FVector SpawnLocation=IsChapter1 ? FVector(220, -548, 92) : FVector(-767, -143, 122 );
 		APlayerCharacter* Player=GetWorld()->SpawnActor<APlayerCharacter>(P2CharacterClass, SpawnLocation, FRotator::ZeroRotator);
 		NewPlayer->Possess(Player);
 	}

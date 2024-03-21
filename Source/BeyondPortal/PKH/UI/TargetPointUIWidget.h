@@ -31,8 +31,12 @@ protected:
 
 	FVector2D ScreenLocation;
 
-	bool IsInScreen();
+	bool IsActiveNow=false;
+
+	void SetPointLocation();
 
 public:
 	FORCEINLINE void SetTargetWidget(class UWidgetComponent* NewWidget) { TargetWidget = NewWidget; }
+
+	void Activate(bool IsActive);
 };
