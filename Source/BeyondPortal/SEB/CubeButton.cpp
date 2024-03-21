@@ -71,7 +71,7 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 		UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
 		FoundActors.Sort([](const AActor& a, const AActor& b)
 		{
-			return a.GetActorLabel() < b.GetActorLabel();
+			return a.GetActorNameOrLabel() < b.GetActorNameOrLabel();
 		});
 		float Delay=0.1f;
 		for ( auto CurrentActor : FoundActors )

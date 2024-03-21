@@ -28,12 +28,18 @@ protected:
 
 	FVector2D ViewportSize;
 	FVector2D CenterPoint;
+	FVector2D TargetPoint;
+	FVector2D ScreenPoint;
 
-	FVector2D ScreenLocation;
+	FVector2D MinPoint;
+	FVector2D MaxPoint;
+
 
 	bool IsActiveNow=false;
 
 	void SetPointLocation();
+
+	bool IsInScreen();
 
 public:
 	FORCEINLINE void SetTargetWidget(class UWidgetComponent* NewWidget) { TargetWidget = NewWidget; }

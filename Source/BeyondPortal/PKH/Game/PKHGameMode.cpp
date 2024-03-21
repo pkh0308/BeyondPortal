@@ -35,7 +35,7 @@ void APKHGameMode::BeginPlay()
 	GetWorldTimerManager().SetTimer(TimeHandle, FTimerDelegate::CreateLambda([this]()
 	{
 		Seconds++;
-	}), 1.0f, false);
+	}), 1.0f, true, 1.0f);
 }
 
 void APKHGameMode::PostLogin(APlayerController* NewPlayer)

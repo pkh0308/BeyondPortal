@@ -5,7 +5,6 @@
 
 #include "EnhancedInputComponent.h"
 #include "PlayerInputComponent.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/AudioComponent.h"
 #include "Components/BoxComponent.h"
@@ -18,6 +17,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "PhysicsEngine/PhysicsHandleComponent.h"
 #include "PKH/Game/PKHGameMode.h"
 #include "PKH/Game/PortalGameInstance.h"
@@ -85,9 +85,15 @@ APlayerCharacter::APlayerCharacter()
 	GunParticleComp->bAutoActivate = false;
 	GunParticleComp->bAutoDestroy = false;
 
+	// Spring Arm
+	SpringComp=CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringComp"));
+	SpringComp->SetupAttachment(RootComponent);
+	SpringComp->TargetArmLength = 0;
+	SpringComp->bDoCollisionTest=true;
+
 	// Camera
 	CameraComp=CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
-	CameraComp->SetupAttachment(RootComponent);
+	CameraComp->SetupAttachment(SpringComp, "CameraBoom");
 	CameraComp->AddRelativeLocation(FVector(17, 7, 28));
 	CameraComp->bUsePawnControlRotation=true;
 
@@ -194,6 +200,11 @@ APlayerCharacter::APlayerCharacter()
 	if ( SFX_DropRef.Object )
 	{
 		SFX_Drop=SFX_DropRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_TargetRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_Target.SFX_Target'"));
+	if ( SFX_TargetRef.Object )
+	{
+		SFX_Target=SFX_TargetRef.Object;
 	}
 }
 
@@ -750,7 +761,8 @@ void APlayerCharacter::SetEmotionUI(bool ActiveSelf)
 
 void APlayerCharacter::BeginEmotion()
 {
-	CameraComp->SetRelativeLocation(CameraLocationInEmotion);
+	//CameraComp->SetRelativeLocation(CameraLocationInEmotion);
+	SpringComp->TargetArmLength=300;
 	GetMesh()->SetOwnerNoSee(false);
 }
 
@@ -764,7 +776,8 @@ void APlayerCharacter::EndEmotion()
 	IsShowingEmotion=false;
 	GunComp->SetVisibility(true);
 	LightComp->SetIntensity(MaxIntensity);
-	CameraComp->SetRelativeLocation(CameraLocationInNormal);
+	//CameraComp->SetRelativeLocation(CameraLocationInNormal);
+	SpringComp->TargetArmLength=0;
 	GetMesh()->SetOwnerNoSee(true);
 }
 
@@ -821,6 +834,7 @@ void APlayerCharacter::RPC_Multi_SetTargetUI_Implementation(const FVector& HitLo
 	TargetUIComp->SetWorldLocationAndRotation(HitLocation, HitRotation);
 	TargetUIComp->SetVisibility(true);
 	TargetPointUI->Activate(true);
+	UGameplayStatics::PlaySound2D(GetWorld(), SFX_Target, 0.7f);
 }
 
 void APlayerCharacter::RPC_Multi_TargetUIOff_Implementation()
@@ -941,14 +955,21 @@ void APlayerCharacter::CrosshairFill(bool IsLeft)
 
 void APlayerCharacter::GameClear()
 {
+	IsDead = true;
+
+	if(CrosshairUI)
+	{
+		CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
+	}
+
 	if(HasAuthority())
 	{
-		APKHGameMode* GM=CastChecked<APKHGameMode>(GetWorld()->GetAuthGameMode());
-		UPortalGameInstance* GI=CastChecked<UPortalGameInstance>(GetWorld()->GetGameInstance());
-		const int32 PlayTime=GM->GetPlayTime() + GI->GetPlayTime();
-		const int32 TotalPortalCount=PortalCount;
-
-		RPC_Multi_GameClear(PlayTime);
+		FTimerHandle ClearHandle;
+		GetWorldTimerManager().SetTimer(ClearHandle, FTimerDelegate::CreateLambda([this]()
+		{
+			UPortalGameInstance* GI=GetGameInstance<UPortalGameInstance>();
+			GI->ExitRoom();
+		}), 13.0f, false);
 	}
 }
 
@@ -959,6 +980,7 @@ void APlayerCharacter::RPC_Multi_GameClear_Implementation(int32 PlayTime)
 		if(GameClearUI)
 		{
 			GameClearUI->SetClearUI(PlayTime, PortalCount);
+			GameClearUI->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
 }
@@ -968,6 +990,24 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	
+}
+
+void APlayerCharacter::VoiceChat(bool IsActive)
+{
+	APlayerController* MyController = GetController<APlayerController>();
+	if( nullptr == MyController || false == MyController->IsLocalController() )
+	{
+		return;
+	}
+
+	if(IsActive)
+	{
+		MyController->StartTalking();
+	}
+	else
+	{
+		MyController->StopTalking();
+	}
 }
 
 void APlayerCharacter::RPC_SetPlayerLocation_Implementation(ACharacter* ClientPlayer)

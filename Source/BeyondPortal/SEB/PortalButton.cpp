@@ -74,7 +74,7 @@ void APortalButton::activeSpawnCube()
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmMesh::StaticClass(), findArmMesh);
 		findArmMesh.Sort([](const AActor& a, const AActor& b)
 		{
-			return a.GetActorLabel() < b.GetActorLabel();
+			return a.GetActorNameOrLabel() < b.GetActorNameOrLabel();
 		});
 		RPC_Server_OpenMesh(findArmMesh);
 	}

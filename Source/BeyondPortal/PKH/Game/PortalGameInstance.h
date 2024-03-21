@@ -27,6 +27,9 @@ protected:
 	FUniqueNetIdPtr MyNetID;
 	
 	FString HostName = TEXT("PSP");
+	FString CurRoomName;
+
+	FString LobbyURL="/Game/PKH/Maps/LobbyMap";
 
 // Create
 public:
@@ -59,6 +62,18 @@ public:
 
 	// Response for join session
 	void OnJoinRoomComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+
+// Destroy
+public:
+	void ExitRoom();
+
+	UFUNCTION(Server, Reliable)
+	void RPC_Server_ExitRoom();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPC_Multi_ExitRoom();
+
+	void OnExitRoomComplete(FName RoomName, bool bWasSuccessful);
 
 // Enter Chapter
 public:

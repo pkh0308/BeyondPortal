@@ -19,9 +19,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 // Owner
 protected:
 	virtual void InitializeComponent() override;
@@ -67,6 +64,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UInputAction> IA_Target;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UInputAction> IA_Voice;
+
 	// Bind Functions
 	UFUNCTION()
 	void OnIAMove(const FInputActionValue& Value);
@@ -97,6 +97,12 @@ protected:
 
 	UFUNCTION()
 	void OnIATarget(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnIABeginVoice(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnIAEndVoice(const FInputActionValue& Value);
 
 	// Values
 	UPROPERTY(EditAnywhere)

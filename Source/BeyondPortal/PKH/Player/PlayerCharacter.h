@@ -41,6 +41,9 @@ protected:
 	TObjectPtr<class UCameraComponent> CameraComp;
 
 	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USpringArmComponent> SpringComp;
+
+	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UPointLightComponent> LightComp;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -207,7 +210,7 @@ public:
 // Emotion
 protected:
 	UPROPERTY(EditDefaultsOnly)
-	FVector CameraLocationInEmotion=FVector(-300, 0, 80);
+	FVector CameraLocationInEmotion=FVector(0, 0, 80);
 
 	UPROPERTY(EditDefaultsOnly)
 	FVector CameraLocationInNormal=FVector(17, 7, 28);
@@ -305,6 +308,7 @@ protected:
 public:
 	void CrosshairFill(bool IsLeft);
 
+	UFUNCTION(BlueprintCallable)
 	void GameClear();
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -318,6 +322,10 @@ protected:
 protected:
 	UFUNCTION(Server, Unreliable)
 	void RPC_SetPlayerLocation(class ACharacter* ClientPlayer);
+
+// Voice
+public:
+	void VoiceChat(bool IsActive);
 
 // Sound
 protected:
@@ -344,6 +352,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class USoundBase> SFX_Drop;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_Target;
 
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UAudioComponent> GunSoundComp;

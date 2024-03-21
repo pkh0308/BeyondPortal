@@ -16,7 +16,7 @@
 
 UPlayerInputComponent::UPlayerInputComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// Input
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCRef(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/PKH/Input/IMC_Player.IMC_Player'"));
@@ -99,13 +99,6 @@ void UPlayerInputComponent::BeginPlay()
 	}
 }
 
-void UPlayerInputComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	
-}
-
 void UPlayerInputComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
@@ -139,11 +132,15 @@ void UPlayerInputComponent::SetupInput(UEnhancedInputComponent* PlayerInputCompo
 
 	// Target
 	InputComp->BindAction(IA_Target, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIATarget);
+
+	// Voice
+	InputComp->BindAction(IA_Voice, ETriggerEvent::Started, this, &UPlayerInputComponent::OnIABeginVoice);
+	InputComp->BindAction(IA_Voice, ETriggerEvent::Completed, this, &UPlayerInputComponent::OnIAEndVoice);
 }
 
 void UPlayerInputComponent::OnIAMove(const FInputActionValue& Value)
 {
-	if(Owner->IsPlayerDead())
+	if(Owner->IsPlayerDead() || Owner->GetIsShowingEmotion())
 	{
 		return;
 	}
@@ -180,7 +177,7 @@ void UPlayerInputComponent::OnIALook(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAJump(const FInputActionValue& Value)
 {
-	if ( Owner->IsPlayerDead() )
+	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
 	{
 		return;
 	}
@@ -190,7 +187,7 @@ void UPlayerInputComponent::OnIAJump(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIACrouch(const FInputActionValue& Value)
 {
-	if ( Owner->IsPlayerDead() )
+	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
 	{
 		return;
 	}
@@ -200,7 +197,7 @@ void UPlayerInputComponent::OnIACrouch(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 {
-	if ( Owner->IsPlayerDead() )
+	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
 	{
 		return;
 	}
@@ -225,7 +222,7 @@ void UPlayerInputComponent::OnIAFireLeft(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 {
-	if ( Owner->IsPlayerDead() )
+	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
 	{
 		return;
 	}
@@ -250,7 +247,7 @@ void UPlayerInputComponent::OnIAFireRight(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 {
-	if ( Owner->IsPlayerDead() )
+	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
 	{
 		return;
 	}
@@ -263,17 +260,42 @@ void UPlayerInputComponent::OnIAInteraction(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAEmotionUIOn(const FInputActionValue& Value)
 {
+	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
+	{
+		return;
+	}
+
 	Owner->SetEmotionUI(true); 
 }
 
 void UPlayerInputComponent::OnIAEmotionUIOff(const FInputActionValue& Value)
 {
+	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
+	{
+		return;
+	}
+
 	Owner->SetEmotionUI(false);
 }
 
 void UPlayerInputComponent::OnIATarget(const FInputActionValue& Value)
 {
+	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
+	{
+		return;
+	}
+
 	Owner->SetTargetUI();
+}
+
+void UPlayerInputComponent::OnIABeginVoice(const FInputActionValue& Value)
+{
+	Owner->VoiceChat(true);
+}
+
+void UPlayerInputComponent::OnIAEndVoice(const FInputActionValue& Value)
+{
+	Owner->VoiceChat(false);
 }
 
 void UPlayerInputComponent::PlayFireMontage() const

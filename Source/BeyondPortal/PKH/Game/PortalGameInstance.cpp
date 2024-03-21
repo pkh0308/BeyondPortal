@@ -45,6 +45,7 @@ void UPortalGameInstance::CreateRoom(int32 MaxPlayerCount, FString RoomName)
 	// 7. 커스텀 정보 설정
 	Settings.Set(TEXT("HOST_NAME"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	Settings.Set(TEXT("ROOM_NAME"), RoomName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	CurRoomName=RoomName;
 	
 	ULocalPlayer* _Player=GetWorld()->GetFirstLocalPlayerFromController();
 	SessionInterface->CreateSession(*_Player->GetPreferredUniqueNetId(), FName(*RoomName), Settings);
@@ -152,6 +153,34 @@ void UPortalGameInstance::OnJoinRoomComplete(FName SessionName, EOnJoinSessionCo
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Join Failed"));
 		UE_LOG(LogTemp, Warning, TEXT("Users: %d"), GetWorld()->GetAuthGameMode()->GetNumPlayers());
+	}
+}
+
+void UPortalGameInstance::ExitRoom()
+{
+	RPC_Server_ExitRoom();
+}
+
+void UPortalGameInstance::RPC_Server_ExitRoom_Implementation()
+{
+	RPC_Multi_ExitRoom();
+}
+
+void UPortalGameInstance::RPC_Multi_ExitRoom_Implementation()
+{
+	SessionInterface->DestroySession(FName(*CurRoomName));
+}
+
+void UPortalGameInstance::OnExitRoomComplete(FName RoomName, bool bWasSuccessful)
+{
+	if ( bWasSuccessful )
+	{
+		CurRoomName="";
+		GetWorld()->GetFirstPlayerController()->ClientTravel(LobbyURL, TRAVEL_Absolute);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Destroy Room Failed"));
 	}
 }
 
