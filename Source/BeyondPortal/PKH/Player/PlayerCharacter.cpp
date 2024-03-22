@@ -206,6 +206,11 @@ APlayerCharacter::APlayerCharacter()
 	{
 		SFX_Target=SFX_TargetRef.Object;
 	}
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_DieRef(TEXT("/Script/Engine.SoundWave'/Game/PKH/Sound/SFX_Die.SFX_Die'"));
+	if ( SFX_DieRef.Object )
+	{
+		SFX_Die=SFX_DieRef.Object;
+	}
 }
 
 void APlayerCharacter::BeginPlay()
@@ -293,7 +298,7 @@ void APlayerCharacter::BeginPlay()
 	GunParticleComp->SetActive(false);
 
 	// Sound
-	GunSoundComp=UGameplayStatics::SpawnSound2D(GetWorld(), SFX_GrabLoop, 0.7f);
+	GunSoundComp=UGameplayStatics::SpawnSound2D(GetWorld(), SFX_GrabLoop, 0.5f);
 	GunSoundComp->Stop();
 	GunSoundComp->bAutoDestroy=false;
 }
@@ -367,7 +372,7 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 	if(IsLocallyControlled())
 	{
 		AddPortalCount();
-		UGameplayStatics::PlaySound2D(GetWorld(), IsLeft ? SFX_PortalLeft : SFX_PortalRight, 1.0f);
+		UGameplayStatics::PlaySound2D(GetWorld(), IsLeft ? SFX_PortalLeft : SFX_PortalRight, 0.8f);
 	}
 
 	// Link
@@ -437,7 +442,7 @@ void APlayerCharacter::SpawnFail(UParticleSystem* TargetVFX, const FVector& NewL
 
 	if(IsLocallyControlled())
 	{
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalFail, 1.0f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalFail, 0.8f);
 	}
 }
 
@@ -522,7 +527,7 @@ void APlayerCharacter::RPC_Multi_GrabObj_Implementation(UPrimitiveComponent* Tar
 	// Sound
 	if ( IsLocallyControlled() )
 	{
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Grab, 0.5f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Grab, 0.3f);
 		if ( GunSoundComp )
 		{
 			GunSoundComp->Play();
@@ -558,7 +563,7 @@ void APlayerCharacter::RPC_Multi_DropObj_Implementation()
 		{
 			GunSoundComp->Stop();
 		}
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Drop, 1.3f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Drop, 1.0f);
 	}
 }
 
@@ -618,11 +623,11 @@ void APlayerCharacter::ChangeVelocity(const FVector& NewDirection)
 	{
 		if ( NewVelocity.Size() > 1000 )
 		{
-			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutStrong, 2.0f);
+			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutStrong, 1.6f);
 		}
 		else
 		{
-			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutWeak, 1.5f);
+			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutWeak, 1.15f);
 		}
 	}
 }
@@ -834,7 +839,7 @@ void APlayerCharacter::RPC_Multi_SetTargetUI_Implementation(const FVector& HitLo
 	TargetUIComp->SetWorldLocationAndRotation(HitLocation, HitRotation);
 	TargetUIComp->SetVisibility(true);
 	TargetPointUI->Activate(true);
-	UGameplayStatics::PlaySound2D(GetWorld(), SFX_Target, 0.7f);
+	UGameplayStatics::PlaySound2D(GetWorld(), SFX_Target, 0.5f);
 }
 
 void APlayerCharacter::RPC_Multi_TargetUIOff_Implementation()
@@ -914,6 +919,10 @@ void APlayerCharacter::OnDie()
 	if( Anim )
 	{
 		Anim->PlayMontage_Dead();
+	}
+	if(SFX_Die)
+	{
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Die, 0.4f);
 	}
 
 	// Gun 

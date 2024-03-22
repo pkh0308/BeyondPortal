@@ -357,5 +357,8 @@ protected:
 	TObjectPtr<class USoundBase> SFX_Target;
 
 	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_Die;
+
+	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UAudioComponent> GunSoundComp;
 };
