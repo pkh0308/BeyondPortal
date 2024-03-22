@@ -64,14 +64,14 @@ void AArmDoor::RPC_Multi_MoveDoor_Implementation()
 	{
 		isClosed=false;
 		armDoor->PlayAnimation(armDoorOpenAnim, false);
-		UGameplayStatics::PlaySound2D(GetWorld(),SFX_OpenDoor, 1.0f );
+		UGameplayStatics::PlaySound2D(GetWorld(),SFX_OpenDoor, 0.3f );
 		isOpened=false;
 	}
 	if ( isClosed )
 	{
 
 		armDoor->PlayAnimation(armDoorCloseAnim, false);
-		UGameplayStatics::PlaySound2D(GetWorld(),SFX_CloseDoor, 1.0f );
+		UGameplayStatics::PlaySound2D(GetWorld(),SFX_CloseDoor, 0.3f );
 
 		isClosed=false;
 		isOpened=false;
@@ -86,6 +86,7 @@ void AArmDoor::closeDoor(AActor* findDoor, float Delay)
 	UAnimationAsset* CloseAnim=armDoorCloseAnim;
 	TObjectPtr<class USkeletalMeshComponent> arm=armDoor;
 	FTimerHandle Handle;
+	UGameplayStatics::PlaySound2D(GetWorld(),SFX_CloseDoor, 0.3f );
 
 	GetWorldTimerManager().SetTimer(Handle, [Door, arm, CloseAnim]()
 		{
@@ -107,11 +108,11 @@ void AArmDoor::openDoor(AActor* findDoor, float Delay)
 	TObjectPtr<class USkeletalMeshComponent> arm=armDoor;
 	FTimerHandle Handle;
 	TObjectPtr<class USoundBase> OpenDoorSound = SFX_OpenDoor;
-
+	UGameplayStatics::PlaySound2D(Door,OpenDoorSound, 0.3f );
 	GetWorldTimerManager().SetTimer(Handle, [Door, arm, OpenAnim, OpenDoorSound]()
 		{
 			arm->PlayAnimation(OpenAnim, false);
-		UGameplayStatics::PlaySound2D(Door,OpenDoorSound, 1.0f );
+		
 
 		}, Delay, false);
 	

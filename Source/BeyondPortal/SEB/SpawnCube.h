@@ -36,4 +36,7 @@ public:
 
 	bool isSpawned=false;
 
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_SpawnCube;
+
 };

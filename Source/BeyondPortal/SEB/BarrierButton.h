@@ -43,5 +43,8 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class USoundBase> SFX_BarrierButtonDown;
 
+	//sound
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_BarrierButton;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

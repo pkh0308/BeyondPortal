@@ -63,7 +63,7 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 
 	if ( OtherActor->IsA<AGrabCube>() ) {
 
-		UGameplayStatics::PlaySound2D(GetWorld(),SFX_CubeButtonDown, 1.0f );
+		UGameplayStatics::PlaySound2D(GetWorld(),SFX_CubeButtonDown, 0.3f );
 		//닿으면 cube 색 변경 blue -> orange
 		AGrabCube* cube=Cast<AGrabCube>(OtherActor);
 		cube->ChangeMaterial(true);

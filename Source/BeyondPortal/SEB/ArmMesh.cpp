@@ -46,7 +46,7 @@ void AArmMesh::Tick(float DeltaTime)
 void AArmMesh::openMesh()
 {
 	armMesh->PlayAnimation(openMeshAnim, false);
-	UGameplayStatics::PlaySound2D(GetWorld(),SFX_OpenDoor, 1.0f );
+	UGameplayStatics::PlaySound2D(GetWorld(),SFX_OpenDoor, 0.3f );
 
 }
 

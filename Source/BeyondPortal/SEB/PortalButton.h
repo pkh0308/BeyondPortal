@@ -60,7 +60,8 @@ public:
 //sound
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class USoundBase> SFX_PortalButtonDown;
-
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_SpawnCube;
 	
 public:
 	

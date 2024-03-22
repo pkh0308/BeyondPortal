@@ -32,12 +32,16 @@ ABarrierButton::ABarrierButton()
 		
 	}
 
-	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_BarrierButtonDownRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/fast-whoosh-118248.fast-whoosh-118248'"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_BarrierButtonDownRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/barrier2.barrier2'"));
 	if ( SFX_BarrierButtonDownRef.Object )
 	{
 		SFX_BarrierButtonDown=SFX_BarrierButtonDownRef.Object;
 	}
-	
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_BarrierButtonRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/barrier2.barrier2'"));
+	if ( SFX_BarrierButtonRef.Object )
+	{
+		SFX_BarrierButton=SFX_BarrierButtonRef.Object;
+	}
 	bReplicates=true;
 }
 
@@ -76,6 +80,7 @@ void ABarrierButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedCompone
 
 			else if ( CurrentActor->IsA<AFloorLine>() )
 			{
+				UGameplayStatics::PlaySound2D(GetWorld(),SFX_BarrierButton, 0.3f );
 
 				FString findColor=CurrentActor->Tags.Num() > 1 ? CurrentActor->Tags[1].ToString() : TEXT("NoTag");
 				if ( findColor == "blue" )

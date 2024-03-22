@@ -11,7 +11,11 @@ ASpawnCube::ASpawnCube()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_SpawnCubeRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/spawncube.spawncube'"));
+	if ( SFX_SpawnCubeRef.Object )
+	{
+		SFX_SpawnCube=SFX_SpawnCubeRef.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -34,6 +38,8 @@ void ASpawnCube::Tick(float DeltaTime)
 	{
 		if(bb->isCheck && bb2->isCheck )
 		{
+			UGameplayStatics::PlaySound2D(GetWorld(),SFX_SpawnCube, 0.3f );
+
 			RPC_Server_Spawn();
 			isSpawned=true;
 		}

@@ -47,6 +47,12 @@ APortalButton::APortalButton()
 	{
 		SFX_PortalButtonDown=SFX_PortalButtonDownRef.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_SpawnCubeRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/spawncube.spawncube'"));
+	if ( SFX_SpawnCubeRef.Object )
+	{
+		SFX_SpawnCube=SFX_SpawnCubeRef.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -89,6 +95,8 @@ void APortalButton::activeSpawnCube()
 	{
 		if (!isSpawned )
 		{
+			UGameplayStatics::PlaySound2D(GetWorld(),SFX_SpawnCube, 0.3f );
+
 			GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Green, TEXT("스폰!!"));
 			//tag가 CubeDropper인 액터 탐색
 			TArray<AActor*> FoundActors;
@@ -147,7 +155,7 @@ void APortalButton::DoInteraction()
 {
 	portalButton->PlayAnimation(pressButtonAnim, false);
 	
-	UGameplayStatics::PlaySound2D(GetWorld(),SFX_PortalButtonDown, 1.0f );
+	UGameplayStatics::PlaySound2D(GetWorld(),SFX_PortalButtonDown, 0.3f );
 	activeSpawnCube();
 }
 
