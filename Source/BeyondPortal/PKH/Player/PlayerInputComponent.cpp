@@ -270,7 +270,7 @@ void UPlayerInputComponent::OnIAEmotionUIOn(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIAEmotionUIOff(const FInputActionValue& Value)
 {
-	if ( Owner->IsPlayerDead() || Owner->GetIsShowingEmotion() )
+	if ( Owner->IsPlayerDead() )
 	{
 		return;
 	}
