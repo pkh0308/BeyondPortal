@@ -30,6 +30,13 @@ ADoor::ADoor()
 		door->SetSkeletalMesh(tempMesh.Object);
 		door->SetRelativeScale3D(FVector(0.004f));
 	}
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_congratulationRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/Voicy_Congratulations__cut_1sec_.Voicy_Congratulations__cut_1sec_'"));
+	if ( SFX_congratulationRef.Object )
+	{
+		SFX_congratulation=SFX_congratulationRef.Object;
+	}
+	
 	bReplicates=true;
 }
 
@@ -52,23 +59,35 @@ void ADoor::Tick(float DeltaTime)
 void ADoor::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	TArray<AActor*> FoundActors;
 	
+	FName findTagName=TEXT("level1");
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
 	// Player가 앞에 와서 충돌하면
 	if ( OtherActor->IsA<APlayerCharacter>() ) {
-		
-		cnt++;
-		UE_LOG(LogTemp, Error, TEXT("cnt : %d"), cnt);
-		OpenDoor();
+		for ( auto CurrentActor : FoundActors )
+		{
+			cnt++;
+			UE_LOG(LogTemp, Error, TEXT("cnt : %d"), cnt);
+			OpenDoor();
+		}
 	}
 }
 
 void ADoor::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	TArray<AActor*> FoundActors;
+	
+	FName findTagName=TEXT("level1");
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), findTagName, FoundActors);
 	// Player가 앞에 와서 충돌하면
 	if ( OtherActor->IsA<APlayerCharacter>() ) {
-
-		cnt--;
+		for ( auto CurrentActor : FoundActors )
+		{
+			cnt--;
+		}
+		
 	}
 }
 
@@ -77,6 +96,7 @@ void ADoor::OpenDoor()
 {
 	if ( cnt >= 2 && !isOpened)
 	{
+		UGameplayStatics::PlaySound2D(GetWorld(),SFX_congratulation, 1.0f );
 		RPC_Server_OpenDoor();
 	}
 	else

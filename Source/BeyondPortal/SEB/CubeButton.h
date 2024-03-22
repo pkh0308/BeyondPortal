@@ -53,5 +53,10 @@ public:
 
 	void OpenNextDoor(int32 i);
 
+
+	//sound
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_CubeButtonDown;
+	
 	/*bool SortByName(const AActor& currentActorA, const AActor& currentActorB);*/
 };

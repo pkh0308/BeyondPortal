@@ -31,6 +31,13 @@ ABarrierButton::ABarrierButton()
 		barrierButton->SetRelativeRotation(FRotator(0, 0, 90));
 		
 	}
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_BarrierButtonDownRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/fast-whoosh-118248.fast-whoosh-118248'"));
+	if ( SFX_BarrierButtonDownRef.Object )
+	{
+		SFX_BarrierButtonDown=SFX_BarrierButtonDownRef.Object;
+	}
+	
 	bReplicates=true;
 }
 
@@ -63,6 +70,8 @@ void ABarrierButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedCompone
 				CurrentActor->SetActorHiddenInGame(true);
 				ABarrier* b=Cast<ABarrier>(CurrentActor);
 				b->boxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				UGameplayStatics::PlaySound2D(GetWorld(),SFX_BarrierButtonDown, 1.0f );
+
 			}
 
 			else if ( CurrentActor->IsA<AFloorLine>() )
@@ -109,6 +118,8 @@ void ABarrierButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AAc
 				CurrentActor->SetActorHiddenInGame(false);
 				ABarrier* b=Cast<ABarrier>(CurrentActor);
 				b->boxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+				UGameplayStatics::PlaySound2D(GetWorld(),SFX_BarrierButtonDown, 1.0f );
+
 			}
 
 			else if ( CurrentActor->IsA<AFloorLine>() )

@@ -3,6 +3,7 @@
 
 #include "SEB/ArmMesh.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -20,7 +21,11 @@ AArmMesh::AArmMesh()
 	{
 		armMesh->SetSkeletalMesh(tempMesh.Object);
 	}
-
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_OpenDoorRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/DoorOpen.DoorOpen'"));
+	if ( SFX_OpenDoorRef.Object )
+	{
+		SFX_OpenDoor=SFX_OpenDoorRef.Object;
+	}
 	bReplicates=true;
 }
 
@@ -41,6 +46,8 @@ void AArmMesh::Tick(float DeltaTime)
 void AArmMesh::openMesh()
 {
 	armMesh->PlayAnimation(openMeshAnim, false);
+	UGameplayStatics::PlaySound2D(GetWorld(),SFX_OpenDoor, 1.0f );
+
 }
 
 

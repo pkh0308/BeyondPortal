@@ -31,7 +31,8 @@ public:
 
 	void openMesh();
 
-	
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_OpenDoor;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

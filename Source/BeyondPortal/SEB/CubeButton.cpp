@@ -34,6 +34,12 @@ ACubeButton::ACubeButton()
 		cubeButton->SetRelativeScale3D(FVector(0.03f));
 		cubeButton->SetRelativeLocation(FVector(0, -25, 20));
 	}
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_CubeButtonDownRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/og_button_up_01.og_button_up_01'"));
+	if ( SFX_CubeButtonDownRef.Object )
+	{
+		SFX_CubeButtonDown=SFX_CubeButtonDownRef.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -57,6 +63,7 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 
 	if ( OtherActor->IsA<AGrabCube>() ) {
 
+		UGameplayStatics::PlaySound2D(GetWorld(),SFX_CubeButtonDown, 1.0f );
 		//닿으면 cube 색 변경 blue -> orange
 		AGrabCube* cube=Cast<AGrabCube>(OtherActor);
 		cube->ChangeMaterial(true);

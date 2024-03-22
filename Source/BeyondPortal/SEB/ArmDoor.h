@@ -52,8 +52,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void openDoor(AActor* findDoor, float Delay);
 
-
-
+	//sound
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_OpenDoor;
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_CloseDoor;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 };

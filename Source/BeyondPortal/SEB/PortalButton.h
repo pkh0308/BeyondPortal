@@ -57,7 +57,11 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void RPC_Multi_OpenMesh(const TArray<AActor*>& findArmMesh);
 	
+//sound
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_PortalButtonDown;
 
+	
 public:
 	
 	virtual void DoInteraction() override;

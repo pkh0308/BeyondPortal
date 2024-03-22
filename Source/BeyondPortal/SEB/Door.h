@@ -60,8 +60,9 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void RPC_Multi_OpenDoor();
 
-
-	
+	//sound
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_congratulation;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

@@ -3,6 +3,7 @@
 
 #include "SEB/ArmDoor.h"
 
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -22,6 +23,18 @@ AArmDoor::AArmDoor()
 		armDoor->SetSkeletalMesh(tempMesh.Object);
 		armDoor->SetAnimationMode(EAnimationMode::AnimationSingleNode);
 		
+	}
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_OpenDoorRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/DoorOpen.DoorOpen'"));
+	if ( SFX_OpenDoorRef.Object )
+	{
+		SFX_OpenDoor=SFX_OpenDoorRef.Object;
+	}
+	
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_CloseDoorRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/Portal-2-Sound-Effects-Door-Close.Portal-2-Sound-Effects-Door-Close'"));
+	if ( SFX_CloseDoorRef.Object )
+	{
+		SFX_CloseDoor=SFX_CloseDoorRef.Object;
 	}
 }
 
@@ -51,12 +64,15 @@ void AArmDoor::RPC_Multi_MoveDoor_Implementation()
 	{
 		isClosed=false;
 		armDoor->PlayAnimation(armDoorOpenAnim, false);
+		UGameplayStatics::PlaySound2D(GetWorld(),SFX_OpenDoor, 1.0f );
 		isOpened=false;
 	}
 	if ( isClosed )
 	{
 
 		armDoor->PlayAnimation(armDoorCloseAnim, false);
+		UGameplayStatics::PlaySound2D(GetWorld(),SFX_CloseDoor, 1.0f );
+
 		isClosed=false;
 		isOpened=false;
 	}
@@ -74,10 +90,11 @@ void AArmDoor::closeDoor(AActor* findDoor, float Delay)
 	GetWorldTimerManager().SetTimer(Handle, [Door, arm, CloseAnim]()
 		{
 			arm->PlayAnimation(CloseAnim, false);
+
 		}, Delay, false);
 
 
-	//armDoor->PlayAnimation(armDoorCloseAnim, false);
+	armDoor->PlayAnimation(armDoorCloseAnim, false);
 	isClosed=false;
 	isOpened=false;
 }
@@ -89,10 +106,13 @@ void AArmDoor::openDoor(AActor* findDoor, float Delay)
 	UAnimationAsset* OpenAnim=armDoorOpenAnim;
 	TObjectPtr<class USkeletalMeshComponent> arm=armDoor;
 	FTimerHandle Handle;
+	TObjectPtr<class USoundBase> OpenDoorSound = SFX_OpenDoor;
 
-	GetWorldTimerManager().SetTimer(Handle, [Door, arm, OpenAnim]()
+	GetWorldTimerManager().SetTimer(Handle, [Door, arm, OpenAnim, OpenDoorSound]()
 		{
 			arm->PlayAnimation(OpenAnim, false);
+		UGameplayStatics::PlaySound2D(Door,OpenDoorSound, 1.0f );
+
 		}, Delay, false);
 	
 

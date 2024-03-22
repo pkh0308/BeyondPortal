@@ -41,6 +41,12 @@ APortalButton::APortalButton()
 	}
 
 	bReplicates=true;
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_PortalButtonDownRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/button_synth_positive_01.button_synth_positive_01'"));
+	if ( SFX_PortalButtonDownRef.Object )
+	{
+		SFX_PortalButtonDown=SFX_PortalButtonDownRef.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -140,8 +146,8 @@ void APortalButton::RPC_Multi_OpenMesh_Implementation(const TArray<AActor*>& fin
 void APortalButton::DoInteraction()
 {
 	portalButton->PlayAnimation(pressButtonAnim, false);
-
 	
+	UGameplayStatics::PlaySound2D(GetWorld(),SFX_PortalButtonDown, 1.0f );
 	activeSpawnCube();
 }
 

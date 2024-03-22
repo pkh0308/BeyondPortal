@@ -39,6 +39,9 @@ public:
 
 	bool isCheck=false;
 	
+	//sound
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_BarrierButtonDown;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
