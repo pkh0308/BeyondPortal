@@ -96,6 +96,7 @@ void UPortalGameInstance::OnFindOtherRoomsComplete(bool bWasSuccessful)
 		OnMyFindRoomDelegate.ExecuteIfBound(false, nullptr);
 		return;
 	}
+
 	if( RoomSearchSettings->SearchResults.Num() > 0 )
 	{
 		for( auto Result : RoomSearchSettings->SearchResults )
