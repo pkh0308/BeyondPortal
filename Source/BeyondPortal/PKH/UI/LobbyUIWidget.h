@@ -32,6 +32,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, meta=(BindWidget))
 	TObjectPtr<class UCanvasPanel> PopUp_WaitPlayer;
 
+	UPROPERTY(EditDefaultsOnly, meta=(BindWidgetAnim), Transient)
+	TObjectPtr<class UWidgetAnimation> CircleAnim;
+
 // Bind
 protected:
 	UFUNCTION()

@@ -26,6 +26,8 @@ void ULobbyUIWidget::NativeConstruct()
 void ULobbyUIWidget::OnClicked_StartGame()
 {
 	PopUp_WaitPlayer->SetVisibility(ESlateVisibility::Visible);
+	PlayAnimation(CircleAnim, 0, 0);
+
 	GameInst->FindOtherRooms(OnFindRoomComplete);
 }
 
