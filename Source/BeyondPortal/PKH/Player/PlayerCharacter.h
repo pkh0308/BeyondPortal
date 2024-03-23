@@ -210,7 +210,7 @@ public:
 // Emotion
 protected:
 	UPROPERTY(EditDefaultsOnly)
-	FVector CameraLocationInEmotion=FVector(0, 0, 80);
+	FVector CameraLocationInEmotion=FVector(0, 7, 80);
 
 	UPROPERTY(EditDefaultsOnly)
 	FVector CameraLocationInNormal=FVector(17, 7, 28);
@@ -294,12 +294,6 @@ protected:
 	TObjectPtr<class UCrosshairUIWidget> CrosshairUI;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<class UGameClearUIWidget> GameClearUIClass;;
-
-	UPROPERTY(EditDefaultsOnly)
-	TObjectPtr<class UGameClearUIWidget> GameClearUI;
-
-	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class UEmotionUIWidget> EmotionUIClass;;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -309,10 +303,10 @@ public:
 	void CrosshairFill(bool IsLeft);
 
 	UFUNCTION(BlueprintCallable)
-	void GameClear();
+	void CrosshairOff();
 
-	UFUNCTION(NetMulticast, Reliable)
-	void RPC_Multi_GameClear(int32 PlayTime);
+	UFUNCTION(BlueprintCallable)
+	void GameClear();
 
 // Network
 protected:
