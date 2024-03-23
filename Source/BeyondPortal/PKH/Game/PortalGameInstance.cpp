@@ -7,7 +7,6 @@
 #include "OnlineSubsystemUtils.h"
 #include "PKHGameMode.h"
 #include "GameFramework/GameModeBase.h"
-#include "Kismet/GameplayStatics.h"
 #include "Online/OnlineSessionNames.h"
 #include "Interfaces/OnlineSessionInterface.h"
 
@@ -21,6 +20,7 @@ void UPortalGameInstance::Init()
 		SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &UPortalGameInstance::OnCreateRoomComplete);
 		SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &UPortalGameInstance::OnFindOtherRoomsComplete);
 		SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &UPortalGameInstance::OnJoinRoomComplete);
+		SessionInterface->OnDestroySessionCompleteDelegates.AddUObject(this, &UPortalGameInstance::OnExitRoomComplete);
 	}
 }
 
@@ -45,7 +45,7 @@ void UPortalGameInstance::CreateRoom(int32 MaxPlayerCount, FString RoomName)
 	// 7. 커스텀 정보 설정
 	Settings.Set(TEXT("HOST_NAME"), HostName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 	Settings.Set(TEXT("ROOM_NAME"), RoomName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
-	CurRoomName=RoomName;
+	CurRoomName=FString::Printf(TEXT("%s"), *RoomName);
 	
 	ULocalPlayer* _Player=GetWorld()->GetFirstLocalPlayerFromController();
 	SessionInterface->CreateSession(*_Player->GetPreferredUniqueNetId(), FName(*RoomName), Settings);
@@ -128,7 +128,7 @@ void UPortalGameInstance::JoinRoom(FString RoomName, FOnlineSessionSearchResult*
 {
 	ULocalPlayer* _Player=GetWorld()->GetFirstLocalPlayerFromController();
 	SessionInterface->JoinSession(*_Player->GetPreferredUniqueNetId(), FName(*RoomName), *result);
-	UE_LOG(LogTemp, Warning, TEXT("ID: %s"), *_Player->GetPreferredUniqueNetId()->ToString());
+	CurRoomName=FString::Printf(TEXT("%s"), *RoomName);
 }
 
 void UPortalGameInstance::OnJoinRoomComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)

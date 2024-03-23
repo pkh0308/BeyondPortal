@@ -144,11 +144,6 @@ APlayerCharacter::APlayerCharacter()
 	{
 		CrosshairUIClass=CrosshairUIClassRef.Class;
 	}
-	static ConstructorHelpers::FClassFinder<UGameClearUIWidget> GameClearUIClassRef(TEXT("/Game/PKH/UI/WBP_GameClear.WBP_GameClear_C"));
-	if ( GameClearUIClassRef.Class )
-	{
-		GameClearUIClass=GameClearUIClassRef.Class;
-	}
 	static ConstructorHelpers::FClassFinder<UEmotionUIWidget> EmotionUIClassRef(TEXT("/Game/PKH/UI/WBP_EmotionUI.WBP_EmotionUI_C"));
 	if ( EmotionUIClassRef.Class )
 	{
@@ -246,13 +241,13 @@ void APlayerCharacter::BeginPlay()
 		if ( CrosshairUI )
 		{
 			CrosshairUI->AddToViewport();
-		}
+			CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
 
-		GameClearUI=CreateWidget<UGameClearUIWidget>(GetWorld(), GameClearUIClass);
-		if ( GameClearUI )
-		{
-			GameClearUI->AddToViewport();
-			GameClearUI->SetVisibility(ESlateVisibility::Hidden);
+			FTimerHandle CrosshairHandle;
+			GetWorldTimerManager().SetTimer(CrosshairHandle, FTimerDelegate::CreateLambda([this]()
+			{
+				CrosshairUI->SetVisibility(ESlateVisibility::Visible);
+			}), 7.0f, false);
 		}
 
 		EmotionUI=CreateWidget<UEmotionUIWidget>(GetWorld(), EmotionUIClass);
@@ -298,7 +293,7 @@ void APlayerCharacter::BeginPlay()
 	GunParticleComp->SetActive(false);
 
 	// Sound
-	GunSoundComp=UGameplayStatics::SpawnSound2D(GetWorld(), SFX_GrabLoop, 0.5f);
+	GunSoundComp=UGameplayStatics::SpawnSound2D(GetWorld(), SFX_GrabLoop, 0.2f);
 	GunSoundComp->Stop();
 	GunSoundComp->bAutoDestroy=false;
 }
@@ -372,7 +367,7 @@ void APlayerCharacter::Spawn(const bool IsLeft, const FVector& Location, const F
 	if(IsLocallyControlled())
 	{
 		AddPortalCount();
-		UGameplayStatics::PlaySound2D(GetWorld(), IsLeft ? SFX_PortalLeft : SFX_PortalRight, 0.8f);
+		UGameplayStatics::PlaySound2D(GetWorld(), IsLeft ? SFX_PortalLeft : SFX_PortalRight, 0.3f);
 	}
 
 	// Link
@@ -442,7 +437,7 @@ void APlayerCharacter::SpawnFail(UParticleSystem* TargetVFX, const FVector& NewL
 
 	if(IsLocallyControlled())
 	{
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalFail, 0.8f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalFail, 0.3f);
 	}
 }
 
@@ -527,7 +522,7 @@ void APlayerCharacter::RPC_Multi_GrabObj_Implementation(UPrimitiveComponent* Tar
 	// Sound
 	if ( IsLocallyControlled() )
 	{
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Grab, 0.3f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Grab, 0.1f);
 		if ( GunSoundComp )
 		{
 			GunSoundComp->Play();
@@ -563,7 +558,7 @@ void APlayerCharacter::RPC_Multi_DropObj_Implementation()
 		{
 			GunSoundComp->Stop();
 		}
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Drop, 1.0f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Drop, 0.7f);
 	}
 }
 
@@ -623,11 +618,11 @@ void APlayerCharacter::ChangeVelocity(const FVector& NewDirection)
 	{
 		if ( NewVelocity.Size() > 1000 )
 		{
-			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutStrong, 1.6f);
+			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutStrong, 0.8f);
 		}
 		else
 		{
-			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutWeak, 1.15f);
+			UGameplayStatics::PlaySound2D(GetWorld(), SFX_PortalOutWeak, 0.6f);
 		}
 	}
 }
@@ -766,7 +761,7 @@ void APlayerCharacter::SetEmotionUI(bool ActiveSelf)
 
 void APlayerCharacter::BeginEmotion()
 {
-	//CameraComp->SetRelativeLocation(CameraLocationInEmotion);
+	CameraComp->SetRelativeLocation(CameraLocationInEmotion);
 	SpringComp->TargetArmLength=300;
 	GetMesh()->SetOwnerNoSee(false);
 }
@@ -781,7 +776,7 @@ void APlayerCharacter::EndEmotion()
 	IsShowingEmotion=false;
 	GunComp->SetVisibility(true);
 	LightComp->SetIntensity(MaxIntensity);
-	//CameraComp->SetRelativeLocation(CameraLocationInNormal);
+	CameraComp->SetRelativeLocation(CameraLocationInNormal);
 	SpringComp->TargetArmLength=0;
 	GetMesh()->SetOwnerNoSee(true);
 }
@@ -839,7 +834,7 @@ void APlayerCharacter::RPC_Multi_SetTargetUI_Implementation(const FVector& HitLo
 	TargetUIComp->SetWorldLocationAndRotation(HitLocation, HitRotation);
 	TargetUIComp->SetVisibility(true);
 	TargetPointUI->Activate(true);
-	UGameplayStatics::PlaySound2D(GetWorld(), SFX_Target, 0.5f);
+	UGameplayStatics::PlaySound2D(GetWorld(), SFX_Target, 0.2f);
 }
 
 void APlayerCharacter::RPC_Multi_TargetUIOff_Implementation()
@@ -922,7 +917,7 @@ void APlayerCharacter::OnDie()
 	}
 	if(SFX_Die)
 	{
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Die, 0.4f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Die, 0.2f);
 	}
 
 	// Gun 
@@ -962,6 +957,14 @@ void APlayerCharacter::CrosshairFill(bool IsLeft)
 	}
 }
 
+void APlayerCharacter::CrosshairOff()
+{
+	if(CrosshairUI)
+	{
+		CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
 void APlayerCharacter::GameClear()
 {
 	IsDead = true;
@@ -979,18 +982,6 @@ void APlayerCharacter::GameClear()
 			UPortalGameInstance* GI=GetGameInstance<UPortalGameInstance>();
 			GI->ExitRoom();
 		}), 13.0f, false);
-	}
-}
-
-void APlayerCharacter::RPC_Multi_GameClear_Implementation(int32 PlayTime)
-{
-	if(IsLocallyControlled())
-	{
-		if(GameClearUI)
-		{
-			GameClearUI->SetClearUI(PlayTime, PortalCount);
-			GameClearUI->SetVisibility(ESlateVisibility::Visible);
-		}
 	}
 }
 
