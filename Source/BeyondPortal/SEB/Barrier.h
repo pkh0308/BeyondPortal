@@ -37,4 +37,7 @@ public:
 
 	UPROPERTY()
 	bool isValid=false;
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_DestroyCube;
 };

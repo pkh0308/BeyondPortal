@@ -18,6 +18,12 @@ ABarrier::ABarrier()
 	this->SetRootComponent(boxComp);
 	barrier=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("barrier"));
 	barrier->SetupAttachment(RootComponent);
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_DestroyCubeRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/destroycube.destroycube'"));
+	if ( SFX_DestroyCubeRef.Object )
+	{
+		SFX_DestroyCube=SFX_DestroyCubeRef.Object;
+	}
 }
 
 // Called when the game starts or when spawned
@@ -61,13 +67,13 @@ void ABarrier::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent, AA
 		
 
 		
-
 		//cube 사라지는 이펙트 후 큐브 제거
 		AGrabCube* cube=Cast<AGrabCube>(OtherActor);
 		cube->OnDisappear();
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("큐브가 사라졌으니까"));
 		
-		
+		UGameplayStatics::PlaySound2D(GetWorld(),SFX_DestroyCube, 0.3f );
+
+
 	}
 
 	//Barrier랑 Player랑 닿았을 때 포탈 초기화
