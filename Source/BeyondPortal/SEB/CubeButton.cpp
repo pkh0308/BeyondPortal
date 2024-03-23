@@ -149,9 +149,7 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 			// 찾은 태그 중에 ArmDoor를 찾아서
 			if ( CurrentActor->IsA<AArmDoor>() )
 			{
-				//문 닫기
-
-				// 딜레이 후에 문 열기
+				// 딜레이 후에 문 닫기
 				AArmDoor* Door=Cast<AArmDoor>(CurrentActor);
 				FTimerHandle Handle;
 				GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Door]()
@@ -189,19 +187,11 @@ void ACubeButton::OpenNextDoor(int32 i)
 {
 	if(armDoorArray.Num() > 0 )
 	{
-		UE_LOG(LogTemp, Error, TEXT("왜 안열리냐.. 이거 인덱스는 %d"), i);
 		// 지정된 인덱스의 문 열기
 		Cast<AArmDoor>(armDoorArray[i])->isOpened=true;
 	}
 		
 	
 }
-
-/*
-bool ACubeButton::SortByName(const AActor& currentActorA, const AActor& currentActorB)
-{
-	return currentActorA.GetActorLabel() < currentActorB.GetActorLabel();
-}
-*/
 
 

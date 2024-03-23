@@ -10,9 +10,7 @@ ACheckOpen::ACheckOpen()
 	PrimaryActorTick.bCanEverTick = true;
 	checkOpen=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("checkOpen"));
 	checkOpen->SetRelativeScale3D(FVector(1, 0.2, 1));
-
 	
-
 }
 
 // Called when the game starts or when spawned

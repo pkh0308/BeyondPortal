@@ -81,7 +81,6 @@ void APortalButton::activeSpawnCube()
 	// 발판 UP
 	if ( findTag == TEXT("open") )
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("열려라"));
 		TArray<AActor*> findArmMesh;
 		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmMesh::StaticClass(), findArmMesh);
 		findArmMesh.Sort([](const AActor& a, const AActor& b)
@@ -97,7 +96,6 @@ void APortalButton::activeSpawnCube()
 		{
 			UGameplayStatics::PlaySound2D(GetWorld(),SFX_SpawnCube, 0.3f );
 
-			GEngine->AddOnScreenDebugMessage(-1, 30.f, FColor::Green, TEXT("스폰!!"));
 			//tag가 CubeDropper인 액터 탐색
 			TArray<AActor*> FoundActors;
 			UGameplayStatics::GetAllActorsWithTag(GetWorld(), TEXT("CubeDropper"), FoundActors);

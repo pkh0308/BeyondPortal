@@ -74,7 +74,7 @@ void ABarrierButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedCompone
 				CurrentActor->SetActorHiddenInGame(true);
 				ABarrier* b=Cast<ABarrier>(CurrentActor);
 				b->boxComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-				UGameplayStatics::PlaySound2D(GetWorld(),SFX_BarrierButtonDown, 1.0f );
+				UGameplayStatics::PlaySound2D(GetWorld(),SFX_BarrierButtonDown, 0.3f );
 
 			}
 
@@ -123,7 +123,7 @@ void ABarrierButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AAc
 				CurrentActor->SetActorHiddenInGame(false);
 				ABarrier* b=Cast<ABarrier>(CurrentActor);
 				b->boxComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-				UGameplayStatics::PlaySound2D(GetWorld(),SFX_BarrierButtonDown, 1.0f );
+				UGameplayStatics::PlaySound2D(GetWorld(),SFX_BarrierButtonDown, 0.3f );
 
 			}
 
@@ -147,8 +147,6 @@ void ABarrierButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AAc
 				co->checkOpen->SetMaterial(0, co->mat2);
 			}
 		}
-		/*cnt--;
-		RPC_Server_ActiveButton();*/
 	}
 }
 
@@ -158,11 +156,6 @@ void ABarrierButton::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 }
-
-
-
-
-
 
 void ABarrierButton::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

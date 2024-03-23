@@ -142,8 +142,6 @@ void ADestroyZone::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(ADestroyZone, cnt1);
 	DOREPLIFETIME(ADestroyZone, cnt2);
 	DOREPLIFETIME(ADestroyZone, isCheckClosed);
-	//DOREPLIFETIME(ADestroyZone, Handle);
-	//DOREPLIFETIME(ADestroyZone, Delay);
 	
 }
 
