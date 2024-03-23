@@ -192,6 +192,8 @@ protected:
 public:
 	void GrabObj(class ICanGrab* NewObject, UPrimitiveComponent* TargetComp);
 	void DropObj();
+	void DropObjFromCube();
+
 	FORCEINLINE ICanGrab* GetGrabObject() const { return GrabObject; }
 
 	FVector GetGrabPoint() const;
