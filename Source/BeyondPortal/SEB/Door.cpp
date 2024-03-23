@@ -36,7 +36,11 @@ ADoor::ADoor()
 	{
 		SFX_congratulation=SFX_congratulationRef.Object;
 	}
-	
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_DoorOpenRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/DoorOpen.DoorOpen'"));
+	if ( SFX_DoorOpenRef.Object )
+	{
+		SFX_DoorOpen=SFX_DoorOpenRef.Object;
+	}
 	bReplicates=true;
 }
 
@@ -97,6 +101,7 @@ void ADoor::OpenDoor()
 	if ( cnt >= 2 && !isOpened)
 	{
 		UGameplayStatics::PlaySound2D(GetWorld(),SFX_congratulation, 1.0f );
+		UGameplayStatics::PlaySound2D(GetWorld(),SFX_DoorOpen, 0.3f );
 		RPC_Server_OpenDoor();
 	}
 	else
@@ -114,7 +119,6 @@ void ADoor::RPC_Server_OpenDoor_Implementation()
 
 void ADoor::RPC_Multi_OpenDoor_Implementation()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("열려라"));
 	door->PlayAnimation(openDoorAnim, false);
 	isOpened=true;
 }

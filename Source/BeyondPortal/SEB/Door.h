@@ -64,5 +64,8 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class USoundBase> SFX_congratulation;
 
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class USoundBase> SFX_DoorOpen;
+	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

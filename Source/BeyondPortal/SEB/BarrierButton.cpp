@@ -37,7 +37,7 @@ ABarrierButton::ABarrierButton()
 	{
 		SFX_BarrierButtonDown=SFX_BarrierButtonDownRef.Object;
 	}
-	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_BarrierButtonRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/barrier2.barrier2'"));
+	static ConstructorHelpers::FObjectFinder<USoundBase> SFX_BarrierButtonRef(TEXT("/Script/Engine.SoundWave'/Game/SEB/Resources/Sounds/select_2-96163.select_2-96163'"));
 	if ( SFX_BarrierButtonRef.Object )
 	{
 		SFX_BarrierButton=SFX_BarrierButtonRef.Object;
