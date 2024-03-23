@@ -241,13 +241,17 @@ void APlayerCharacter::BeginPlay()
 		if ( CrosshairUI )
 		{
 			CrosshairUI->AddToViewport();
-			CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
-
-			FTimerHandle CrosshairHandle;
-			GetWorldTimerManager().SetTimer(CrosshairHandle, FTimerDelegate::CreateLambda([this]()
+			// 챕터 1에서는 시퀀스 종료(7초) 후에 보이게 설정 
+			if(UGameplayStatics::GetCurrentLevelName(GetWorld()) == TEXT("BeyondPortalMap"))
 			{
-				CrosshairUI->SetVisibility(ESlateVisibility::Visible);
-			}), 7.0f, false);
+				CrosshairUI->SetVisibility(ESlateVisibility::Hidden);
+
+				FTimerHandle CrosshairHandle;
+				GetWorldTimerManager().SetTimer(CrosshairHandle, FTimerDelegate::CreateLambda([this]()
+					{
+						CrosshairUI->SetVisibility(ESlateVisibility::Visible);
+					}), 7.0f, false);
+			}
 		}
 
 		EmotionUI=CreateWidget<UEmotionUIWidget>(GetWorld(), EmotionUIClass);
@@ -502,6 +506,7 @@ void APlayerCharacter::TickGrab()
 void APlayerCharacter::GrabObj(ICanGrab* NewObject, UPrimitiveComponent* TargetComp)
 {
 	GrabObject=NewObject;
+	GrabObject->Grab(this);
 	PhysicsHandleComp->GrabComponentAtLocationWithRotation(TargetComp, FName(), TargetComp->GetComponentLocation(), TargetComp->GetComponentRotation());
 
 	RPC_Multi_GrabObj(TargetComp);
@@ -539,6 +544,14 @@ void APlayerCharacter::DropObj()
 	RPC_Multi_DropObj();
 }
 
+void APlayerCharacter::DropObjFromCube()
+{
+	PhysicsHandleComp->ReleaseComponent();
+	GrabObject=nullptr;
+
+	RPC_Multi_DropObj();
+}
+
 void APlayerCharacter::RPC_Multi_DropObj_Implementation()
 {
 	//Particle
@@ -558,7 +571,7 @@ void APlayerCharacter::RPC_Multi_DropObj_Implementation()
 		{
 			GunSoundComp->Stop();
 		}
-		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Drop, 0.7f);
+		UGameplayStatics::PlaySound2D(GetWorld(), SFX_Drop, 0.6f);
 	}
 }
 
