@@ -95,7 +95,7 @@ void AGrabCube::RPC_Multi_Grab_Implementation(APlayerCharacter* NewOwnPlayer)
 {
 	/*if ( nullptr != OwnPlayer && nullptr != OwnPlayer->GetGrabObject() )
 	{
-		OwnPlayer->DropObj();
+		OwnPlayer->DropObjFromCube();
 	}*/
 	OwnPlayer=NewOwnPlayer;
 
@@ -214,7 +214,10 @@ void AGrabCube::TickDisappear(float DeltaSeconds)
 	if( DissolveCount > 1.0f )
 	{
 		IsDissolving=false;
-		OwnPlayer->DropObjFromCube();
+		if(OwnPlayer)
+		{
+			OwnPlayer->DropObjFromCube();
+		}
 		Destroy();
 	}
 }
