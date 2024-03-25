@@ -212,7 +212,7 @@ public:
 // Emotion
 protected:
 	UPROPERTY(EditDefaultsOnly)
-	FVector CameraLocationInEmotion=FVector(0, 7, 80);
+	FVector CameraLocationInEmotion=FVector(0, 27, 90);
 
 	UPROPERTY(EditDefaultsOnly)
 	FVector CameraLocationInNormal=FVector(17, 7, 28);

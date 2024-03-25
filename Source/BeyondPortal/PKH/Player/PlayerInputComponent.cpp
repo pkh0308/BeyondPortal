@@ -73,6 +73,12 @@ UPlayerInputComponent::UPlayerInputComponent()
 	{
 		IA_Target=IA_TargetRef.Object;
 	}
+	// Voice
+	static ConstructorHelpers::FObjectFinder<UInputAction> IA_VoiceRef(TEXT("/Script/EnhancedInput.InputAction'/Game/PKH/Input/IA_Portal_Voice.IA_Portal_Voice'"));
+	if ( IA_VoiceRef.Object )
+	{
+		IA_Voice=IA_VoiceRef.Object;
+	}
 }
 
 void UPlayerInputComponent::BeginPlay()
