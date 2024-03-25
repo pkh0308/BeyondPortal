@@ -1008,8 +1008,9 @@ void APlayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 void APlayerCharacter::VoiceChat(bool IsActive)
 {
 	APlayerController* MyController = GetController<APlayerController>();
-	if( nullptr == MyController || false == MyController->IsLocalController() )
+	if( nullptr == MyController )
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Controller Error"));
 		return;
 	}
 

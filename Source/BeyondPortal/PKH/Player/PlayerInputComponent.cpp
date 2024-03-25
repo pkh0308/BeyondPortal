@@ -296,12 +296,12 @@ void UPlayerInputComponent::OnIATarget(const FInputActionValue& Value)
 
 void UPlayerInputComponent::OnIABeginVoice(const FInputActionValue& Value)
 {
-	Owner->VoiceChat(true);
+	Owner->VoiceChat(true); UE_LOG(LogTemp, Warning, TEXT("Voice Start"));
 }
 
 void UPlayerInputComponent::OnIAEndVoice(const FInputActionValue& Value)
 {
-	Owner->VoiceChat(false);
+	Owner->VoiceChat(false); UE_LOG(LogTemp, Warning, TEXT("Voice End"));
 }
 
 void UPlayerInputComponent::PlayFireMontage() const
