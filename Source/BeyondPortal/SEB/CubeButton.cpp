@@ -89,12 +89,11 @@ void ACubeButton::OnMyCompBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 			{
 				// 딜레이 후에 문 열기
 				AArmDoor* Door=Cast<AArmDoor>(CurrentActor);
-				FTimerHandle Handle;
-				GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Door]()
-					{
-						Door->isOpened=true;
-					}), Delay, false);
+				
+				Door->openDoor(CurrentActor, Delay);
 				Delay+=0.1f;
+
+				
 			}
 			
 			else if( CurrentActor->IsA<AFloorLine>() ) //FloorLine 색상 변경
@@ -151,11 +150,8 @@ void ACubeButton::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActor
 			{
 				// 딜레이 후에 문 닫기
 				AArmDoor* Door=Cast<AArmDoor>(CurrentActor);
-				FTimerHandle Handle;
-				GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([Door]()
-					{
-						Door->isClosed=true;
-					}), Delay, false);
+				
+				Door->closeDoor(CurrentActor, Delay);
 				Delay+=0.1f;
 
 			}

@@ -60,7 +60,7 @@ void AArmDoor::RPC_Server_MoveDoor_Implementation()
 
 void AArmDoor::RPC_Multi_MoveDoor_Implementation()
 {
-	if ( isOpened )
+	/*if ( isOpened )
 	{
 		isClosed=false;
 		armDoor->PlayAnimation(armDoorOpenAnim, false);
@@ -75,7 +75,7 @@ void AArmDoor::RPC_Multi_MoveDoor_Implementation()
 
 		isClosed=false;
 		isOpened=false;
-	}
+	}*/
 }
 
 void AArmDoor::closeDoor(AActor* findDoor, float Delay)
