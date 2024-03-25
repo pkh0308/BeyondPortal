@@ -50,7 +50,7 @@ void AArmDoor::BeginPlay()
 void AArmDoor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	RPC_Server_MoveDoor();
+	//RPC_Server_MoveDoor();
 }
 
 void AArmDoor::RPC_Server_MoveDoor_Implementation()

@@ -128,10 +128,18 @@ void ADestroyZone::OnMyCompEndOverlap(UPrimitiveComponent* OverlappedComp, AActo
 			UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmDoor::StaticClass(), FoundDoors);
 			float Delay=0.1f;
 			cnt1--;
-			
+		}
+		else if( findMyTag == "closedoor" && !isCheckClosed ) 
+		{
+			UGameplayStatics::GetAllActorsOfClass(GetWorld(), AArmDoor::StaticClass(), FoundDoors);
+			cnt2--;
+
 			
 		}
-		
+		else if(findMyTag == "NoTag" )
+		{
+			
+		}
 	}
 }
 
